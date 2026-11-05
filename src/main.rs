@@ -5,11 +5,13 @@
 //! client.
 
 mod api;
+mod arabic_forms;
 mod auth;
 mod config;
 mod db;
 mod error;
 mod events;
+mod fonts;
 mod form;
 mod i18n;
 mod models;

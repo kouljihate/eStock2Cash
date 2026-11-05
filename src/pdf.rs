@@ -1,14 +1,21 @@
 //! Minimal, dependency-free PDF writer for invoices and tickets.
 //!
-//! The document uses the built-in Helvetica faces and WinAnsi text, so it needs
-//! no font embedding and renders identically everywhere. Company branding
-//! (primary/accent colours, header, footer, JPEG logo) comes from the invoice
-//! template. Arabic shaping needs an embedded CID font, so Arabic sessions get
-//! the English labels here (the on-screen document stays fully translated).
+//! Latin text uses the built-in Helvetica faces and WinAnsi encoding, so a
+//! French or English document needs no font embedding and renders identically
+//! everywhere. Arabic cannot be expressed that way: it needs a Unicode font and
+//! contextual glyph selection, so when `static/fonts/arabic.ttf` is present the
+//! writer embeds it (Type0 / Identity-H) and shapes the text with [`crate::fonts`].
+//! Company branding (primary/accent colours, header, footer, JPEG logo) comes
+//! from the invoice template.
+
+use std::cell::RefCell;
+use std::collections::BTreeMap;
+use std::rc::Rc;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 
+use crate::fonts::{self, Piece, TrueTypeFont};
 use crate::i18n::{Lang, tr};
 use crate::models::{Company, Invoice, InvoiceTemplate, Ticket};
 use crate::util::{money, qty};
@@ -50,7 +57,7 @@ fn char_width(ch: char, bold: bool) -> f64 {
     if bold { base * 1.06 } else { base }
 }
 
-fn text_width(text: &str, size: f64, bold: bool) -> f64 {
+pub fn latin_width(text: &str, size: f64, bold: bool) -> f64 {
     text.chars().map(|c| char_width(c, bold)).sum::<f64>() * size / 1000.0
 }
 
@@ -79,13 +86,45 @@ fn rgb(hex: &str) -> (f64, f64, f64) {
 // Page content
 // ---------------------------------------------------------------------------
 
+type GlyphUse = Rc<RefCell<BTreeMap<u16, Vec<u32>>>>;
+
 pub struct Content {
     ops: Vec<u8>,
+    /// Embedded face, available to any document that needs it.
+    font: Option<&'static TrueTypeFont>,
+    /// Draw every string with the embedded face (Arabic documents), instead of
+    /// only the strings that WinAnsi cannot encode.
+    force_font: bool,
+    /// Glyph ids drawn so far, mapped to the character they came from, so the
+    /// document can emit a `ToUnicode` CMap (text stays selectable/searchable).
+    used: GlyphUse,
 }
 
 impl Content {
-    fn new() -> Self {
-        Self { ops: Vec::new() }
+    fn new(font: Option<&'static TrueTypeFont>, force_font: bool, used: GlyphUse) -> Self {
+        Self {
+            ops: Vec::new(),
+            font,
+            force_font,
+            used,
+        }
+    }
+
+    /// The face this string must be drawn with, if the base-14 fonts will not do.
+    fn face_for(&self, text: &str) -> Option<&'static TrueTypeFont> {
+        let font = self.font?;
+        if self.force_font || fonts::needs_embedded_face(text) {
+            Some(font)
+        } else {
+            None
+        }
+    }
+
+    fn measure(&self, text: &str, size: f64, bold: bool) -> f64 {
+        match self.face_for(text) {
+            Some(font) => font.width(text, size),
+            None => latin_width(text, size, bold),
+        }
     }
 
     fn raw(&mut self, s: &str) {
@@ -126,26 +165,77 @@ impl Content {
         if text.is_empty() {
             return;
         }
-        self.fill_color(hex);
-        let font = if bold { "F2" } else { "F1" };
-        let mut s = Vec::new();
-        s.extend_from_slice(
-            format!("BT /{font} {size:.2} Tf 1 0 0 1 {x:.2} {:.2} Tm ", PAGE_H - y_top)
-                .as_bytes(),
-        );
-        s.push(b'(');
-        s.extend_from_slice(&pdf_escape(text));
-        s.extend_from_slice(b") Tj ET\n");
-        self.ops.extend_from_slice(&s);
+        let baseline = PAGE_H - y_top;
+        let Some(font) = self.face_for(text) else {
+            self.fill_color(hex);
+            let name = if bold { "F2" } else { "F1" };
+            let mut s = Vec::new();
+            s.extend_from_slice(
+                format!("BT /{name} {size:.2} Tf 1 0 0 1 {x:.2} {baseline:.2} Tm ").as_bytes(),
+            );
+            s.push(b'(');
+            s.extend_from_slice(&pdf_escape(text));
+            s.extend_from_slice(b") Tj ET\n");
+            self.ops.extend_from_slice(&s);
+            return;
+        };
+
+        // Mixed content is drawn run by run: Arabic glyphs from the embedded
+        // face, Latin and digits from Helvetica, each advancing the cursor.
+        let pieces = font.layout(text);
+        let mut cursor = x;
+        for piece in pieces {
+            match piece {
+                Piece::Arabic(run) => {
+                    let mut hexs = String::with_capacity(run.len() * 4);
+                    for (gid, uni) in &run {
+                        hexs.push_str(&format!("{gid:04X}"));
+                        self.used
+                            .borrow_mut()
+                            .entry(*gid)
+                            .or_insert_with(|| uni.clone());
+                    }
+                    let (r, g, b) = rgb(hex);
+                    if bold {
+                        // The face ships a single weight; thicken the fill with
+                        // a stroke in the same colour.
+                        self.raw(&format!(
+                            "q {r:.3} {g:.3} {b:.3} rg {r:.3} {g:.3} {b:.3} RG\
+                             {:.2} w 2 Tr BT /F3 {size:.2} Tf 1 0 0 1 {cursor:.2} {baseline:.2} Tm <{hexs}> Tj ET 0 Tr Q",
+                            size * 0.04
+                        ));
+                    } else {
+                        self.raw(&format!(
+                            "{r:.3} {g:.3} {b:.3} rg BT /F3 {size:.2} Tf 1 0 0 1 {cursor:.2} {baseline:.2} Tm <{hexs}> Tj ET"
+                        ));
+                    }
+                    cursor += font.run_width(&run, size);
+                }
+                Piece::Latin(run) => {
+                    self.fill_color(hex);
+                    let name = if bold { "F2" } else { "F1" };
+                    let mut s = Vec::new();
+                    s.extend_from_slice(
+                        format!("BT /{name} {size:.2} Tf 1 0 0 1 {cursor:.2} {baseline:.2} Tm ")
+                            .as_bytes(),
+                    );
+                    s.push(b'(');
+                    s.extend_from_slice(&pdf_escape(&run));
+                    s.extend_from_slice(b") Tj ET\n");
+                    self.ops.extend_from_slice(&s);
+                    cursor += latin_width(&run, size, bold);
+                }
+            }
+        }
     }
 
     fn text_right(&mut self, right: f64, y_top: f64, size: f64, bold: bool, hex: &str, text: &str) {
-        let w = text_width(text, size, bold);
+        let w = self.measure(text, size, bold);
         self.text(right - w, y_top, size, bold, hex, text);
     }
 
     fn text_center(&mut self, center: f64, y_top: f64, size: f64, bold: bool, hex: &str, text: &str) {
-        let w = text_width(text, size, bold);
+        let w = self.measure(text, size, bold);
         self.text(center - w / 2.0, y_top, size, bold, hex, text);
     }
 }
@@ -214,34 +304,66 @@ struct PdfDoc {
     pages: Vec<Content>,
     logo: Option<(Vec<u8>, JpegInfo)>,
     page_w: f64,
+    font: Option<&'static TrueTypeFont>,
+    force_font: bool,
+    used: GlyphUse,
 }
 
 impl PdfDoc {
-    fn new(logo: Option<(Vec<u8>, JpegInfo)>, page_w: f64) -> Self {
+    fn new(
+        logo: Option<(Vec<u8>, JpegInfo)>,
+        page_w: f64,
+        font: Option<&'static TrueTypeFont>,
+        force_font: bool,
+    ) -> Self {
         Self {
             pages: Vec::new(),
             logo,
             page_w,
+            font,
+            force_font,
+            used: Rc::new(RefCell::new(BTreeMap::new())),
         }
     }
 
     fn page(&mut self) -> &mut Content {
         if self.pages.is_empty() {
-            self.pages.push(Content::new());
+            let used = self.used.clone();
+            self.pages.push(Content::new(self.font, self.force_font, used));
         }
         self.pages.last_mut().unwrap()
     }
 
     fn new_page(&mut self) {
-        self.pages.push(Content::new());
+        let used = self.used.clone();
+        self.pages.push(Content::new(self.font, self.force_font, used));
     }
 
     fn finish(self) -> Vec<u8> {
-        // 1 catalog, 2 pages, 3 font regular, 4 font bold, 5 logo (optional),
-        // then two objects per page (page, content).
+        // Fixed objects: 1 catalog, 2 pages, 3 Helvetica, 4 Helvetica-Bold.
+        // Optional objects follow: five for an embedded face (Type0, CIDFont,
+        // descriptor, font program, ToUnicode), one for the logo; then two per
+        // page (page, content stream).
+        let used = self.used.borrow().clone();
+        // Embed the face only when some glyph was actually drawn with it.
+        let font = self.font.filter(|_| !used.is_empty());
         let has_logo = self.logo.is_some();
-        let first_page_obj = if has_logo { 6 } else { 5 };
         let page_count = self.pages.len().max(1);
+
+        let mut next = 5usize;
+        let font_ids = font.map(|_| {
+            let first = next;
+            next += 5;
+            (first, first + 1, first + 2, first + 3, first + 4)
+        });
+        let logo_id = if has_logo {
+            let id = next;
+            next += 1;
+            Some(id)
+        } else {
+            None
+        };
+        let first_page_obj = next;
 
         let mut objects: Vec<Vec<u8>> = Vec::new();
 
@@ -261,6 +383,98 @@ impl PdfDoc {
             b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
                 .to_vec(),
         );
+
+        if let (Some(font), Some((_type0, cid, descriptor, program, to_unicode))) = (font, font_ids) {
+            objects.push(
+                format!(
+                    "<< /Type /Font /Subtype /Type0 /BaseFont /{} /Encoding /Identity-H \
+                     /DescendantFonts [{cid} 0 R] /ToUnicode {to_unicode} 0 R >>",
+                    font.name
+                )
+                .into_bytes(),
+            );
+
+            let upem = font.units_per_em() as f64;
+            let mut widths = String::from("[");
+            for &gid in used.keys() {
+                let w = (font.advance(gid) as f64 * 1000.0 / upem).round() as i64;
+                widths.push_str(&format!("{gid} [{w}] "));
+            }
+            widths.push(']');
+            objects.push(
+                format!(
+                    "<< /Type /Font /Subtype /CIDFontType2 /BaseFont /{} \
+                     /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> \
+                     /FontDescriptor {descriptor} 0 R /DW 600 /W {widths} /CIDToGIDMap /Identity >>",
+                    font.name
+                )
+                .into_bytes(),
+            );
+
+            let scale = |v: i16| (v as f64 * 1000.0 / upem).round() as i64;
+            let [x0, y0, x1, y1] = font.bbox();
+            let (ascent, descent) = font.ascent_descent();
+            objects.push(
+                format!(
+                    "<< /Type /FontDescriptor /FontName /{} /Flags 32 /FontBBox [{} {} {} {}] \
+                     /ItalicAngle 0 /Ascent {} /Descent {} /CapHeight {} /StemV 80 /FontFile2 {program} 0 R >>",
+                    font.name,
+                    scale(x0),
+                    scale(y0),
+                    scale(x1),
+                    scale(y1),
+                    scale(ascent),
+                    scale(descent),
+                    scale(ascent * 7 / 10),
+                )
+                .into_bytes(),
+            );
+
+            let program_data = font.compressed();
+            let mut stream = format!(
+                "<< /Length {} /Length1 {} /Filter /FlateDecode >>\nstream\n",
+                program_data.len(),
+                font.raw_len()
+            )
+            .into_bytes();
+            stream.extend_from_slice(program_data);
+            stream.extend_from_slice(b"\nendstream");
+            objects.push(stream);
+
+            // Glyph id -> character, so the text can be selected and searched.
+            let mut cmap = String::from(
+                "/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n\
+                 /CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n\
+                 /CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n\
+                 1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n",
+            );
+            let entries: Vec<(&u16, &Vec<u32>)> = used.iter().collect();
+            for chunk in entries.chunks(100) {
+                cmap.push_str(&format!("{} beginbfchar\n", chunk.len()));
+                for (gid, source) in chunk {
+                    let mut utf16 = String::new();
+                    for cp in source.iter() {
+                        if *cp <= 0xFFFF {
+                            utf16.push_str(&format!("{cp:04X}"));
+                        } else {
+                            let v = cp - 0x10000;
+                            utf16.push_str(&format!("{:04X}{:04X}", 0xD800 + (v >> 10), 0xDC00 + (v & 0x3FF)));
+                        }
+                    }
+                    if !utf16.is_empty() {
+                        cmap.push_str(&format!("<{gid:04X}> <{utf16}>\n"));
+                    }
+                }
+                cmap.push_str("endbfchar\n");
+            }
+            cmap.push_str(
+                "endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n",
+            );
+            let mut obj = format!("<< /Length {} >>\nstream\n", cmap.len()).into_bytes();
+            obj.extend_from_slice(cmap.as_bytes());
+            obj.extend_from_slice(b"\nendstream");
+            objects.push(obj);
+        }
 
         if let Some((data, info)) = self.logo {
             let cs = match info.components {
@@ -283,10 +497,13 @@ impl PdfDoc {
             objects.push(obj);
         }
 
-        let xobject = if has_logo {
-            " /XObject << /Im0 5 0 R >>"
-        } else {
-            ""
+        let xobject = match logo_id {
+            Some(id) => format!(" /XObject << /Im0 {id} 0 R >>"),
+            None => String::new(),
+        };
+        let embedded = match font_ids {
+            Some((type0, ..)) => format!(" /F3 {type0} 0 R"),
+            None => String::new(),
         };
 
         for (i, page) in self.pages.iter().enumerate() {
@@ -295,7 +512,7 @@ impl PdfDoc {
             objects.push(
                 format!(
                     "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {:.2} {PAGE_H:.2}] \
-                     /Resources << /Font << /F1 3 0 R /F2 4 0 R >>{xobject} >> /Contents {content_obj} 0 R >>",
+                     /Resources << /Font << /F1 3 0 R /F2 4 0 R{embedded} >>{xobject} >> /Contents {content_obj} 0 R >>",
                     self.page_w
                 )
                 .into_bytes(),
@@ -338,6 +555,9 @@ impl PdfDoc {
 // ---------------------------------------------------------------------------
 
 pub struct PdfLabels {
+    /// True when the labels and the document body are Arabic and the embedded
+    /// face is available.
+    pub arabic: bool,
     pub invoice: String,
     pub number: String,
     pub date: String,
@@ -362,24 +582,35 @@ pub struct PdfLabels {
 
 impl PdfLabels {
     pub fn new(lang: Lang) -> Self {
-        // Arabic text needs an embedded shaping font; fall back to English.
-        let l = if matches!(lang, Lang::Ar) { Lang::En } else { lang };
+        // Arabic needs an embedded shaping font; without one, fall back to
+        // English so the document never shows blanks.
+        let arabic = matches!(lang, Lang::Ar) && fonts::arabic().is_some();
+        let l = if matches!(lang, Lang::Ar) && !arabic {
+            Lang::En
+        } else {
+            lang
+        };
         let t = |key: &str| tr(l, key);
         Self {
-            invoice: if matches!(l, Lang::Fr) {
-                "FACTURE".into()
-            } else {
-                "INVOICE".into()
+            arabic,
+            invoice: match l {
+                Lang::Fr => "FACTURE".into(),
+                Lang::Ar => "فاتورة".into(),
+                Lang::En => "INVOICE".into(),
             },
             number: t("lbl_number"),
             date: t("lbl_date"),
             due_date: t("lbl_due_date"),
-            bill_to: if matches!(l, Lang::Fr) {
-                "Facturé à".into()
-            } else {
-                "Bill to".into()
+            bill_to: match l {
+                Lang::Fr => "Facturé à".into(),
+                Lang::Ar => "إلى".into(),
+                Lang::En => "Bill to".into(),
             },
-            from: if matches!(l, Lang::Fr) { "Émetteur".into() } else { "From".into() },
+            from: match l {
+                Lang::Fr => "Émetteur".into(),
+                Lang::Ar => "من".into(),
+                Lang::En => "From".into(),
+            },
             description: t("lbl_description"),
             qty: t("lbl_quantity"),
             unit_price: t("lbl_unit_price"),
@@ -390,17 +621,17 @@ impl PdfLabels {
             paid: t("lbl_paid"),
             outstanding: t("lbl_outstanding"),
             reference: t("lbl_reference"),
-            ticket: if matches!(l, Lang::Fr) {
-                "TICKET DE CAISSE".into()
-            } else {
-                "SALES TICKET".into()
+            ticket: match l {
+                Lang::Fr => "TICKET DE CAISSE".into(),
+                Lang::Ar => "تذكرة بيع".into(),
+                Lang::En => "SALES TICKET".into(),
             },
             cashier: t("lbl_cashier"),
             change: t("lbl_change"),
-            thank_you: if matches!(l, Lang::Fr) {
-                "Merci de votre visite".into()
-            } else {
-                "Thank you for your business".into()
+            thank_you: match l {
+                Lang::Fr => "Merci de votre visite".into(),
+                Lang::Ar => "شكراً لتعاملكم معنا".into(),
+                Lang::En => "Thank you for your business".into(),
             },
         }
     }
@@ -564,7 +795,9 @@ pub fn invoice_pdf(
 ) -> Vec<u8> {
     let tmpl = company.template.clone();
     let logo = if tmpl.show_logo { decode_logo(company) } else { None };
-    let mut doc = PdfDoc::new(logo, PAGE_W);
+    // The face is available to every document (an English invoice can still
+    // carry an Arabic customer name); it is only embedded when used.
+    let mut doc = PdfDoc::new(logo, PAGE_W, fonts::arabic(), labels.arabic);
 
     const PAGE_ROWS: usize = 22;
     let chunks: Vec<&[crate::models::DocLine]> = if inv.lines.is_empty() {
@@ -668,7 +901,7 @@ pub fn invoice_pdf(
 pub fn ticket_pdf(ticket: &Ticket, company: &Company, labels: &PdfLabels) -> Vec<u8> {
     let tmpl = company.template.clone();
     let width = 226.77; // 80 mm
-    let mut doc = PdfDoc::new(None, width);
+    let mut doc = PdfDoc::new(None, width, fonts::arabic(), labels.arabic);
     {
         let page = doc.page();
         page.rect(0.0, 0.0, width, 46.0, &tmpl.primary);

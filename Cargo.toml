@@ -1,6 +1,6 @@
 [package]
 name = "stockinvoice"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Procure-to-Pay and Quote-to-Cash business application (Leptos + Axum + MongoDB)"
 license = "MIT"
@@ -12,6 +12,7 @@ axum-extra = { version = "0.12.6", features = ["cookie"] }
 base64 = "0.23.1"
 chrono = { version = "0.4.45", features = ["serde"] }
 dotenvy = "0.15.7"
+flate2 = "1.1.5"
 futures-util = "0.3.34"
 jsonwebtoken = { version = "11.1.0", default-features = false, features = ["rust_crypto"] }
 lapin = "4.12.3"

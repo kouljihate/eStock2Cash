@@ -166,7 +166,7 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                     <nav class="nav" inner_html=nav></nav>
                     <div class="side-foot">
                         <div class="langs" inner_html=langs></div>
-                        <div class="ver">"v0.1.0"</div>
+                        <div class="ver">"v" { env!("CARGO_PKG_VERSION") }</div>
                     </div>
                 </aside>
                 <div class="main">

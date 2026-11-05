@@ -110,13 +110,13 @@ src/
   services.rs    business rules: stock posting, settlement, credit, aging
   events.rs      RabbitMQ publisher, Mongo mirror consumer, broker monitor
   pdf.rs         native PDF writer (invoice + receipt)
+  fonts.rs       TrueType parsing, Arabic shaping, bidi for the PDF writer
   ticket.rs      ESC/POS byte stream for mini printers
   i18n.rs        EN/FR/AR dictionary
   views.rs       Leptos shell (sidebar, topbar), tables, form components
   pages/         one module per domain (handlers + rendered bodies)
   routes.rs      web routing
-  api.rs         /api/v1 JSON API (Bearer JWT) for the Android client
-static/          app.css, app.js, favicon (fonts are added by the operator)
+  api.rs         /api/v1 JSON API (Bearer JWT) for the Android client  static/app.css, app.js, favicon, fonts/ (arabic.ttf is bundled)
 ```
 
 ### Data model
@@ -181,26 +181,43 @@ generated PDF: coloured header band, company block, bill-to block, line table,
 totals, payment status and footer — all driven by **Admin → Invoice template**
 (primary/accent colour, header, footer, terms, tax visibility, logo).
 
-- The writer is dependency-free Rust (Helvetica base-14 + WinAnsi), so no font
-  embedding or external service is needed, and multi-page invoices paginate
-  automatically.
+- Latin text uses the base-14 Helvetica faces and WinAnsi encoding, so French
+  and English documents embed nothing (a few kilobytes) and multi-page invoices
+  paginate automatically.
+- **Arabic** is drawn with a real Unicode font: the writer embeds
+  `static/fonts/arabic.ttf` (Type0 / Identity-H) and does the shaping itself —
+  contextual isolated/final/initial/medial forms, the lam-alef ligatures and
+  bidi reordering so Latin codes and numbers keep their own direction. Arabic
+  labels and Arabic data (customer, product, notes) work in every document, and
+  an English invoice carrying an Arabic customer name also renders it instead of
+  `?????`. The `ToUnicode` CMap keeps the text selectable and searchable.
+- The face is embedded only when it is used: an entirely Latin PDF stays small,
+  an Arabic one grows by roughly 210 KB (the full font program). Glyph
+  subsetting is not implemented.
 - **Logo**: paste a base64 JPEG (`data:image/jpeg;base64,…` or the raw
   `/9j/…` form) into the company profile. PNG logos are ignored — PDF image
   embedding uses `DCTDecode`, which is JPEG-only.
-- **Arabic**: the PDF uses English/French labels because Arabic needs an embedded
-  shaped CID font (e.g. VIP RAWY). The on-screen document is fully translated.
+- `tools/gen_arabic_forms.py` regenerates `src/arabic_forms.rs` (the joining
+  table) from the Unicode character database.
 
 ## Fonts
 
-The theme loads `Comfortaa` (Latin) and `VIP RAWY` (Arabic) if present:
+The screen theme loads `Comfortaa` (Latin) and `VIP RAWY` (Arabic) when they are
+present, and the PDF writer uses `arabic.ttf`:
 
 ```
-static/fonts/Comfortaa-Regular.ttf
-static/fonts/VIPRawy-Regular.ttf
+static/fonts/Comfortaa-Regular.ttf   # UI, Latin
+static/fonts/VIPRawy-Regular.ttf     # UI, Arabic
+static/fonts/arabic.ttf              # PDF, Arabic (Amiri, OFL — bundled)
 ```
 
-Fonts are not bundled (licensing); without them the UI falls back to the system
-font stack and Arabic still renders with a system Arabic face.
+The screen fonts are not bundled (licensing); without them the UI falls back to
+the system stack and Arabic still renders with a system face. To use VIP RAWY in
+PDFs, replace `static/fonts/arabic.ttf` with the licensed file (or point
+`PDF_ARABIC_FONT` at it) — the writer only needs a TrueType with Arabic
+presentation forms. `static/fonts/arabic.ttf` ships under the SIL Open Font
+License (`static/fonts/OFL.txt`); drop it and Arabic PDFs fall back to the
+English/French labels, exactly as before.
 
 ## Direct ticket printing
 
@@ -252,8 +269,10 @@ rejection; tenant isolation; EN/FR/AR switching.
 
 - **Android app is not included.** The API it needs (auth, dashboard, master
   data, documents, tickets, PDF) is implemented and documented.
-- Arabic **PDF** labels are English/French (see above); the UI itself is fully
-  Arabic with RTL.
+- Arabic PDFs keep the left-to-right grid (column order, totals block); the
+  text itself is shaped and runs right to left, but the layout is not mirrored.
+- PDF fonts are embedded whole (no subsetting), so an Arabic document is ~210 KB
+  larger than a Latin one.
 - One company and one profile per installation, per the specification.
 - `SECRET_KEY`/`JWT_SECRET_KEY` shorter than 32 characters produce an ephemeral
   key at boot: sessions become invalid on restart.
