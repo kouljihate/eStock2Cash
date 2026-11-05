@@ -265,13 +265,42 @@ h3 { font-size: 13.5px; }
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 28px;
-  background: rgba(255, 255, 255, .78);
-  backdrop-filter: saturate(160%) blur(14px);
-  -webkit-backdrop-filter: saturate(160%) blur(14px);
-  border-bottom: 1px solid var(--line);
+  padding: 13px 28px;
+  background:
+    radial-gradient(110% 220% at 0% 0%, rgba(79, 70, 229, .09), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .94), rgba(255, 255, 255, .74));
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-bottom: 1px solid rgba(231, 234, 243, .9);
+  box-shadow: 0 14px 34px -30px rgba(12, 18, 34, .55);
 }
-.crumbs h1 { font-size: 17.5px; letter-spacing: -.02em; }
+
+/* hairline that fades into the page, so the glass bar has an edge of its own */
+.topbar::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(79, 70, 229, .42), rgba(6, 182, 212, .3), transparent);
+  pointer-events: none;
+}
+.crumbs h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17.5px;
+  letter-spacing: -.02em;
+}
+.crumbs h1::before {
+  content: "";
+  flex: 0 0 4px;
+  width: 4px;
+  height: 19px;
+  border-radius: 3px;
+  background: var(--grad);
+  box-shadow: 0 0 12px -2px rgba(79, 70, 229, .55);
+}
 .crumbs .muted { display: block; font-size: 11px; margin-top: 1px; }
 .top-actions { display: flex; align-items: center; gap: 8px; }
 .chip {
@@ -302,7 +331,39 @@ h3 { font-size: 13.5px; }
   flex-direction: column;
   gap: 18px;
 }
-.appfoot { padding: 0 28px 24px; color: var(--faint); font-size: 10.5px; letter-spacing: .01em; }
+.appfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding: 16px 28px 18px;
+  border-top: 1px solid rgba(231, 234, 243, .85);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .72));
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: .015em;
+}
+.foot-id { display: inline-flex; align-items: center; gap: 9px; }
+.foot-id::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--grad);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, .12);
+}
+.foot-ver {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand-600);
+  background: rgba(79, 70, 229, .08);
+  border: 1px solid rgba(79, 70, 229, .14);
+}
+.foot-year { font-variant-numeric: tabular-nums; }
 
 .flash-wrap { padding: 0 28px; }
 .flash {
@@ -868,15 +929,23 @@ html[dir="rtl"] .row-actions { justify-content: flex-start; }
 }
 
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; }
+  /* The header belongs above the navigation on a narrow screen: the sidebar is
+     only 268px of chrome on a desktop, but stacked it is taller than the page,
+     which pushed the title, the user and the sign-out out of sight. */
+  .app { display: flex; flex-direction: column; }
+  .main { display: contents; }
+  .topbar { order: 1; }
   .sidebar {
     position: static;
-    order: 0;
+    order: 2;
     height: auto;
     overflow: visible;
     flex-direction: column;
     padding: 14px 14px 12px;
   }
+  .flash-wrap { order: 3; }
+  .content { order: 4; }
+  .appfoot { order: 5; padding: 16px 16px 20px; }
 
   .brand { padding-bottom: 10px; }
   .nav { flex-direction: row; flex-wrap: wrap; gap: 5px; }
@@ -886,7 +955,8 @@ html[dir="rtl"] .row-actions { justify-content: flex-start; }
   .nav-item.active::before { display: none; }
   .side-foot { margin-top: 4px; }
   .content { padding: 16px; gap: 14px; }
-  .topbar { flex-wrap: wrap; gap: 10px; }
+  .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+  .topbar .crumbs h1 { font-size: 16px; }
   .grid-2 { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 }

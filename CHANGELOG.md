@@ -3,6 +3,25 @@
 All notable changes to StockInvoice. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.3.1 — 2026-11-05
+
+Header and footer get the theme, and stop getting in the way on a small screen.
+
+### Changed
+
+- **Top bar** — aurora tint behind the glass blur, a gradient hairline along its
+  bottom edge, a gradient rule before the page title, and a soft shadow so
+  scrolling cards pass under it cleanly.
+- **Footer** — a real bar instead of a stray line of text: gradient brand dot, the
+  app version as a pill, the copyright year and the company name, separated from
+  the content by a hairline and pinned to the bottom of the viewport.
+
+### Fixed
+
+- On a narrow screen the whole navigation was rendered *above* the header, so the
+  page title, the signed-in user and the sign-out button were pushed below a menu
+  taller than the viewport. The order is now header, navigation, content, footer.
+
 ## 0.3.0 — 2026-11-05
 
 A new visual identity, and the branding fonts now actually load.
