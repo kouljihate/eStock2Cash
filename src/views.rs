@@ -151,7 +151,7 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <title>{page_title}</title>
-                <link rel="stylesheet" href=format!("/static/app.css?v={}", env!("CARGO_PKG_VERSION"))/>
+                <link rel="stylesheet" href=format!("/static/app.css?v={}", crate::routes::asset_token())/>
                 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
             </head>
             <body class=format!("app lang-{}", lang.code())>
@@ -186,7 +186,7 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                     <main class="content" inner_html=body></main>
                     <footer class="appfoot">"StockInvoice · " {year}</footer>
                 </div>
-                <script src=format!("/static/app.js?v={}", env!("CARGO_PKG_VERSION"))></script>
+                <script src=format!("/static/app.js?v={}", crate::routes::asset_token())></script>
             </body>
         </html>
     };

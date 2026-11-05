@@ -16,6 +16,22 @@ const APP_CSS: &str = include_str!("../static/app.css");
 const APP_JS: &str = include_str!("../static/app.js");
 const FAVICON: &str = include_str!("../static/favicon.svg");
 
+/// Cache key for the embedded assets: the crate version plus a checksum of the
+/// stylesheet and script. The version alone is not enough — a rebuild that keeps
+/// the same version, or a page loaded while one was being edited, would keep an
+/// old sheet in the browser for an hour.
+pub fn asset_token() -> &'static str {
+    static TOKEN: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    TOKEN.get_or_init(|| {
+        let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+        for byte in APP_CSS.as_bytes().iter().chain(APP_JS.as_bytes()) {
+            hash ^= u64::from(*byte);
+            hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        format!("{}-{:08x}", env!("CARGO_PKG_VERSION"), (hash >> 32) as u32 ^ hash as u32)
+    })
+}
+
 /// Fonts live on disk rather than in the binary: they are licensed assets the
 /// operator may replace (VIP Rawy), and a 100-400 KB face does not belong in a
 /// `include_str!`. Only known font extensions are served, and only from the

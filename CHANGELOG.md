@@ -23,8 +23,9 @@ A new visual identity, and the branding fonts now actually load.
 
 - `/static/fonts/{file}` serves the bundled faces (`font/ttf`, one-year cache);
   it only accepts font extensions and rejects path traversal.
-- Stylesheet and script URLs carry the crate version, so a new build is never
-  served from a stale browser cache.
+- Stylesheet and script URLs carry the crate version *and* a checksum of their
+  contents (`?v=0.3.0-92cbc54f`), so a rebuild is never served from an hour-old
+  browser cache — the version alone was not enough while iterating on the theme.
 
 ### Fixed
 
