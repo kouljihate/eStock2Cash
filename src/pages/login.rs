@@ -1,9 +1,9 @@
 //! Sign-in, sign-out and language switching.
 
 use axum::extract::{Path, Query, State};
-use axum::http::header::SET_COOKIE;
-use axum::http::HeaderMap;
-use axum::response::{IntoResponse, Redirect, Response};
+use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, SET_COOKIE};
+use axum::http::{HeaderMap, HeaderValue};
+use axum::response::{Html, IntoResponse, Redirect, Response};
 use leptos::prelude::*;
 use mongodb::bson::doc;
 use std::collections::HashMap;
@@ -50,14 +50,14 @@ fn shell(lang: Lang, brand: &str, body: String) -> Response {
             </body>
         </html>
     };
-    (
-        [(
-            axum::http::header::CACHE_CONTROL,
-            axum::http::HeaderValue::from_static("no-store"),
-        )],
-        format!("<!doctype html>{}", view.to_html()),
-    )
-        .into_response()
+    let mut resp = Html(format!("<!doctype html>{}", view.to_html())).into_response();
+    resp.headers_mut()
+        .insert(CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    resp.headers_mut().insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("text/html; charset=utf-8"),
+    );
+    resp
 }
 
 pub async fn form(
