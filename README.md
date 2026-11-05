@@ -202,22 +202,26 @@ totals, payment status and footer — all driven by **Admin → Invoice template
 
 ## Fonts
 
-The screen theme loads `Comfortaa` (Latin) and `VIP RAWY` (Arabic) when they are
-present, and the PDF writer uses `arabic.ttf`:
+The UI font is **Comfortaa** for Latin and **VIP Rawy** for Arabic; the PDF
+writer uses `arabic.ttf` for Arabic documents:
 
 ```
-static/fonts/Comfortaa-Regular.ttf   # UI, Latin
-static/fonts/VIPRawy-Regular.ttf     # UI, Arabic
-static/fonts/arabic.ttf              # PDF, Arabic (Amiri, OFL — bundled)
+static/fonts/Comfortaa-{Light,Regular,Bold}.ttf   # UI, Latin (OFL, bundled)
+static/fonts/VIP-Rawy-{Regular,Bold}.ttf          # UI, Arabic (commercial)
+static/fonts/arabic.ttf                            # PDF, Arabic (Amiri, OFL, bundled)
 ```
 
-The screen fonts are not bundled (licensing); without them the UI falls back to
-the system stack and Arabic still renders with a system face. To use VIP RAWY in
-PDFs, replace `static/fonts/arabic.ttf` with the licensed file (or point
-`PDF_ARABIC_FONT` at it) — the writer only needs a TrueType with Arabic
-presentation forms. `static/fonts/arabic.ttf` ships under the SIL Open Font
-License (`static/fonts/OFL.txt`); drop it and Arabic PDFs fall back to the
-English/French labels, exactly as before.
+They are served from `/static/fonts/<file>` and declared in `static/app.css` with
+`@font-face`, including the true 300/400/700 weights. Missing files fall back to
+the system stack, so a checkout without them still works.
+
+VIP Rawy is a commercial face: it is **not committed** (see `.gitignore`), copy
+it into `static/fonts/` for each deployment if you are licensed for it. The PDF
+side is independent — to use VIP Rawy in PDFs as well, either overwrite
+`static/fonts/arabic.ttf` with it or set `PDF_ARABIC_FONT`; the writer only needs
+a TrueType file with Arabic presentation forms. Amiri ships under the SIL Open
+Font License (`static/fonts/OFL.txt`); without it Arabic PDFs fall back to the
+English/French labels.
 
 ## Direct ticket printing
 

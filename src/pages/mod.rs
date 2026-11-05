@@ -16,11 +16,12 @@ use crate::models::{DocLine, Product};
 use crate::util::{esc, money, qty};
 
 /// Small header with a title and action buttons.
-pub fn page_head(ctx: &Ctx, title_key: &str, subtitle: &str, actions: Vec<String>) -> String {
+/// Toolbar row of a page. The title is already in the top bar (page name, or the
+/// document number on a detail page), so repeating it here only produced a
+/// second, larger copy right above the card that names the section again.
+pub fn page_head(_ctx: &Ctx, _title_key: &str, _subtitle: &str, actions: Vec<String>) -> String {
     format!(
-        "<div class=\"page-head\"><div><h2>{}</h2><p class=\"muted\">{}</p></div><div class=\"page-actions\">{}</div></div>",
-        esc(&tr(ctx.lang, title_key)),
-        esc(subtitle),
+        "<div class=\"page-head solo\"><div class=\"page-actions\">{}</div></div>",
         actions.join("")
     )
 }

@@ -3,6 +3,35 @@
 All notable changes to StockInvoice. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.3.0 — 2026-11-05
+
+A new visual identity, and the branding fonts now actually load.
+
+### Changed
+
+- **Theme** — rewritten stylesheet: aurora gradient canvas and sidebar, glass top
+  bar, gradient stat cards with accent rules, card-wrapped tables, pill badges
+  with status dots, gradient primary buttons and a dark, grid-lit sign-in screen.
+  RTL rules, print output and the responsive breakpoints were carried over.
+- **Typography** — Comfortaa (300/400/700) drives the Latin UI and VIP Rawy the
+  Arabic one, both declared with `@font-face` at their real weights.
+- Page headers are now just the action toolbar: the top bar already names the
+  page (or the document number), so pages no longer print a second, larger title
+  above a card that repeats the same section name.
+
+### Added
+
+- `/static/fonts/{file}` serves the bundled faces (`font/ttf`, one-year cache);
+  it only accepts font extensions and rejects path traversal.
+- Stylesheet and script URLs carry the crate version, so a new build is never
+  served from a stale browser cache.
+
+### Fixed
+
+- The theme referenced `VIPRawy-Regular.ttf`, but the shipped file is
+  `VIP-Rawy-Regular.ttf`, and no route served `/static/fonts/*` at all — so both
+  branding fonts silently fell back to system faces.
+
 ## 0.2.0 — 2026-11-05
 
 Arabic documents are now real documents rather than English fallbacks, and the

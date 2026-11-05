@@ -16,6 +16,47 @@ const APP_CSS: &str = include_str!("../static/app.css");
 const APP_JS: &str = include_str!("../static/app.js");
 const FAVICON: &str = include_str!("../static/favicon.svg");
 
+/// Fonts live on disk rather than in the binary: they are licensed assets the
+/// operator may replace (VIP Rawy), and a 100-400 KB face does not belong in a
+/// `include_str!`. Only known font extensions are served, and only from the
+/// fonts directory.
+async fn font_asset(axum::extract::Path(file): axum::extract::Path<String>) -> Response {
+    let mime = match file.rsplit_once('.').map(|(_, ext)| ext.to_ascii_lowercase()) {
+        Some(ext) if ext == "ttf" => "font/ttf",
+        Some(ext) if ext == "otf" => "font/otf",
+        Some(ext) if ext == "woff" => "font/woff",
+        Some(ext) if ext == "woff2" => "font/woff2",
+        _ => return StatusCode::NOT_FOUND.into_response(),
+    };
+    let plain_name = !file.is_empty()
+        && file.len() < 96
+        && !file.contains('/')
+        && !file.contains('\\')
+        && !file.contains(':')
+        && !file.contains("..");
+    if !plain_name {
+        return StatusCode::NOT_FOUND.into_response();
+    }
+    match tokio::fs::read(std::path::Path::new("static/fonts").join(&file)).await {
+        Ok(bytes) => (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, HeaderValue::from_static(mime)),
+                (
+                    header::CACHE_CONTROL,
+                    HeaderValue::from_static("public, max-age=31536000, immutable"),
+                ),
+            ],
+            bytes,
+        )
+            .into_response(),
+        Err(err) => {
+            tracing::debug!(file, %err, "font not found");
+            StatusCode::NOT_FOUND.into_response()
+        }
+    }
+}
+
 fn asset(body: &'static str, mime: &'static str) -> Response {
     (
         StatusCode::OK,
@@ -46,7 +87,8 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/static/favicon.svg",
             get(|| async { asset(FAVICON, "image/svg+xml") }),
-        );
+        )
+        .route("/static/fonts/{file}", get(font_asset));
 
     let protected = Router::new()
         .route("/", get(pages::dashboard::index))

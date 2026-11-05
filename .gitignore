@@ -5,5 +5,10 @@
 /.checks
 static/fonts/*
 !static/fonts/.gitkeep
+!static/fonts/README.md
 !static/fonts/arabic.ttf
 !static/fonts/OFL.txt
+!static/fonts/Comfortaa-Light.ttf
+!static/fonts/Comfortaa-Regular.ttf
+!static/fonts/Comfortaa-Bold.ttf
+!static/fonts/OFL-Comfortaa.txt
