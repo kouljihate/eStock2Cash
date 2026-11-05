@@ -1,0 +1,6 @@
+/target
+.env
+.env.local
+*.log
+static/fonts/*
+!static/fonts/.gitkeep

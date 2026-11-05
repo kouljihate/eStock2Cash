@@ -1,0 +1,67 @@
+# StockInvoice — app + local MongoDB + local RabbitMQ.
+#
+#   docker compose up --build
+#
+# The app is stateless: all data lives in the mongo volume, all events flow
+# through the rabbitmq volume. Management UI: http://localhost:15672
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: stockinvoice-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: stockinvoice-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: stockinvoice
+      RABBITMQ_DEFAULT_PASS: stockinvoice
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+    container_name: stockinvoice-app
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      MONGO_URI: "mongodb://mongo:27017/?directConnection=true"
+      MONGO_DB: "stockinvoice"
+      RABBITMQ_URL: "amqp://stockinvoice:stockinvoice@rabbitmq:5672/%2f"
+      JWT_ACCESS_TOKEN_EXPIRES: "3600"
+      COOKIE_SECURE: "0"
+      DEFAULT_LOCALE: "en"
+      # Set these to long random strings before exposing the app:
+      SECRET_KEY: "${SECRET_KEY:-dev-secret-key-change-me-please-32-chars}"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-jwt-dev-secret-change-me-please-32-chars}"
+    ports:
+      - "8080:8080"
+
+volumes:
+  mongo_data:
+  rabbit_data:
