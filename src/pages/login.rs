@@ -40,7 +40,7 @@ fn shell(lang: Lang, brand: &str, body: String) -> Response {
             <body class=format!("login-body lang-{}", lang.code())>
                 <div class="login-wrap">
                     <div class="login-brand">
-                        <div class="brand-mark lg">"SI"</div>
+                        <div class="brand-mark lg">"S2C"</div>
                         <h1>{esc(brand)}</h1>
                         <p>{tagline}</p>
                     </div>

@@ -1,4 +1,4 @@
-# StockInvoice API v1
+# S2C MAROC API v1
 
 JSON API for the Android client. All endpoints are under `http://<host>:8080/api/v1`.
 
@@ -21,7 +21,7 @@ JSON API for the Android client. All endpoints are under `http://<host>:8080/api
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "expires_in": 3600,
   "user": { "id": "6aec...", "username": "admin", "full_name": "Local Administrator", "role": "local_admin", "locale": "en" },
-  "company": { "id": "6aec...", "name": "Atlas Trading", "currency": "USD" }
+  "company": { "id": "6aec...", "name": "S2C MAROC", "currency": "MAD" }
 }
 ```
 
@@ -33,7 +33,7 @@ Returns the user and company documents.
 
 ### `GET /health`
 
-Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.3.1"}`.
+Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.4.0"}`.
 
 ## Dashboard
 

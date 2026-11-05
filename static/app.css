@@ -173,11 +173,11 @@ h3 { font-size: 13.5px; }
   background: var(--grad);
   color: #fff;
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: .04em;
+  font-size: 12.5px;
+  letter-spacing: .01em;
   box-shadow: 0 10px 26px -12px rgba(79, 70, 229, .9), inset 0 1px 0 rgba(255, 255, 255, .35);
 }
-.brand-mark.lg { width: 58px; height: 58px; font-size: 18px; border-radius: 19px; }
+.brand-mark.lg { width: 58px; height: 58px; font-size: 17px; letter-spacing: .01em; border-radius: 19px; }
 .brand-text strong { display: block; color: #fff; font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; }
 .brand-text small { display: block; color: #7b8cad; font-size: 10px; letter-spacing: .04em; margin-top: 1px; }
 

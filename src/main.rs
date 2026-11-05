@@ -1,4 +1,4 @@
-//! StockInvoice — Procure-to-Pay / Quote-to-Cash for small businesses.
+//! S2C MAROC — Procure-to-Pay / Quote-to-Cash for small businesses.
 //!
 //! A single-binary Leptos-SSR (Axum) application backed by MongoDB, with
 //! RabbitMQ domain events mirrored into Mongo and a JSON API for the Android
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         mongo_db = %cfg.mongo_db,
         company = %cfg.company_name,
         rabbitmq = cfg.rabbit_enabled(),
-        "starting StockInvoice"
+        "starting S2C MAROC"
     );
 
     let client = db::connect(&cfg.mongo_uri, &cfg.mongo_db).await?;

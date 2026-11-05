@@ -75,7 +75,7 @@ impl Config {
             rabbit_mgmt_url: env::var("RABBITMQ_MGMT_URL").ok().filter(|v| !v.is_empty()),
             admin_username: var("ADMIN_USERNAME", "admin"),
             admin_password: var("ADMIN_PASSWORD", "looklook"),
-            company_name: var("COMPANY_NAME", "StockInvoice"),
+            company_name: var("COMPANY_NAME", "S2C MAROC"),
             default_locale: var("DEFAULT_LOCALE", "en"),
         }
     }

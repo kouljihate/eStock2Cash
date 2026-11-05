@@ -1,4 +1,7 @@
-# StockInvoice
+# S2C MAROC
+
+Moroccan Procure-to-Pay / Quote-to-Cash. The seeded company is **S2C MAROC** with
+**MAD** (dirham) as its currency; both are editable in **Administration → Company**.
 
 A single-binary **Rust** business application for the full **Procure-to-Pay** and
 **Quote-to-Cash** lifecycle with MongoDB, role-based access, per-company
@@ -88,8 +91,11 @@ needed — every dependency is pure Rust.
 | `RABBITMQ_MGMT_URL` | derived | Overrides the management API URL used by the broker monitor |
 | `ADMIN_USERNAME` | `admin` | Seeded administrator (empty database only) |
 | `ADMIN_PASSWORD` | `looklook` | Seeded administrator password |
-| `COMPANY_NAME` | `StockInvoice` | Seeded company name |
+| `COMPANY_NAME` | `S2C MAROC` | Seeded company name (rename it in **Administration**) |
 | `DEFAULT_LOCALE` | `en` | `en`, `fr` or `ar` |
+
+The seeded company starts in **MAD**; the currency code is free text on the
+company form, so it can be switched to EUR, USD or anything else per company.
 
 The broker monitor derives the management API host/port/credentials from
 `RABBITMQ_URL` (`amqp://user:pass@host:5672/vhost` → `http://host:15672`).

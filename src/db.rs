@@ -139,7 +139,7 @@ pub async fn seed(db: &Database, cfg: &Config) -> Result<(), AppError> {
                 name: cfg.company_name.clone(),
                 legal_name: cfg.company_name.clone(),
                 tax_id: String::new(),
-                currency: "USD".into(),
+                currency: "MAD".into(),
                 address: String::new(),
                 phone: String::new(),
                 email: String::new(),

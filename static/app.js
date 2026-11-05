@@ -1,4 +1,4 @@
-/* StockInvoice — progressive enhancement only; every form works without JS. */
+/* S2C MAROC — progressive enhancement only; every form works without JS. */
 (function () {
   "use strict";
 

@@ -139,8 +139,8 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
     let user_name = esc(&ctx.claims.nm);
     let username = esc(&ctx.claims.un);
     let company_name = esc(&ctx.company.name);
-    let foot_company = company_name.clone();
     let tagline = tr(lang, "app_tagline");
+    let app_name = tr(lang, "app_name");
     let sign_out = tr(lang, "a_logout");
     let signed_in = tr(lang, "m_signed_in_as");
     let heading = title.to_string();
@@ -158,7 +158,7 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
             <body class=format!("app lang-{}", lang.code())>
                 <aside class="sidebar">
                     <div class="brand">
-                        <div class="brand-mark">"SI"</div>
+                        <div class="brand-mark">"S2C"</div>
                         <div class="brand-text">
                             <strong>{company_name}</strong>
                             <small>{tagline}</small>
@@ -187,10 +187,10 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                     <main class="content" inner_html=body></main>
                     <footer class="appfoot">
                         <span class="foot-id">
-                            "StockInvoice"
+                            {app_name}
                             <span class="foot-ver">{ concat!("v", env!("CARGO_PKG_VERSION")) }</span>
                         </span>
-                        <span class="foot-year">"© " {year} " · " {foot_company}</span>
+                        <span class="foot-year">"© " {year}</span>
                     </footer>
                 </div>
                 <script src=format!("/static/app.js?v={}", crate::routes::asset_token())></script>

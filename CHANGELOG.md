@@ -1,7 +1,21 @@
 # Changelog
 
-All notable changes to StockInvoice. The version follows the crate version in
+All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
+
+## 0.4.0 — 2026-11-05
+
+The app is now **S2C MAROC**, and it trades in dirhams.
+
+### Changed
+
+- **Name** — the product name, window titles, footer, brand mark (`S2C`), seeded
+  company (`COMPANY_NAME`, default `S2C MAROC`), liveness text, README and API
+  docs all say S2C MAROC. The crate and binary keep the historical identifier
+  `stockinvoice`, so existing run scripts and log filters still work.
+- **Currency** — a fresh database seeds its company in **MAD** instead of USD.
+  The code is free text on the company form, so a company can still be switched
+  to EUR, USD or anything else.
 
 ## 0.3.1 — 2026-11-05
 
