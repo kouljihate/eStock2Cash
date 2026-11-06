@@ -39,7 +39,7 @@ Cross-cutting    Products & stock, Credit limits & aging, Direct POS tickets,
 | **Direct Tickets** | POS sale, stock out, receipt PDF + ESC/POS + Bluetooth | Ready |
 | **Admin** | Company profile, invoice template, users, event log, broker | Ready |
 | **PDF invoices** | Native PDF writer with per-company branding | Ready |
-| **i18n** | English, French, Arabic (RTL) with switcher | Ready |
+| **i18n** | Arabic (RTL) + English/French, `Languages` menu in the header | Ready |
 | **RabbitMQ** | Topic events, MongoDB mirror, management monitor | Ready |
 | **Docker** | App + local MongoDB + local RabbitMQ | Ready |
 | **Android app** | Client not built; the JSON API it needs is ready | Partial |
@@ -226,6 +226,23 @@ totals, payment status and footer — all driven by **Admin → Invoice template
   embedding uses `DCTDecode`, which is JPEG-only.
 - `tools/gen_arabic_forms.py` regenerates `src/arabic_forms.rs` (the joining
   table) from the Unicode character database.
+
+## Languages
+
+The interface is Arabic (RTL) paired with English or French, and the switcher is a
+single `Languages` dropdown centred in the top bar (the login screen shows the same
+menu above the brand). It lists exactly two duos:
+
+```
+AR / EN      AR / FR
+```
+
+Each code is its own link — `AR` switches to Arabic, `EN`/`FR` to that Latin
+language — and the current language is highlighted in both rows, so there are never
+three separate language entries. Each code is drawn in its own face (`EN`/`FR` in
+Comfortaa, `AR` in VIP Rawy) whatever language the page is in. The chosen language
+is stored in the `lang` cookie; `DEFAULT_LOCALE` (`en`, `fr` or `ar`) decides the
+first page load.
 
 ## Fonts
 

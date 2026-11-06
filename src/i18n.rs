@@ -70,6 +70,7 @@ macro_rules! lang_table {
 lang_table! {
     "app_name" => ("S2C MAROC", "S2C MAROC", "S2C MAROC"),
     "app_tagline" => ("Procure-to-Pay · Quote-to-Cash", "Procure-to-Pay · Quote-to-Cash", "دورة الشراء · دورة البيع"),
+    "lbl_languages" => ("Languages", "Langues", "اللغات"),
     "nav_dashboard" => ("Dashboard", "Tableau de bord", "لوحة التحكم"),
     "nav_purchasing" => ("Procure-to-Pay", "Procure-to-Pay", "دورة الشراء"),
     "nav_sales" => ("Quote-to-Cash", "Quote-to-Cash", "دورة البيع"),

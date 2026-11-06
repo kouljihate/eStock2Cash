@@ -3,6 +3,28 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.4.3 — 2026-11-06
+
+The language switcher is now a single header menu with two duos.
+
+### Changed
+
+- The three separate language links in the sidebar footer (and under the login
+  card) became one **Languages** dropdown centred in the top bar, labelled in the
+  current language, with the same menu on the sign-in screen.
+- The menu lists exactly two duos — `AR / EN` and `AR / FR` — instead of three
+  standalone languages. Each code is a link and the current language is
+  highlighted in both rows.
+- Fonts follow the language: `EN`/`FR` render in **Comfortaa**, `AR` in
+  **VIP Rawy**. The codes are styled per language inside the menu, so they keep
+  their own face even when the surrounding page is in the other language.
+
+### Added
+
+- `lbl_languages` (Languages / Langues / اللغات) and a globe icon for the trigger.
+- The menu closes on an outside click or `Escape` (it is a `<details>` element, so
+  it also works without JavaScript).
+
 ## 0.4.2 — 2026-11-06
 
 Numbers in Arabic now wear the same face as the rest of the app.

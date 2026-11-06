@@ -16,17 +16,7 @@ use crate::state::AppState;
 use crate::util::{esc, urlenc};
 
 fn shell(lang: Lang, brand: &str, body: String) -> Response {
-    let langs = Lang::all()
-        .iter()
-        .map(|l| {
-            format!(
-                "<a class=\"lang{}\" href=\"/lang/{}?next=/login\">{}</a>",
-                if *l == lang { " active" } else { "" },
-                l.code(),
-                l.label()
-            )
-        })
-        .collect::<String>();
+    let langs = crate::views::lang_menu(lang, "/login");
     let tagline = tr(lang, "app_tagline");
     let view = view! {
         <html lang=lang.code() dir=lang.dir()>
@@ -39,13 +29,13 @@ fn shell(lang: Lang, brand: &str, body: String) -> Response {
             </head>
             <body class=format!("login-body lang-{}", lang.code())>
                 <div class="login-wrap">
+                    <div class="login-top" inner_html=langs></div>
                     <div class="login-brand">
                         <div class="brand-mark lg">"S2C"</div>
                         <h1>{esc(brand)}</h1>
                         <p>{tagline}</p>
                     </div>
                     <div inner_html=body></div>
-                    <div class="langs center" inner_html=langs></div>
                 </div>
             </body>
         </html>

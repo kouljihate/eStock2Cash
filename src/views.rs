@@ -26,6 +26,7 @@ fn icon(name: &str) -> String {
         "ticket" => r#"<path d="M4 9V6h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M12 7v10" stroke-dasharray="2 2"/>"#,
         "admin" => r#"<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>"#,
         "events" => r#"<path d="M3 12h4l2-6 3 12 2-6h4"/>"#,
+        "globe" => r#"<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.6 3.7 5.6 3.7 9s-1.3 6.4-3.7 9c-2.4-2.6-3.7-5.6-3.7-9S9.6 5.6 12 3z"/>"#,
         "broker" => r#"<path d="M9 7V3M15 7V3"/><rect x="6" y="7" width="12" height="7" rx="2"/><path d="M9 14v3a3 3 0 0 0 3 3 3 3 0 0 0 3-3v-3"/>"#,
         _ => r#"<circle cx="12" cy="12" r="8"/>"#,
     };
@@ -106,27 +107,53 @@ fn nav_html(ctx: &Ctx) -> String {
     out
 }
 
-fn lang_switch(ctx: &Ctx) -> String {
-    Lang::all()
-        .iter()
-        .map(|l| {
-            let active = if *l == ctx.lang { " active" } else { "" };
-            format!(
-                "<a class=\"lang{active}\" href=\"/lang/{}?next={}\">{}</a>",
-                l.code(),
-                crate::util::urlenc(&ctx.path),
-                l.label()
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("")
+/// Header language menu. The switcher is drawn as exactly two duos — AR/EN and
+/// AR/FR — so the bar never lists three separate languages. Every code is a link
+/// and the current one is highlighted; each code keeps its own face (Comfortaa
+/// for EN/FR, VIP Rawy for AR) whatever language the page is in.
+pub fn lang_menu(lang: Lang, next: &str) -> String {
+    let next = crate::util::urlenc(next);
+    let link = |l: Lang, text: &str| -> String {
+        format!(
+            "<a class=\"langlink{}\" data-lang=\"{}\" href=\"/lang/{}?next={}\"{}>{}</a>",
+            if l == lang { " active" } else { "" },
+            l.code(),
+            l.code(),
+            next,
+            if l == lang { " aria-current=\"true\"" } else { "" },
+            text
+        )
+    };
+    let duo = |right: Lang, right_label: &str| -> String {
+        format!(
+            "<div class=\"langrow\">{}<span class=\"langsep\">/</span>{}</div>",
+            link(Lang::Ar, "AR"),
+            link(right, right_label)
+        )
+    };
+    let label = tr(lang, "lbl_languages");
+    format!(
+        "<details class=\"langmenu\">\
+           <summary class=\"langmenu-trigger\" title=\"{label}\">{globe}\
+             <span class=\"langmenu-name\">{label}</span>\
+             <span class=\"langmenu-cur\">{cur}</span></summary>\
+           <div class=\"langmenu-panel\">\
+             <span class=\"langmenu-head\">{label}</span>{en}{fr}\
+           </div>\
+         </details>",
+        label = label,
+        globe = icon("globe"),
+        cur = lang.code().to_uppercase(),
+        en = duo(Lang::En, "EN"),
+        fr = duo(Lang::Fr, "FR"),
+    )
 }
 
 /// Full page shell.
 pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
     let lang = ctx.lang;
     let nav = nav_html(ctx);
-    let langs = lang_switch(ctx);
+    let langmenu = lang_menu(lang, &ctx.path);
     let flash_html = match &ctx.flash {
         Some(f) => format!(
             "<div class=\"flash {}\">{}<button class=\"flash-x\" onclick=\"this.parentNode.remove()\">×</button></div>",
@@ -166,7 +193,6 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                     </div>
                     <nav class="nav" inner_html=nav></nav>
                     <div class="side-foot">
-                        <div class="langs" inner_html=langs></div>
                         <div class="ver">"v" { env!("CARGO_PKG_VERSION") }</div>
                     </div>
                 </aside>
@@ -176,6 +202,7 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                             <h1>{heading}</h1>
                             <span class="muted">{signed_in} " " {username}</span>
                         </div>
+                        <div class="topbar-lang" inner_html=langmenu></div>
                         <div class="top-actions">
                             <span class="chip">{user_name}</span>
                             <form method="post" action="/logout" class="inline">

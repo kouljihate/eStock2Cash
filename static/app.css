@@ -274,21 +274,88 @@ h3 { font-size: 13.5px; }
   align-items: center;
   gap: 8px;
 }
-.langs { display: flex; gap: 3px; flex-wrap: wrap; }
-.langs.center { justify-content: center; margin-top: 20px; }
-.lang {
-  font-size: 10.5px;
-  padding: 4px 8px;
+/* ---------------------------------------------- language menu (header) */
+
+/* Exactly two duos — AR/EN and AR/FR — inside a `Languages` dropdown that sits
+   in the middle of the top bar. */
+.langmenu { position: relative; display: inline-block; }
+.langmenu > summary { list-style: none; }
+.langmenu > summary::-webkit-details-marker { display: none; }
+.langmenu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+.langmenu-trigger:hover { border-color: rgba(79, 70, 229, .32); }
+.langmenu-trigger svg { width: 15px; height: 15px; color: var(--brand); flex: none; }
+.langmenu[open] .langmenu-trigger { border-color: rgba(79, 70, 229, .4); box-shadow: var(--ring); }
+.langmenu-cur {
+  font-family: "Comfortaa", "Segoe UI", system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--muted);
+  padding-inline-start: 3px;
+  border-inline-start: 1px solid var(--line);
+}
+.langmenu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  min-width: 186px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 22px 48px -22px rgba(12, 18, 34, .42);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.langmenu-head {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 2px 6px 4px;
+}
+.langrow { display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 10px; }
+.langrow:hover { background: var(--card-2); }
+.langrow .langlink {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
   border-radius: 8px;
-  color: #93a3c1;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--ink-2);
   transition: background .14s ease, color .14s ease;
 }
-.lang:hover { background: rgba(255, 255, 255, .08); color: #fff; text-decoration: none; }
-.lang.active {
-  background: rgba(129, 140, 248, .22);
+.langrow .langlink:hover { color: var(--brand-600); background: rgba(79, 70, 229, .08); text-decoration: none; }
+.langrow .langlink.active {
+  background: linear-gradient(135deg, var(--brand), #6d28d9);
   color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(165, 180, 252, .35);
+  box-shadow: 0 8px 18px -10px rgba(79, 70, 229, .8);
 }
+.langsep { color: var(--faint); font-size: 11px; }
+/* Each code is drawn in its own face, whatever the page language is. */
+.langlink[data-lang="en"], .langlink[data-lang="fr"] {
+  font-family: "Comfortaa", "Segoe UI", system-ui, sans-serif;
+}
+.langlink[data-lang="ar"] { font-family: "VIP Rawy", "Cairo", Tahoma, sans-serif; }
+
 .ver { font-size: 10px; color: #5d6f92; font-family: var(--font-num); }
 
 .main { display: flex; flex-direction: column; min-width: 0; }
@@ -300,6 +367,8 @@ h3 { font-size: 13.5px; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* the language menu is centred on the bar, not on the free space */
+  /* (see .topbar-lang) */
   gap: 16px;
   padding: 13px 28px;
   background:
@@ -338,6 +407,14 @@ h3 { font-size: 13.5px; }
   box-shadow: 0 0 12px -2px rgba(79, 70, 229, .55);
 }
 .crumbs .muted { display: block; font-size: 11px; margin-top: 1px; }
+/* the language menu sits dead centre of the top bar */
+.topbar-lang {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+}
 .top-actions { display: flex; align-items: center; gap: 8px; }
 .chip {
   display: inline-flex;
@@ -880,13 +957,27 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 .login-card .field > span { color: var(--ink-2); }
 .login-card .hint { margin: 0; text-align: center; font-size: 10.5px; color: var(--faint); }
-.login-body .langs { justify-content: center; }
-.login-body .lang { color: #9fb0cd; }
-.login-body .lang:hover { background: rgba(255, 255, 255, .1); color: #fff; }
-.login-body .lang.active {
-  background: rgba(255, 255, 255, .16);
+.login-top { display: flex; justify-content: center; margin-bottom: 4px; }
+.login-body .langmenu-trigger {
+  background: rgba(255, 255, 255, .10);
+  border-color: rgba(255, 255, 255, .18);
+  color: #e7ecfb;
+}
+.login-body .langmenu-trigger:hover { border-color: rgba(165, 180, 252, .55); }
+.login-body .langmenu-cur { color: #9fb0cd; border-inline-start-color: rgba(255, 255, 255, .18); }
+.login-body .langmenu-panel {
+  background: #111a33;
+  border-color: rgba(255, 255, 255, .14);
+  box-shadow: 0 26px 50px -22px rgba(0, 0, 0, .7);
+}
+.login-body .langrow:hover { background: rgba(255, 255, 255, .06); }
+.login-body .langmenu-head { color: #7c8cab; }
+.login-body .langrow .langlink { color: #cfd9ee; }
+.login-body .langrow .langlink:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.login-body .langrow .langlink.active {
+  background: rgba(255, 255, 255, .18);
   color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
 }
 
 /* ==============================================================  receipts */
@@ -992,6 +1083,15 @@ html[dir="rtl"] .row-actions { justify-content: flex-start; }
   .side-foot { margin-top: 4px; }
   .content { padding: 16px; gap: 14px; }
   .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+  /* no room for a centred overlay on a phone: the menu takes its own row */
+  .topbar-lang {
+    position: static;
+    transform: none;
+    order: 3;
+    flex-basis: 100%;
+    display: flex;
+    justify-content: center;
+  }
   .topbar .crumbs h1 { font-size: 16px; }
   .grid-2 { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }

@@ -158,6 +158,27 @@
     });
   }
 
+  /* ---------------- language menu ---------------- */
+  function initLangMenu() {
+    var open = document.querySelectorAll("details.langmenu[open]");
+    if (!open.length) return;
+    open.forEach(function (d) { d.removeAttribute("open"); });
+  }
+
+  function initLangMenus() {
+    if (!document.querySelector("details.langmenu")) return;
+
+    document.addEventListener("click", function (e) {
+      document.querySelectorAll("details.langmenu[open]").forEach(function (d) {
+        if (!d.contains(e.target)) d.removeAttribute("open");
+      });
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") initLangMenu();
+    });
+  }
+
   mutate(function () {
     document.addEventListener("DOMContentLoaded", function () {
       initLines();
@@ -165,6 +186,7 @@
       initForms();
       initConfirm();
       initBluetooth();
+      initLangMenus();
     });
   });
 })();
