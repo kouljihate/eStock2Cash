@@ -104,7 +104,7 @@ pub async fn suppliers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_suppliers");
+    let title = views::Title::of(l, "nav_suppliers");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -137,7 +137,7 @@ pub async fn supplier_new(ctx: Ctx) -> Result<Response, AppError> {
         views::textarea(&tr(l, "lbl_address"), "address", ""),
         views::form_actions(&tr(l, "a_save"), "/suppliers", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_suppliers"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_suppliers").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -188,7 +188,7 @@ pub async fn supplier_edit(ctx: Ctx, Path(id): Path<String>) -> Result<Response,
         views::textarea(&tr(l, "lbl_address"), "address", &s.address),
         views::form_actions(&tr(l, "a_save"), "/suppliers", &tr(l, "a_back")),
     );
-    let title = tr(l, "a_edit");
+    let title = views::Title::of(l, "a_edit");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -320,7 +320,7 @@ pub async fn customers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_customers");
+    let title = views::Title::of(l, "nav_customers");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -356,7 +356,7 @@ pub async fn customer_new(ctx: Ctx) -> Result<Response, AppError> {
         views::textarea(&tr(l, "lbl_address"), "address", ""),
         views::form_actions(&tr(l, "a_save"), "/customers", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_customers"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_customers").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -409,7 +409,7 @@ pub async fn customer_edit(ctx: Ctx, Path(id): Path<String>) -> Result<Response,
         views::textarea(&tr(l, "lbl_address"), "address", &c.address),
         views::form_actions(&tr(l, "a_save"), "/customers", &tr(l, "a_back")),
     );
-    let title = tr(l, "a_edit");
+    let title = views::Title::of(l, "a_edit");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -538,6 +538,6 @@ pub async fn customer_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Respons
         ),
         ""
     );
-    let title = c.name.clone();
+    let title = views::Title::raw(&c.name);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }

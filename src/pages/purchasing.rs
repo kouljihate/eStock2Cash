@@ -84,7 +84,7 @@ pub async fn po_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_purchase_orders");
+    let title = views::Title::of(l, "nav_purchase_orders");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -113,9 +113,7 @@ pub async fn po_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
     let suppliers = supplier_options(&ctx, &supplier_id).await?;
 
     if suppliers.is_empty() {
-        return Ok(views::respond(views::page(
-            &ctx,
-            &tr(l, "nav_purchase_orders"),
+        return Ok(views::respond(views::page(&ctx, &views::Title::of(l, "nav_purchase_orders"),
             format!(
                 "{}{}",
                 super::page_head(&ctx, "nav_purchase_orders", "", vec![]),
@@ -143,7 +141,7 @@ pub async fn po_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
             views::form_actions(&tr(l, "a_save"), "/purchase-orders", &tr(l, "a_back"))
         )
     );
-    let title = format!("{} · {}", tr(l, "nav_purchase_orders"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_purchase_orders").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -313,7 +311,7 @@ pub async fn po_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, App
             )
         )
     );
-    let title = po.number.clone();
+    let title = views::Title::raw(&po.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -426,7 +424,7 @@ pub async fn gr_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_goods_receipts");
+    let title = views::Title::of(l, "nav_goods_receipts");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -540,7 +538,7 @@ pub async fn gr_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::form_actions(&tr(l, "a_save"), "/goods-receipts", &tr(l, "a_back")),
     );
     let _ = supplier_id;
-    let title = format!("{} · {}", tr(l, "nav_goods_receipts"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_goods_receipts").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -726,7 +724,7 @@ pub async fn gr_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, App
         ),
         views::card(&tr(l, "lbl_notes"), format!("<p>{}</p>", esc(&gr.notes)))
     );
-    let title = gr.number.clone();
+    let title = views::Title::raw(&gr.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -819,7 +817,7 @@ pub async fn si_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_supplier_invoices");
+    let title = views::Title::of(l, "nav_supplier_invoices");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -880,7 +878,7 @@ pub async fn si_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/supplier-invoices", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_supplier_invoices"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_supplier_invoices").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -1002,7 +1000,7 @@ pub async fn si_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, App
             super::totals_block(&ctx, &inv.totals, Some(inv.paid_amount), &cur_code)
         )
     );
-    let title = inv.number.clone();
+    let title = views::Title::raw(&inv.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 

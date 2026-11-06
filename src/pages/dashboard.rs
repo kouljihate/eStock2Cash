@@ -254,7 +254,7 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
         "{cards}{pipeline}<div class=\"grid-2\">{low_stock}{aging}</div><div class=\"grid-2\">{pos}{invoices}</div><div class=\"grid-2\">{quotes}{quick}</div>"
     );
 
-    let title = tr(l, "nav_dashboard");
+    let title = views::Title::of(l, "nav_dashboard");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 

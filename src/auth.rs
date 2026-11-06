@@ -20,6 +20,9 @@ use crate::util::{ct_eq, esc, urlenc};
 
 pub const COOKIE_TOKEN: &str = "si_token";
 pub const COOKIE_LANG: &str = "si_lang";
+/// Text size of each face: `s`, `m` (default) or `l`.
+pub const COOKIE_FS_LAT: &str = "si_fs_lat";
+pub const COOKIE_FS_AR: &str = "si_fs_ar";
 
 fn hex(bytes: &[u8]) -> String {
     let mut s = String::with_capacity(bytes.len() * 2);
@@ -164,6 +167,23 @@ pub fn cookie_lang(headers: &HeaderMap, default: &str) -> Lang {
     Lang::from_code(default).unwrap_or(Lang::En)
 }
 
+/// Text size for one face, read from `si_fs_lat` / `si_fs_ar`.
+pub fn cookie_size(headers: &HeaderMap, name: &str) -> &'static str {
+    if let Some(cookies) = header_value(headers, COOKIE.as_str()) {
+        for pair in cookies.split(';') {
+            let mut it = pair.trim().splitn(2, '=');
+            if it.next() == Some(name) {
+                return match it.next().map(str::trim) {
+                    Some("s") => "s",
+                    Some("l") => "l",
+                    _ => "m",
+                };
+            }
+        }
+    }
+    "m"
+}
+
 pub fn set_cookie(name: &str, value: &str, max_age: Option<i64>, secure: bool, http_only: bool) -> String {
     let mut c = format!("{name}={value}; Path=/; SameSite=Lax");
     if http_only {
@@ -233,6 +253,9 @@ pub struct Ctx {
     pub state: AppState,
     pub flash: Option<Flash>,
     pub path: String,
+    /// Text size of the Latin and the Arabic face, chosen in Settings.
+    pub fs_lat: &'static str,
+    pub fs_ar: &'static str,
 }
 
 #[derive(Clone)]
@@ -299,6 +322,8 @@ impl FromRequestParts<AppState> for Ctx {
             state: state.clone(),
             flash,
             path: parts.uri.path().to_string(),
+            fs_lat: cookie_size(&parts.headers, COOKIE_FS_LAT),
+            fs_ar: cookie_size(&parts.headers, COOKIE_FS_AR),
         })
     }
 }

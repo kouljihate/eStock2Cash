@@ -93,7 +93,7 @@ pub async fn quote_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_quotes");
+    let title = views::Title::of(l, "nav_quotes");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -118,7 +118,7 @@ pub async fn quote_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/quotes", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_quotes"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_quotes").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -227,7 +227,7 @@ pub async fn quote_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, 
             super::totals_block(&ctx, &quote.totals, None, &cur_code)
         )
     );
-    let title = quote.number.clone();
+    let title = views::Title::raw(&quote.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -446,7 +446,7 @@ pub async fn order_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_customer_orders");
+    let title = views::Title::of(l, "nav_customer_orders");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -482,7 +482,7 @@ pub async fn order_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
         views::textarea(&tr(l, "lbl_notes"), "notes", &note),
         views::form_actions(&tr(l, "a_save"), "/customer-orders", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_customer_orders"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_customer_orders").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -590,7 +590,7 @@ pub async fn order_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, 
             super::totals_block(&ctx, &order.totals, None, &cur_code)
         )
     );
-    let title = order.number.clone();
+    let title = views::Title::raw(&order.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -676,7 +676,7 @@ pub async fn delivery_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_delivery_notes");
+    let title = views::Title::of(l, "nav_delivery_notes");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -757,7 +757,7 @@ pub async fn delivery_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) ->
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/delivery-notes", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_delivery_notes"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_delivery_notes").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -883,7 +883,7 @@ pub async fn delivery_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Respons
             )
         )
     );
-    let title = dn.number.clone();
+    let title = views::Title::raw(&dn.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 

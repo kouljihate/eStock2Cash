@@ -158,24 +158,27 @@
     });
   }
 
-  /* ---------------- language menu ---------------- */
-  function initLangMenu() {
-    var open = document.querySelectorAll("details.langmenu[open]");
-    if (!open.length) return;
-    open.forEach(function (d) { d.removeAttribute("open"); });
+  /* ---------------- header settings menu ---------------- */
+  function closeSettings() {
+    document.querySelectorAll("details.settings[open]").forEach(function (d) {
+      d.removeAttribute("open");
+      d.querySelectorAll("details.sub[open]").forEach(function (s) {
+        s.removeAttribute("open");
+      });
+    });
   }
 
-  function initLangMenus() {
-    if (!document.querySelector("details.langmenu")) return;
+  function initSettingsMenu() {
+    if (!document.querySelector("details.settings")) return;
 
     document.addEventListener("click", function (e) {
-      document.querySelectorAll("details.langmenu[open]").forEach(function (d) {
+      document.querySelectorAll("details.settings[open]").forEach(function (d) {
         if (!d.contains(e.target)) d.removeAttribute("open");
       });
     });
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") initLangMenu();
+      if (e.key === "Escape") closeSettings();
     });
   }
 
@@ -186,7 +189,7 @@
       initForms();
       initConfirm();
       initBluetooth();
-      initLangMenus();
+      initSettingsMenu();
     });
   });
 })();

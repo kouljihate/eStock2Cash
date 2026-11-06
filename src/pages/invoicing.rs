@@ -117,7 +117,7 @@ pub async fn ci_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_customer_invoices");
+    let title = views::Title::of(l, "nav_customer_invoices");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -171,7 +171,7 @@ pub async fn ci_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/customer-invoices", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_customer_invoices"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_customer_invoices").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -336,7 +336,7 @@ pub async fn ci_detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, App
             )
         )
     );
-    let title = inv.number.clone();
+    let title = views::Title::raw(&inv.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -465,7 +465,7 @@ pub async fn payment_list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_payments");
+    let title = views::Title::of(l, "nav_payments");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -531,7 +531,7 @@ pub async fn payment_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> 
         format!("<input type=\"hidden\" name=\"kind\" value=\"{}\"/>", kind.as_str()),
         views::form_actions(&tr(l, "a_save"), "/payments", &tr(l, "a_back")),
     );
-    let title = tr(l, "nav_payments");
+    let title = views::Title::of(l, "nav_payments");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -733,6 +733,6 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
             )
         )
     );
-    let title = tr(l, "nav_credit");
+    let title = views::Title::of(l, "nav_credit");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }

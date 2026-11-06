@@ -27,11 +27,11 @@ impl Lang {
         }
     }
 
+    /// Bilingual pages always read left to right — the Latin half of every label
+    /// comes first and its Arabic half follows — so Arabic is never a layout
+    /// direction any more, only half of the text.
     pub fn dir(&self) -> &'static str {
-        match self {
-            Lang::Ar => "rtl",
-            _ => "ltr",
-        }
+        "ltr"
     }
 
     pub fn label(&self) -> &'static str {
@@ -55,7 +55,9 @@ impl fmt::Display for Lang {
 
 macro_rules! lang_table {
     ($($key:literal => ($en:literal, $fr:literal, $ar:literal)),* $(,)?) => {
-        pub fn t(lang: Lang, key: &str) -> &'static str {
+        /// One language only — used where a label cannot hold both (the two
+        /// halves of the header, print/PDF output, API payloads).
+        pub fn one(lang: Lang, key: &str) -> &'static str {
             match (lang, key) {
                 $((Lang::En, $key) => $en, (Lang::Fr, $key) => $fr, (Lang::Ar, $key) => $ar,)*
                 _ => "",
@@ -68,9 +70,13 @@ macro_rules! lang_table {
 }
 
 lang_table! {
-    "app_name" => ("S2C MAROC", "S2C MAROC", "S2C MAROC"),
-    "app_tagline" => ("Procure-to-Pay · Quote-to-Cash", "Procure-to-Pay · Quote-to-Cash", "دورة الشراء · دورة البيع"),
+    "app_name" => ("S2C MAROC", "S2C MAROC", "S2C المغرب"),
+    // "app_tagline" => ("Procure-to-Pay · Quote-to-Cash", "Procure-to-Pay · Quote-to-Cash", "دورة الشراء · دورة البيع"),
+    "app_tagline_1" => ("Procure-to-Pay", "Procure-to-Pay", "دورة الشراء"),
+    "app_tagline_2" => ("Quote-to-Cash", "Quote-to-Cash", "دورة البيع"),
     "lbl_languages" => ("Languages", "Langues", "اللغات"),
+    "lbl_settings" => ("Settings", "Réglages", "الإعدادات"),
+    "lbl_font_size" => ("Font size", "Taille du texte", "حجم الخط"),
     "nav_dashboard" => ("Dashboard", "Tableau de bord", "لوحة التحكم"),
     "nav_purchasing" => ("Procure-to-Pay", "Procure-to-Pay", "دورة الشراء"),
     "nav_sales" => ("Quote-to-Cash", "Quote-to-Cash", "دورة البيع"),
@@ -282,8 +288,40 @@ lang_table! {
 }
 
 /// Translate `key`; falls back to the key itself so a missing label is obvious.
+/// Bilingual label: the duo's Latin language plus Arabic, e.g.
+/// `Suppliers · الموردون`. Both halves are always present, so every screen shows
+/// the two languages at once; a key whose two sides are identical prints once.
 pub fn tr(lang: Lang, key: &str) -> String {
-    let s = t(lang, key);
+    let (first, second) = match lang {
+        Lang::Ar => (one(Lang::Ar, key), one(Lang::En, key)),
+        l => (one(l, key), one(Lang::Ar, key)),
+    };
+    if first.is_empty() {
+        return key.to_string();
+    }
+    if second.is_empty() || first == second {
+        return first.to_string();
+    }
+    format!("{first} · {second}")
+}
+
+/// Latin half of a bilingual label (`Suppliers`); Arabic-first pages use English.
+pub fn tr_lat(lang: Lang, key: &str) -> String {
+    match lang {
+        Lang::Ar => one(Lang::En, key).to_string(),
+        l => one(l, key).to_string(),
+    }
+}
+
+/// Arabic half of a bilingual label (`الموردون`).
+pub fn tr_ar(key: &str) -> String {
+    one(Lang::Ar, key).to_string()
+}
+
+// Kept for callers that still reason in a single language.
+#[allow(dead_code)]
+pub fn tr_single(lang: Lang, key: &str) -> String {
+    let s = one(lang, key);
     if s.is_empty() {
         key.to_string()
     } else {

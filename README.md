@@ -39,7 +39,7 @@ Cross-cutting    Products & stock, Credit limits & aging, Direct POS tickets,
 | **Direct Tickets** | POS sale, stock out, receipt PDF + ESC/POS + Bluetooth | Ready |
 | **Admin** | Company profile, invoice template, users, event log, broker | Ready |
 | **PDF invoices** | Native PDF writer with per-company branding | Ready |
-| **i18n** | Arabic (RTL) + English/French, `Languages` menu in the header | Ready |
+| **i18n** | Bilingual Arabic + English/French on every screen, chosen in `Settings` | Ready |
 | **RabbitMQ** | Topic events, MongoDB mirror, management monitor | Ready |
 | **Docker** | App + local MongoDB + local RabbitMQ | Ready |
 | **Android app** | Client not built; the JSON API it needs is ready | Partial |
@@ -229,20 +229,43 @@ totals, payment status and footer — all driven by **Admin → Invoice template
 
 ## Languages
 
-The interface is Arabic (RTL) paired with English or French, and the switcher is a
-single `Languages` dropdown centred in the top bar (the login screen shows the same
-menu above the brand). It lists exactly two duos:
+Every screen is **bilingual**: each label carries both languages at once —
+`Suppliers · الموردون`, `Purchase Orders · أوامر الشراء`, `Save · حفظ` — in the page
+titles, sidebar, tables, forms, buttons, badges, flash messages and the event log.
+The Latin half is drawn in Comfortaa and the Arabic half in VIP Rawy inside the same
+element (the stack falls through per glyph), so the two languages sit in one line
+rather than in two separate screens.
+
+The pair is chosen from one place, the **Settings** dropdown in the middle of the
+header, under **Languages**:
 
 ```
-AR / EN      AR / FR
+AR / EN      English first in Latin, Arabic after
+AR / FR      Français first in Latin, Arabic after
 ```
 
-Each code is its own link — `AR` switches to Arabic, `EN`/`FR` to that Latin
-language — and the current language is highlighted in both rows, so there are never
-three separate language entries. Each code is drawn in its own face (`EN`/`FR` in
-Comfortaa, `AR` in VIP Rawy) whatever language the page is in. The chosen language
-is stored in the `lang` cookie; `DEFAULT_LOCALE` (`en`, `fr` or `ar`) decides the
-first page load.
+One row is the whole choice: it sets the duo, highlights itself with a tick, and
+every page then renders both languages of that duo. The choice lives in the
+`si_lang` cookie and survives sign-in; `DEFAULT_LOCALE` decides the first visit.
+
+### The header
+
+The bar is split in three columns — **40 % English text, 20 % controls, 40 % Arabic
+text**:
+
+| column | content |
+| --- | --- |
+| left (40 %) | page title in the duo's Latin language, plus `Signed in as <user>` |
+| middle (20 %) | sign-out button and the `Settings` dropdown |
+| right (40 %) | the same title in Arabic, right-aligned |
+
+### Settings › Font size
+
+Text size is set **per font**, in a submenu for each face: `Comfortaa` (the Latin
+half of every label) and `VIP Rawy` (the Arabic half), each with `S` / `M` / `L`.
+They are independent, so Arabic can be enlarged while the Latin text keeps its size.
+The sizes are cookie-backed (`si_fs_lat`, `si_fs_ar`) and implemented with
+`size-adjust` font faces, so a single bilingual label scales each half separately.
 
 ## Fonts
 
@@ -260,12 +283,16 @@ They are served from `/static/fonts/<file>` and declared in `static/app.css` wit
 the system stack, so a checkout without them still works.
 
 **Numbers follow Comfortaa in every language.** VIP Rawy also carries Latin
-digits, so the Arabic UI declares a digits-only family (`Comfortaa Numbers`, three
-weights, `unicode-range: U+0025, U+002C, U+002E, U+0030-0039`) and puts it first in
-the RTL stack: letters stay VIP Rawy while every digit, decimal point, thousands
-comma and percent sign is drawn by Comfortaa. The numeric stack (`--font-num`, used
-by `.num` cells, totals, aging rows and the version pill) also resolves to Comfortaa
-under `html[dir="rtl"]`, so amounts look identical in all three languages.
+digits, so the page stack puts Comfortaa first and VIP Rawy second: Latin letters
+and every digit, decimal point and thousands comma are drawn by Comfortaa, while the
+Arabic letters fall through to VIP Rawy. The numeric stack (`--font-num`, used by
+`.num` cells, totals, aging rows and the version pill) is the Comfortaa face too, so
+amounts look identical whichever duo is selected.
+
+**Text size** is set per face in `Settings › Font size`, through `Comfortaa S` /
+`Comfortaa L` and `VIP Rawy S` / `VIP Rawy L` — the same files again with
+`size-adjust` (90 % and 114 %). The Arabic variants are limited to the Arabic
+Unicode blocks, so raising the Arabic size never touches Latin letters or digits.
 
 VIP Rawy is a commercial face: it is **not committed** (see `.gitignore`), copy
 it into `static/fonts/` for each deployment if you are licensed for it. The PDF

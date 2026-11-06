@@ -109,7 +109,7 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_products");
+    let title = views::Title::of(l, "nav_products");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -150,7 +150,7 @@ pub async fn product_new(ctx: Ctx) -> Result<Response, AppError> {
         product_fields(l, &empty, true),
         views::form_actions(&tr(l, "a_save"), "/products", &tr(l, "a_back")),
     );
-    let title = format!("{} · {}", tr(l, "nav_products"), tr(l, "a_new"));
+    let title = views::Title::of(l, "nav_products").join(l, "a_new");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -212,7 +212,7 @@ pub async fn product_edit(ctx: Ctx, Path(id): Path<String>) -> Result<Response, 
         product_fields(l, &p, false),
         views::form_actions(&tr(l, "a_save"), "/products", &tr(l, "a_back")),
     );
-    let title = tr(l, "a_edit");
+    let title = views::Title::of(l, "a_edit");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -316,7 +316,7 @@ pub async fn product_movements(ctx: Ctx, Path(id): Path<String>) -> Result<Respo
             )
         )
     );
-    let title = p.name.clone();
+    let title = views::Title::raw(&p.name);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 

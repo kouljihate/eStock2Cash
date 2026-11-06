@@ -95,6 +95,7 @@ pub fn router(state: AppState) -> Router {
             get(pages::login::form).post(pages::login::submit),
         )
         .route("/lang/{code}", get(pages::login::switch_lang))
+        .route("/font/{face}/{size}", get(pages::login::switch_font))
         .route("/static/app.css", get(|| async { asset(APP_CSS, "text/css; charset=utf-8") }))
         .route(
             "/static/app.js",

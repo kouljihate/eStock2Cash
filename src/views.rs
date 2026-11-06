@@ -6,7 +6,7 @@ use axum::response::{Html, IntoResponse, Response};
 use leptos::prelude::*;
 
 use crate::auth::Ctx;
-use crate::i18n::{Lang, tr};
+use crate::i18n::{Lang, tr, tr_ar, tr_lat};
 use crate::util::{esc, money};
 
 fn icon(name: &str) -> String {
@@ -28,6 +28,8 @@ fn icon(name: &str) -> String {
         "events" => r#"<path d="M3 12h4l2-6 3 12 2-6h4"/>"#,
         "globe" => r#"<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.6 3.7 5.6 3.7 9s-1.3 6.4-3.7 9c-2.4-2.6-3.7-5.6-3.7-9S9.6 5.6 12 3z"/>"#,
         "broker" => r#"<path d="M9 7V3M15 7V3"/><rect x="6" y="7" width="12" height="7" rx="2"/><path d="M9 14v3a3 3 0 0 0 3 3 3 3 0 0 0 3-3v-3"/>"#,
+        "cog" => r#"<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>"#,
+        "logout" => r#"<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/>"#,
         _ => r#"<circle cx="12" cy="12" r="8"/>"#,
     };
     format!(
@@ -107,53 +109,91 @@ fn nav_html(ctx: &Ctx) -> String {
     out
 }
 
-/// Header language menu. The switcher is drawn as exactly two duos — AR/EN and
-/// AR/FR — so the bar never lists three separate languages. Every code is a link
-/// and the current one is highlighted; each code keeps its own face (Comfortaa
-/// for EN/FR, VIP Rawy for AR) whatever language the page is in.
-pub fn lang_menu(lang: Lang, next: &str) -> String {
+/// Page title in both languages. The header shows the Latin half on the left and
+/// the Arabic half on the right, so a title has to carry both.
+#[derive(Clone)]
+pub struct Title {
+    pub lat: String,
+    pub ar: String,
+}
+
+impl Title {
+    /// Title from a dictionary key, e.g. `nav_suppliers`.
+    pub fn of(lang: Lang, key: &str) -> Self {
+        Self {
+            lat: tr_lat(lang, key),
+            ar: tr_ar(key),
+        }
+    }
+
+    /// `Products · New`, joined in each language.
+    pub fn join(self, lang: Lang, key: &str) -> Self {
+        Self {
+            lat: format!("{} · {}", self.lat, tr_lat(lang, key)),
+            ar: format!("{} · {}", self.ar, tr_ar(key)),
+        }
+    }
+
+    /// A document number or party name: the same text on both sides.
+    pub fn raw(name: &str) -> Self {
+        Self {
+            lat: name.to_string(),
+            ar: name.to_string(),
+        }
+    }
+}
+
+/// Settings dropdown shown in the middle column of every page header.
+///
+/// It holds two submenus: `Languages`, listing the two duos (AR/EN and AR/FR)
+/// one per row, and `Font size`, which splits the choice per font — Comfortaa for
+/// the Latin half of every label, VIP Rawy for the Arabic half.
+pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> String {
     let next = crate::util::urlenc(next);
-    let link = |l: Lang, text: &str| -> String {
+
+    let duo = |l: Lang, codes: &str| -> String {
         format!(
-            "<a class=\"langlink{}\" data-lang=\"{}\" href=\"/lang/{}?next={}\"{}>{}</a>",
+            "<a class=\"duorow{}\" href=\"/lang/{}?next={}\"{}><span class=\"duo-ar\">AR</span><span class=\"duo-sep\">/</span><span class=\"duo-lat\">{}</span><span class=\"duo-tick\">{}</span></a>",
             if l == lang { " active" } else { "" },
-            l.code(),
             l.code(),
             next,
             if l == lang { " aria-current=\"true\"" } else { "" },
-            text
+            codes,
+            if l == lang { "✓" } else { "" },
         )
     };
-    let duo = |right: Lang, right_label: &str| -> String {
-        format!(
-            "<div class=\"langrow\">{}<span class=\"langsep\">/</span>{}</div>",
-            link(Lang::Ar, "AR"),
-            link(right, right_label)
-        )
+
+    let sizes = |face: &str, cur: &str| -> String {
+        [("s", "S"), ("m", "M"), ("l", "L")]
+            .iter()
+            .map(|(code, label)| {
+                format!(
+                    "<a class=\"fsopt{}\" href=\"/font/{face}/{code}?next={next}\"{}>{label}</a>",
+                    if *code == cur { " active" } else { "" },
+                    if *code == cur { " aria-current=\"true\"" } else { "" },
+                )
+            })
+            .collect::<String>()
     };
-    let label = tr(lang, "lbl_languages");
+
     format!(
-        "<details class=\"langmenu\">\
-           <summary class=\"langmenu-trigger\" title=\"{label}\">{globe}\
-             <span class=\"langmenu-name\">{label}</span>\
-             <span class=\"langmenu-cur\">{cur}</span></summary>\
-           <div class=\"langmenu-panel\">\
-             <span class=\"langmenu-head\">{label}</span>{en}{fr}\
-           </div>\
-         </details>",
-        label = label,
-        globe = icon("globe"),
-        cur = lang.code().to_uppercase(),
+        "<details class=\"settings\"><summary class=\"settings-trigger\" title=\"{label}\">{gear}<span class=\"settings-name\">{label}</span></summary><div class=\"settings-panel\"><details class=\"sub\"><summary class=\"sub-head\">{langs}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\">{en}{fr}</div></details><details class=\"sub\"><summary class=\"sub-head\">{font_size}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\"><div class=\"fsrow\"><span class=\"fsname\">Comfortaa</span>{lat_sizes}</div><div class=\"fsrow\"><span class=\"fsname ar\">VIP Rawy</span>{ar_sizes}</div></div></details></div></details>",
+        label = tr(lang, "lbl_settings"),
+        gear = icon("cog"),
+        langs = tr(lang, "lbl_languages"),
+        font_size = tr(lang, "lbl_font_size"),
         en = duo(Lang::En, "EN"),
         fr = duo(Lang::Fr, "FR"),
+        lat_sizes = sizes("lat", fs_lat),
+        ar_sizes = sizes("ar", fs_ar),
     )
 }
 
 /// Full page shell.
-pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
+pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let lang = ctx.lang;
     let nav = nav_html(ctx);
-    let langmenu = lang_menu(lang, &ctx.path);
+    let settings = settings_menu(lang, &ctx.path, ctx.fs_lat, ctx.fs_ar);
     let flash_html = match &ctx.flash {
         Some(f) => format!(
             "<div class=\"flash {}\">{}<button class=\"flash-x\" onclick=\"this.parentNode.remove()\">×</button></div>",
@@ -162,19 +202,21 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
         ),
         None => String::new(),
     };
-    let page_title = format!("{} · {}", title, ctx.company.name);
-    let user_name = esc(&ctx.claims.nm);
+    let page_title = format!("{} · {} · {}", title.lat, title.ar, ctx.company.name);
+    let title_lat = esc(&title.lat);
+    let title_ar = esc(&title.ar);
     let username = esc(&ctx.claims.un);
     let company_name = esc(&ctx.company.name);
-    let tagline = tr(lang, "app_tagline");
+    let tagline1 = tr(lang, "app_tagline_1");
+    let tagline2 = tr(lang, "app_tagline_2");
     let app_name = tr(lang, "app_name");
     let sign_out = tr(lang, "a_logout");
     let signed_in = tr(lang, "m_signed_in_as");
-    let heading = title.to_string();
+    let signed_in_ar = tr_ar("m_signed_in_as");
     let year = chrono::Utc::now().format("%Y").to_string();
 
     let view = view! {
-        <html lang=lang.code() dir=lang.dir()>
+        <html lang=lang.code() dir=lang.dir() data-fs-lat=ctx.fs_lat data-fs-ar=ctx.fs_ar>
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -188,7 +230,8 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                         <div class="brand-mark">"S2C"</div>
                         <div class="brand-text">
                             <strong>{company_name}</strong>
-                            <small>{tagline}</small>
+                            <small>{tagline1}</small>
+                            <small>{tagline2}</small>
                         </div>
                     </div>
                     <nav class="nav" inner_html=nav></nav>
@@ -198,16 +241,19 @@ pub fn page(ctx: &Ctx, title: &str, body: String) -> String {
                 </aside>
                 <div class="main">
                     <header class="topbar">
-                        <div class="crumbs">
-                            <h1>{heading}</h1>
-                            <span class="muted">{signed_in} " " {username}</span>
+                        <div class="tb-col tb-lat">
+                            <h1>{title_lat}</h1>
+                            <span class="muted">{signed_in} " " {username.clone()}</span>
                         </div>
-                        <div class="topbar-lang" inner_html=langmenu></div>
-                        <div class="top-actions">
-                            <span class="chip">{user_name}</span>
+                        <div class="tb-col tb-mid">
                             <form method="post" action="/logout" class="inline">
-                                <button class="btn btn-ghost" type="submit">{sign_out}</button>
+                                <button class="btn btn-ghost btn-icon" type="submit" title=sign_out.clone() aria-label=sign_out.clone() inner_html=icon("logout")></button>
                             </form>
+                            <div class="tb-settings" inner_html=settings></div>
+                        </div>
+                        <div class="tb-col tb-ar">
+                            <h1 class="ar">{title_ar}</h1>
+                            <span class="muted">{signed_in_ar} " " {username}</span>
                         </div>
                     </header>
                     <div class="flash-wrap" inner_html=flash_html></div>

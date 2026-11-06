@@ -63,7 +63,7 @@ pub async fn list(ctx: Ctx) -> Result<Response, AppError> {
             "msg_no_records",
         )
     );
-    let title = tr(l, "nav_tickets");
+    let title = views::Title::of(l, "nav_tickets");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -128,7 +128,7 @@ pub async fn new(ctx: Ctx) -> Result<Response, AppError> {
         views::input_step(&tr(l, "lbl_tax"), "tax", "0", "0.01", false),
         views::form_actions(&tr(l, "a_save"), "/tickets", &tr(l, "a_back")),
     );
-    let title = tr(l, "m_direct_purchase");
+    let title = views::Title::of(l, "m_direct_purchase");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -271,7 +271,7 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
             )
         )
     );
-    let title = ticket.number.clone();
+    let title = views::Title::raw(&ticket.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 

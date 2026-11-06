@@ -3,6 +3,41 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.5.0 — 2026-11-06
+
+Every screen is bilingual and the header became a three-column bar.
+
+### Changed
+
+- **Both languages on every page.** A duo no longer picks one language for the
+  screen: with `AR / EN` selected, every label — titles, sidebar, tables, forms,
+  buttons, badges, flash messages, event log — shows English *and* Arabic, e.g.
+  `Suppliers · الموردون`. The same with `AR / FR` and French.
+- The Latin half is Comfortaa and the Arabic half VIP Rawy inside the same element
+  (the font stack falls through per glyph), so a bilingual label needs no extra
+  markup and keeps its own face on each side.
+- Bilingual pages always read left to right: `Lang::dir()` is `ltr` for every duo,
+  so the RTL layout is no longer used.
+- The header is a 40 % / 20 % / 40 % grid: page title in the duo's Latin language
+  on the left, sign-out and `Settings` in the middle, the Arabic title on the right
+  (all pages, including the sign-in screen).
+- Each duo is now one row in `Settings › Languages` (`AR / EN`, `AR / FR`), marked
+  with a tick when selected, instead of a code-by-code switcher.
+- Signing in no longer overwrites the language cookie, so the chosen duo survives
+  the login round-trip.
+
+### Added
+
+- `Settings › Font size`, one submenu per font — `Comfortaa` and `VIP Rawy`, each
+  with `S` / `M` / `L` — so the two halves of a label can be sized independently.
+  Implemented with `size-adjust` font faces (`Comfortaa S/L`, `VIP Rawy S/L`, the
+  Arabic ones limited to the Arabic Unicode blocks) and the `si_fs_lat` /
+  `si_fs_ar` cookies; routes `/font/{face}/{size}`.
+- `views::Title` carries the page title in both languages so the header can show
+  each half in its own column.
+- Settings submenus are `<details>` elements: they work without JavaScript and the
+  menu closes on an outside click or `Escape`.
+
 ## 0.4.3 — 2026-11-06
 
 The language switcher is now a single header menu with two duos.

@@ -144,7 +144,7 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
         views::notice(l, "m_sample_admin", "info"),
     );
     let _ = user_count;
-    let title = tr(l, "nav_admin");
+    let title = views::Title::of(l, "nav_admin");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -309,7 +309,7 @@ pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
             )
         )
     );
-    let title = tr(l, "nav_events");
+    let title = views::Title::of(l, "nav_events");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
@@ -376,7 +376,7 @@ pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
     ));
     body.push_str(&views::notice(l, "m_ticket_hint", "info"));
 
-    let title = tr(l, "nav_broker");
+    let title = views::Title::of(l, "nav_broker");
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
