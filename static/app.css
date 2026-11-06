@@ -77,10 +77,10 @@
 @font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 114%; }
 @font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 114%; }
 @font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 114%; }
-@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 90%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
-@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 90%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
-@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 114%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
-@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 114%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 120%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 120%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 160%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 160%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
 
 :root {
   /* surfaces */
@@ -227,6 +227,39 @@ h3 { font-size: 13.5px; }
 }
 .sidebar::-webkit-scrollbar { width: 8px; }
 .sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .14); border-radius: 999px; }
+
+.side-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+/* collapses the whole menu to an icon rail; the state is kept in localStorage and
+   restored in <head>, so a collapsed bar never flashes open on load */
+.side-toggle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px; height: 28px;
+  margin-top: 6px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .07);
+  color: #c3cde2;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease, transform .16s ease;
+}
+.side-toggle:hover { background: rgba(255, 255, 255, .16); color: #fff; }
+.side-toggle svg { width: 15px; height: 15px; }
+html.nav-closed .app { grid-template-columns: 78px minmax(0, 1fr); }
+html.nav-closed .sidebar { padding-inline: 9px; }
+html.nav-closed .side-head { flex-direction: column; align-items: center; }
+html.nav-closed .brand { padding: 2px 0 8px; justify-content: center; }
+html.nav-closed .brand-text,
+html.nav-closed .nav-title,
+html.nav-closed .nav-item span,
+html.nav-closed .ver { display: none; }
+html.nav-closed .side-toggle { margin-top: 2px; transform: rotate(180deg); }
+html.nav-closed .nav-item { justify-content: center; padding: 10px 0; }
+html.nav-closed .nav-item.active::before { display: none; }
+html.nav-closed .nav-section { margin-top: 10px; }
+html.nav-closed .side-foot { margin-top: 6px; }
 
 .brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 16px; }
 .brand-mark {
@@ -1189,6 +1222,12 @@ html[dir="rtl"] .row-actions { justify-content: flex-start; }
   .nav-section { flex-direction: row; flex-wrap: wrap; align-items: center; margin-top: 6px; }
   .nav-title { width: 100%; padding-bottom: 4px; }
   .nav-item { padding: 7px 10px; font-size: 11.4px; line-height: 1.35; }
+  .side-toggle { display: none; }
+  html.nav-closed .app { grid-template-columns: 1fr; }
+  html.nav-closed .brand-text,
+  html.nav-closed .nav-title,
+  html.nav-closed .nav-item span,
+  html.nav-closed .ver { display: revert; }
   .nav-item.active::before { display: none; }
   .side-foot { margin-top: 4px; }
   .content { padding: 16px; gap: 14px; }

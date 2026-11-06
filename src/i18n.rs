@@ -76,6 +76,7 @@ lang_table! {
     "app_tagline_2" => ("Quote-to-Cash", "Quote-to-Cash", "دورة البيع"),
     "lbl_languages" => ("Languages", "Langues", "اللغات"),
     "lbl_settings" => ("Settings", "Réglages", "الإعدادات"),
+    "lbl_toggle_menu" => ("Collapse or expand the menu", "Réduire ou déplier le menu", "طي القائمة أو توسيعها"),
     "lbl_font_size" => ("Font size", "Taille du texte", "حجم الخط"),
     "nav_dashboard" => ("Dashboard", "Tableau de bord", "لوحة التحكم"),
     "nav_purchasing" => ("Procure-to-Pay", "Procure-to-Pay", "دورة الشراء"),

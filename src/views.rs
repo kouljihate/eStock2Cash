@@ -30,6 +30,7 @@ fn icon(name: &str) -> String {
         "broker" => r#"<path d="M9 7V3M15 7V3"/><rect x="6" y="7" width="12" height="7" rx="2"/><path d="M9 14v3a3 3 0 0 0 3 3 3 3 0 0 0 3-3v-3"/>"#,
         "cog" => r#"<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>"#,
         "logout" => r#"<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/>"#,
+        "panel" => r#"<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>"#,
         _ => r#"<circle cx="12" cy="12" r="8"/>"#,
     };
     format!(
@@ -40,9 +41,10 @@ fn icon(name: &str) -> String {
 
 fn nav_item(active: bool, href: &str, label: &str, ico: &str) -> String {
     format!(
-        "<a class=\"nav-item{}\" href=\"{}\">{}<span>{}</span></a>",
+        "<a class=\"nav-item{}\" href=\"{}\" title=\"{}\">{}<span>{}</span></a>",
         if active { " active" } else { "" },
         href,
+        esc(label),
         icon(ico),
         esc(label)
     )
@@ -189,6 +191,10 @@ pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> Strin
     )
 }
 
+/// Runs in `<head>`: restores the collapsed sidebar before the first paint so the
+/// rail never flashes open on a page load.
+pub const NAV_STATE_SCRIPT: &str = "try{if(localStorage.getItem('s2c-nav')==='closed'){document.documentElement.classList.add('nav-closed')}}catch(e){}";
+
 /// Full page shell.
 pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let lang = ctx.lang;
@@ -213,6 +219,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let sign_out = tr(lang, "a_logout");
     let signed_in = tr(lang, "m_signed_in_as");
     let signed_in_ar = tr_ar("m_signed_in_as");
+    let nav_toggle = tr(lang, "lbl_toggle_menu");
     let year = chrono::Utc::now().format("%Y").to_string();
 
     let view = view! {
@@ -223,18 +230,22 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                 <title>{page_title}</title>
                 <link rel="stylesheet" href=format!("/static/app.css?v={}", crate::routes::asset_token())/>
                 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
+                <script inner_html=crate::views::NAV_STATE_SCRIPT></script>
             </head>
             <body class=format!("app lang-{}", lang.code())>
                 <aside class="sidebar">
-                    <div class="brand">
-                        <div class="brand-mark">"S2C"</div>
-                        <div class="brand-text">
-                            <strong>{company_name}</strong>
-                            <small>{tagline1}</small>
-                            <small>{tagline2}</small>
+                    <div class="side-head">
+                        <div class="brand">
+                            <div class="brand-mark">"S2C"</div>
+                            <div class="brand-text">
+                                <strong>{company_name}</strong>
+                                <small>{tagline1}</small>
+                                <small>{tagline2}</small>
+                            </div>
                         </div>
+                        <button class="side-toggle" type="button" data-nav-toggle aria-expanded="true" aria-controls="side-nav" title=nav_toggle.clone() inner_html=icon("panel")></button>
                     </div>
-                    <nav class="nav" inner_html=nav></nav>
+                    <nav class="nav" id="side-nav" inner_html=nav></nav>
                     <div class="side-foot">
                         <div class="ver">"v" { env!("CARGO_PKG_VERSION") }</div>
                     </div>

@@ -259,6 +259,14 @@ text**:
 | middle (20 %) | sign-out button and the `Settings` dropdown |
 | right (40 %) | the same title in Arabic, right-aligned |
 
+### The sidebar
+
+The menu collapses to a 78 px icon rail and expands back with the panel button in
+its top-right corner. Icons keep their bilingual label as a tooltip, and the state
+is stored in `localStorage` (`s2c-nav`) and re-applied by a small inline script in
+`<head>`, so a collapsed menu never flashes open while a page loads. On a phone the
+sidebar is a stacked block and the toggle is hidden.
+
 ### Settings › Font size
 
 Text size is set **per font**, in a submenu for each face: `Comfortaa` (the Latin

@@ -3,6 +3,21 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.5.1 — 2026-11-06
+
+The sidebar menu collapses.
+
+### Added
+
+- A panel button at the top of the sidebar folds the whole menu down to a 78 px
+  icon rail and opens it again; the page content takes the freed width.
+- Nav items keep their bilingual label as a `title`, so the collapsed icons are
+  still identifiable on hover.
+- The state lives in `localStorage` (`s2c-nav`) and a small inline script in
+  `<head>` applies it before the first paint, so a collapsed menu does not flash
+  open on load. `aria-expanded` follows the state, and the toggle is hidden on
+  phones where the sidebar is a stacked block.
+
 ## 0.5.0 — 2026-11-06
 
 Every screen is bilingual and the header became a three-column bar.

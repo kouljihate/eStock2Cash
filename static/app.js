@@ -158,6 +158,26 @@
     });
   }
 
+  /* ---------------- collapsible sidebar ---------------- */
+  function initSidebarToggle() {
+    var btn = document.querySelector("[data-nav-toggle]");
+    if (!btn) return;
+
+    function sync() {
+      var closed = document.documentElement.classList.contains("nav-closed");
+      btn.setAttribute("aria-expanded", closed ? "false" : "true");
+    }
+
+    sync();
+    btn.addEventListener("click", function () {
+      var closed = document.documentElement.classList.toggle("nav-closed");
+      try {
+        localStorage.setItem("s2c-nav", closed ? "closed" : "open");
+      } catch (e) {}
+      sync();
+    });
+  }
+
   /* ---------------- header settings menu ---------------- */
   function closeSettings() {
     document.querySelectorAll("details.settings[open]").forEach(function (d) {
@@ -190,6 +210,7 @@
       initConfirm();
       initBluetooth();
       initSettingsMenu();
+      initSidebarToggle();
     });
   });
 })();
