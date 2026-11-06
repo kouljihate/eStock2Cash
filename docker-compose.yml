@@ -59,8 +59,13 @@ services:
       # Set these to long random strings before exposing the app:
       SECRET_KEY: "${SECRET_KEY:-dev-secret-key-change-me-please-32-chars}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-jwt-dev-secret-change-me-please-32-chars}"
+    # Host port 8080 → container 8080. Open http://localhost:8080.
+    # If something else already holds 8080 (for example the binary started with
+    # `cargo run`), Docker reports "port is already allocated" and the container
+    # shows no published port: stop the other process, or start with
+    # `APP_PORT=8090 docker compose up` and browse http://localhost:8090.
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
 
 volumes:
   mongo_data:

@@ -56,6 +56,27 @@ docker compose up --build
 # rabbitmq   http://localhost:15672  (stockinvoice / stockinvoice)
 ```
 
+`APP_PORT` changes the published port: `APP_PORT=8090 docker compose up --build`
+serves the app on <http://localhost:8090>.
+
+### Where is the app?
+
+| How it runs | Browse | Docker Desktop |
+|-------------|--------|----------------|
+| `cargo run` / `./target/debug/stockinvoice.exe` (host binary) | <http://localhost:8080> | *no app container* — Docker only runs MongoDB and RabbitMQ |
+| `docker compose up --build` (container `stockinvoice-app`) | <http://localhost:8080> | port `8080:8080` is listed under **Ports** |
+
+The app always prints the URL at startup:
+`listening — open the url in a browser local=0.0.0.0:8080 url=http://localhost:8080`.
+
+**No port column for the app in Docker Desktop?** Two causes:
+
+1. Only the dependencies are containerised — `docker compose up -d mongo rabbitmq`
+   plus a host binary is the normal dev setup, so no app container exists to show a port.
+2. The port is already taken. If the host binary still holds 8080, the app
+   container fails with `port is already allocated` and shows no published port.
+   Stop the binary (`taskkill //PID <pid> //F` on Windows) or use `APP_PORT`.
+
 The first boot seeds one company and one local administrator:
 
 ```
@@ -288,3 +309,26 @@ rejection; tenant isolation; EN/FR/AR switching.
   key at boot: sessions become invalid on restart.
 - MongoDB in `docker-compose.yml` runs without auth for local development; put it
   behind a private network (or enable auth) for shared deployments.
+
+---
+
+## RabbitMQ log noise
+
+The broker logs a lot on every boot; none of it is a fault. What the usual lines mean:
+
+| Line | Meaning |
+|------|---------|
+| `alarm_handler: {set,{system_memory_high_watermark,[]}}` / `clear` | Erlang raises the memory alarm while the VM boots, then clears it. Publishers are only blocked if the watermark stays set (it is 40% of RAM, here 3137 MiB of 7844 MiB). |
+| `Application syslog exited`, `Logging: switching to configured handler(s)` | The broker replaces its log handlers during startup. |
+| `Khepri leader elected`, `Waiting for Khepri projections`, `ra: starting system …`, `WAL init` | RabbitMQ 3.13 metadata store (Khepri/Ra) coming up. Normal on a single node. |
+| `Classic peer discovery backend: list of nodes does not contain the local node []` | Warning only — no cluster peers are configured. |
+| `Message store … rebuilding indices from scratch` | First boot, or the container was recreated with a fresh volume. |
+| `Deprecated features: management_metrics_collection` | The management plugin still enables a deprecated feature; harmless in 3.13. |
+| `accepting AMQP connection` / `user 'stockinvoice' authenticated` | The app connected successfully. |
+| `client unexpectedly closed TCP connection` | The app process stopped (killed, rebuilt, or restarted) without closing the AMQP socket. |
+| `SIGTERM received - shutting down`, `broker forced connection closure … 'shutdown'` | The container was stopped/restarted (`docker compose restart`, Docker Desktop restart). |
+| `HTTP listener registry could not find context … _tls` | Cosmetic shutdown message when no TLS listener is configured. |
+
+So a pair of boot sequences in the log simply means the RabbitMQ container was
+recreated; readiness is `Server startup complete` plus `rabbitmq-diagnostics ping`
+(the compose healthcheck does exactly that).

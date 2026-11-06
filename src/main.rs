@@ -67,7 +67,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let addr = cfg.bind_addr();
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    tracing::info!(%addr, "listening");
+    let local = listener.local_addr()?;
+    tracing::info!(%local, url = %format!("http://localhost:{}", local.port()), "listening — open the url in a browser");
     axum::serve(listener, app).await?;
     Ok(())
 }

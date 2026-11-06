@@ -1,6 +1,6 @@
 [package]
 name = "stockinvoice"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Procure-to-Pay and Quote-to-Cash business application (Leptos + Axum + MongoDB)"
 license = "MIT"

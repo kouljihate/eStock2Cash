@@ -3,6 +3,24 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.4.1 — 2026-11-06
+
+Finding the app is now documented instead of guessed.
+
+### Added
+
+- The startup log states the browsable URL:
+  `listening — open the url in a browser local=0.0.0.0:8080 url=http://localhost:8080`.
+- README: a **Where is the app?** table (host binary vs container, and why Docker
+  Desktop shows no port for the app), plus a **RabbitMQ log noise** section that
+  explains the boot, shutdown and `client unexpectedly closed TCP connection` lines.
+
+### Changed
+
+- The compose app service publishes `${APP_PORT:-8080}:8080`, so a second install
+  can avoid a port clash with `APP_PORT=8090 docker compose up`.
+- `.env.example` seeds `COMPANY_NAME="S2C MAROC"`.
+
 ## 0.4.0 — 2026-11-05
 
 The app is now **S2C MAROC**, and it trades in dirhams.
