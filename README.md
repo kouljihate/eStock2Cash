@@ -242,6 +242,14 @@ They are served from `/static/fonts/<file>` and declared in `static/app.css` wit
 `@font-face`, including the true 300/400/700 weights. Missing files fall back to
 the system stack, so a checkout without them still works.
 
+**Numbers follow Comfortaa in every language.** VIP Rawy also carries Latin
+digits, so the Arabic UI declares a digits-only family (`Comfortaa Numbers`, three
+weights, `unicode-range: U+0025, U+002C, U+002E, U+0030-0039`) and puts it first in
+the RTL stack: letters stay VIP Rawy while every digit, decimal point, thousands
+comma and percent sign is drawn by Comfortaa. The numeric stack (`--font-num`, used
+by `.num` cells, totals, aging rows and the version pill) also resolves to Comfortaa
+under `html[dir="rtl"]`, so amounts look identical in all three languages.
+
 VIP Rawy is a commercial face: it is **not committed** (see `.gitignore`), copy
 it into `static/fonts/` for each deployment if you are licensed for it. The PDF
 side is independent — to use VIP Rawy in PDFs as well, either overwrite

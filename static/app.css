@@ -24,6 +24,34 @@
   font-style: normal;
   font-display: swap;
 }
+/* Numerals-only faces. The Arabic UI sets its text in VIP Rawy, which also
+   carries Latin digits; restricting this family to digits (and the separators
+   that sit between them) makes every number render in Comfortaa while the
+   surrounding Arabic letters keep VIP Rawy. */
+@font-face {
+  font-family: "Comfortaa Numbers";
+  src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0025, U+002C, U+002E, U+0030-0039;
+}
+@font-face {
+  font-family: "Comfortaa Numbers";
+  src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0025, U+002C, U+002E, U+0030-0039;
+}
+@font-face {
+  font-family: "Comfortaa Numbers";
+  src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0025, U+002C, U+002E, U+0030-0039;
+}
 @font-face {
   font-family: "VIP Rawy";
   src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype");
@@ -104,6 +132,14 @@ body {
   letter-spacing: .002em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arabic text stays VIP Rawy, but every digit is drawn by Comfortaa: the
+   numerals-only family leads both stacks, and the numeric stack (`.num` cells,
+   tables, totals, the version pill) switches to Comfortaa as well. */
+html[dir="rtl"] {
+  --font-ar: "Comfortaa Numbers", "VIP Rawy", "Cairo", "Segoe UI", Tahoma, sans-serif;
+  --font-num: "Comfortaa", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 html[dir="rtl"] body {
@@ -439,7 +475,7 @@ h3 { font-size: 13.5px; }
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
-html[dir="rtl"] .stat strong { font-family: var(--font-ar); font-size: 19px; }
+html[dir="rtl"] .stat strong { font-family: var(--font-num); font-size: 19px; }
 .stat small { color: var(--muted); font-size: 10.5px; }
 
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px; align-items: start; }

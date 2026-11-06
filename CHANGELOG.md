@@ -3,6 +3,18 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.4.2 — 2026-11-06
+
+Numbers in Arabic now wear the same face as the rest of the app.
+
+### Changed
+
+- The Arabic UI keeps VIP Rawy for its letters but draws every digit, decimal
+  point, thousands comma and percent sign with **Comfortaa**: a digits-only
+  `Comfortaa Numbers` family (300/400/700, declared with `unicode-range`) leads the
+  RTL stack, and the numeric stack used by `.num` cells, totals, aging rows, the
+  version pill and the dashboard cards is Comfortaa in RTL too.
+
 ## 0.4.1 — 2026-11-06
 
 Finding the app is now documented instead of guessed.
