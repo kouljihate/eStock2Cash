@@ -115,15 +115,15 @@ pub async fn new(ctx: Ctx) -> Result<Response, AppError> {
         views::input(&tr(l, "lbl_date"), "date", &today(), "date", true),
         views::input(&tr(l, "lbl_cashier"), "cashier", &ctx.claims.un, "text", false),
         views::input_step(&tr(l, "lbl_tax_rate"), "default_tax", "0", "0.01", false),
-        esc(&tr(l, "lbl_product")),
-        esc(&tr(l, "lbl_description")),
-        esc(&tr(l, "lbl_quantity")),
-        esc(&tr(l, "lbl_unit_price")),
-        esc(&tr(l, "lbl_total")),
-        esc(&tr(l, "a_add_line")),
-        esc(&tr(l, "lbl_subtotal")),
-        esc(&tr(l, "lbl_tax")),
-        esc(&tr(l, "lbl_total")),
+        tr(l, "lbl_product"),
+        tr(l, "lbl_description"),
+        tr(l, "lbl_quantity"),
+        tr(l, "lbl_unit_price"),
+        tr(l, "lbl_total"),
+        tr(l, "a_add_line"),
+        tr(l, "lbl_subtotal"),
+        tr(l, "lbl_tax"),
+        tr(l, "lbl_total"),
         views::input_step(&tr(l, "lbl_paid"), "paid", "0", "0.01", false),
         views::input_step(&tr(l, "lbl_tax"), "tax", "0", "0.01", false),
         views::form_actions(&tr(l, "a_save"), "/tickets", &tr(l, "a_back")),
@@ -217,7 +217,7 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
         esc(&ctx.company.name),
         esc(&ctx.company.address),
         esc(&ctx.company.phone),
-        esc(&tr(l, "lbl_number")),
+        tr(l, "lbl_number"),
         esc(&ticket.number),
         esc(&ticket.date),
         items
@@ -230,17 +230,17 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
                     .collect::<String>()
             ))
             .collect::<String>(),
-        esc(&tr(l, "lbl_subtotal")),
+        tr(l, "lbl_subtotal"),
         esc(&views::money_text(ticket.subtotal, &cur_code)),
-        esc(&tr(l, "lbl_tax")),
+        tr(l, "lbl_tax"),
         esc(&views::money_text(ticket.tax, &cur_code)),
-        esc(&tr(l, "lbl_total")),
+        tr(l, "lbl_total"),
         esc(&views::money_text(ticket.total, &cur_code)),
-        esc(&tr(l, "lbl_paid")),
+        tr(l, "lbl_paid"),
         esc(&views::money_text(ticket.paid, &cur_code)),
-        esc(&tr(l, "lbl_change")),
+        tr(l, "lbl_change"),
         esc(&views::money_text(ticket.change, &cur_code)),
-        esc(&tr(l, "lbl_cashier")),
+        tr(l, "lbl_cashier"),
         esc(&ticket.cashier),
     );
 
@@ -248,12 +248,12 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
         views::link_btn(&format!("/tickets/{}/pdf", ticket.id), &tr(l, "a_pdf")),
         format!(
             "<button class=\"btn btn-primary\" onclick=\"window.print()\">{}</button>",
-            esc(&tr(l, "a_print"))
+            tr(l, "a_print")
         ),
         format!(
             "<button class=\"btn btn-ghost bt-print\" data-url=\"/tickets/{}/escpos\">{}</button>",
             esc(&ticket.id),
-            esc(&tr(l, "a_bluetooth"))
+            tr(l, "a_bluetooth")
         ),
         views::link_btn(&format!("/tickets/{}/escpos", ticket.id), "ESC/POS"),
     ];
@@ -266,7 +266,7 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
             &tr(l, "m_ticket_printer"),
             format!(
                 "<p class=\"muted\">{}</p><p class=\"mono small\">GET /tickets/{}/escpos</p>",
-                esc(&tr(l, "m_ticket_hint")),
+                tr(l, "m_ticket_hint"),
                 esc(&ticket.id)
             )
         )

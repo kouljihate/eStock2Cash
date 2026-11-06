@@ -166,7 +166,7 @@ pub async fn ci_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::input(&tr(l, "lbl_due_date"), "due_date", &add_days(&today(), 30), "date", true),
         views::input_step(&tr(l, "lbl_tax_rate"), "default_tax", "0", "0.01", false),
         esc(&source_id),
-        esc(&tr(l, "lbl_lines")),
+        tr(l, "lbl_lines"),
         super::lines_editor(&ctx, &list, &lines, 0.0, false),
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/customer-invoices", &tr(l, "a_back")),
@@ -696,13 +696,13 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
             <div><span>31-60 {}</span><b>{}</b></div>
             <div><span>61+ {}</span><b>{}</b></div>
          </div>",
-        esc(&tr(l, "m_current")),
+        tr(l, "m_current"),
         esc(&views::money_text(aging.current, &cur)),
-        esc(&tr(l, "m_days_old")),
+        tr(l, "m_days_old"),
         esc(&views::money_text(aging.d30, &cur)),
-        esc(&tr(l, "m_days_old")),
+        tr(l, "m_days_old"),
         esc(&views::money_text(aging.d60, &cur)),
-        esc(&tr(l, "m_days_old")),
+        tr(l, "m_days_old"),
         esc(&views::money_text(aging.d90, &cur)),
     );
 
@@ -713,7 +713,7 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
             &tr(l, "m_aging"),
             format!(
                 "{aging_body}<div class=\"tot-row grand\"><span>{}</span><b>{}</b></div>",
-                esc(&tr(l, "lbl_total")),
+                tr(l, "lbl_total"),
                 esc(&views::money_text(aging.total, &cur))
             )
         ),

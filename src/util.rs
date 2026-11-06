@@ -2,6 +2,22 @@
 
 use chrono::{DateTime, NaiveDate, Utc};
 
+/// Text of an HTML fragment, tags removed — for `title`/`aria-label` attributes
+/// that must not contain the `.bi` markup.
+pub fn text_of(html: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut depth = 0usize;
+    for ch in html.chars() {
+        match ch {
+            '<' => depth += 1,
+            '>' => depth = depth.saturating_sub(1),
+            _ if depth == 0 => out.push(ch),
+            _ => {}
+        }
+    }
+    out.trim().to_string()
+}
+
 pub fn esc(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 8);
     for ch in s.chars() {

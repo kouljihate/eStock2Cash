@@ -99,11 +99,11 @@ pub fn lines_editor(
                 product_options(products, &line.product_id)
             },
             desc = esc(&line.description),
-            ph = esc(&tr(ctx.lang, "lbl_description")),
+            ph = crate::i18n::tr_text(ctx.lang, "lbl_description"),
             q = if line.qty > 0.0 { qty(line.qty) } else { "1".into() },
             price = format!("{:.2}", line.unit_price),
             tax = qty(line.tax_rate),
-            rm = esc(&tr(ctx.lang, "a_remove")),
+            rm = crate::i18n::tr_text(ctx.lang, "a_remove"),
         )
     };
 
@@ -151,17 +151,17 @@ pub fn lines_editor(
           <input type=\"hidden\" name=\"default_tax\" value=\"{tax}\"/>\
         </div>",
         if use_cost { "cost" } else { "sale" },
-        esc(&tr(ctx.lang, "lbl_product")),
-        esc(&tr(ctx.lang, "lbl_description")),
-        esc(&tr(ctx.lang, "lbl_quantity")),
-        esc(&tr(ctx.lang, "lbl_unit_price")),
-        esc(&tr(ctx.lang, "lbl_tax")),
-        esc(&tr(ctx.lang, "lbl_total")),
-        esc(&tr(ctx.lang, "lbl_description")),
-        esc(&tr(ctx.lang, "a_add_line")),
-        esc(&tr(ctx.lang, "lbl_subtotal")),
-        esc(&tr(ctx.lang, "lbl_tax")),
-        esc(&tr(ctx.lang, "lbl_total")),
+        tr(ctx.lang, "lbl_product"),
+        tr(ctx.lang, "lbl_description"),
+        tr(ctx.lang, "lbl_quantity"),
+        tr(ctx.lang, "lbl_unit_price"),
+        tr(ctx.lang, "lbl_tax"),
+        tr(ctx.lang, "lbl_total"),
+        crate::i18n::tr_text(ctx.lang, "lbl_description"),
+        tr(ctx.lang, "a_add_line"),
+        tr(ctx.lang, "lbl_subtotal"),
+        tr(ctx.lang, "lbl_tax"),
+        tr(ctx.lang, "lbl_total"),
     )
 }
 
@@ -170,7 +170,7 @@ pub fn lines_view(ctx: &Ctx, lines: &[DocLine], currency: &str) -> String {
     if lines.is_empty() {
         return format!(
             "<div class=\"empty\">{}</div>",
-            esc(&tr(ctx.lang, "m_no_lines"))
+            tr(ctx.lang, "m_no_lines")
         );
     }
     let rows = lines
@@ -190,11 +190,11 @@ pub fn lines_view(ctx: &Ctx, lines: &[DocLine], currency: &str) -> String {
         .collect::<Vec<_>>();
     format!(
         "<div class=\"table-wrap\"><table><thead><tr><th>{}</th><th class=\"num\">{}</th><th class=\"num\">{}</th><th class=\"num\">{}</th><th class=\"num\">{}</th></tr></thead><tbody>{}</tbody></table></div>",
-        esc(&tr(ctx.lang, "lbl_description")),
-        esc(&tr(ctx.lang, "lbl_quantity")),
-        esc(&tr(ctx.lang, "lbl_unit_price")),
-        esc(&tr(ctx.lang, "lbl_tax")),
-        esc(&tr(ctx.lang, "lbl_total")),
+        tr(ctx.lang, "lbl_description"),
+        tr(ctx.lang, "lbl_quantity"),
+        tr(ctx.lang, "lbl_unit_price"),
+        tr(ctx.lang, "lbl_tax"),
+        tr(ctx.lang, "lbl_total"),
         rows.into_iter()
             .map(|cells| format!(
                 "<tr>{}</tr>",
@@ -252,7 +252,7 @@ pub fn totals_block(ctx: &Ctx, totals: &crate::models::Totals, paid: Option<f64>
         .collect::<String>();
     format!(
         "<div class=\"totals\">{body}<div class=\"tot-row grand\"><span>{}</span><b>{}</b></div></div>",
-        esc(&tr(ctx.lang, "lbl_total")),
+        tr(ctx.lang, "lbl_total"),
         esc(&money_text(totals.total, currency))
     )
 }

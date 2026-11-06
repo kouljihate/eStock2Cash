@@ -217,7 +217,7 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
             format!(
                 "<div class=\"aging-row\"><span class=\"dot {}\"></span><span>{}</span><b class=\"num\">{}</b></div>",
                 tone,
-                esc(&label),
+                label,
                 esc(&views::money_text(value, &cur))
             )
         })
@@ -226,7 +226,7 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
         &tr(l, "m_aging"),
         format!(
             "{aging_body}<div class=\"aging-row total\"><span>{}</span><b class=\"num\">{}</b></div>",
-            esc(&tr(l, "lbl_total")),
+            tr(l, "lbl_total"),
             esc(&views::money_text(stats.aging.total, &cur))
         ),
     );
@@ -246,8 +246,8 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
 
     let pipeline = format!(
         "<div class=\"pipeline\"><div class=\"pipe-block\"><h3>{}</h3>{chain}</div><div class=\"pipe-block\"><h3>{}</h3>{chain2}</div></div>",
-        esc(&tr(l, "nav_purchasing")),
-        esc(&tr(l, "nav_sales"))
+        tr(l, "nav_purchasing"),
+        tr(l, "nav_sales")
     );
 
     let body = format!(

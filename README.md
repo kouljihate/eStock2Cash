@@ -229,12 +229,24 @@ totals, payment status and footer — all driven by **Admin → Invoice template
 
 ## Languages
 
-Every screen is **bilingual**: each label carries both languages at once —
-`Suppliers · الموردون`, `Purchase Orders · أوامر الشراء`, `Save · حفظ` — in the page
-titles, sidebar, tables, forms, buttons, badges, flash messages and the event log.
-The Latin half is drawn in Comfortaa and the Arabic half in VIP Rawy inside the same
-element (the stack falls through per glyph), so the two languages sit in one line
+Every screen is **bilingual**: each label carries both languages at once — in the
+page titles, sidebar, tables, forms, buttons, badges, flash messages and the event
+log. The Latin half is drawn in Comfortaa and the Arabic half in VIP Rawy inside the
+same element (the stack falls through per glyph), so the two languages sit together
 rather than in two separate screens.
+
+`tr()` emits the pair as markup, `<span class="bi"><span class="lat">…</span>` +
+`<span class="ar">…</span></span>`, and one CSS rule decides the arrangement per
+element type:
+
+| element | arrangement |
+| --- | --- |
+| buttons, table headers | stacked — **Arabic on top, EN/FR underneath** |
+| labels, fields, cells, cards, nav, titles, badges | one line — **English at the left, Arabic at the right end** |
+
+The `.sep` span between the halves is hidden by CSS, so contexts without styles —
+`<option>` text, copy/paste, `title` tooltips — still read `English · Arabic`.
+Attributes, `<title>` and PDFs use `tr_text()`, which returns that plain string.
 
 The pair is chosen from one place, the **Settings** dropdown in the middle of the
 header, under **Languages**:
@@ -270,10 +282,19 @@ sidebar is a stacked block and the toggle is hidden.
 ### Settings › Font size
 
 Text size is set **per font**, in a submenu for each face: `Comfortaa` (the Latin
-half of every label) and `VIP Rawy` (the Arabic half), each with `S` / `M` / `L`.
+half of every label) and `VIP Rawy` (the Arabic half), each with four steps:
+
+| step | scale |
+| --- | --- |
+| `S` | 100 % |
+| `M` | 150 % (default) |
+| `L` | 200 % |
+| `XL` | 250 % |
+
 They are independent, so Arabic can be enlarged while the Latin text keeps its size.
-The sizes are cookie-backed (`si_fs_lat`, `si_fs_ar`) and implemented with
-`size-adjust` font faces, so a single bilingual label scales each half separately.
+The sizes are cookie-backed (`si_fs_lat`, `si_fs_ar`, values `s`/`m`/`l`/`xl`) and
+implemented with `size-adjust` font faces, so a single bilingual label scales each
+half separately.
 
 ## Fonts
 
@@ -297,10 +318,11 @@ Arabic letters fall through to VIP Rawy. The numeric stack (`--font-num`, used b
 `.num` cells, totals, aging rows and the version pill) is the Comfortaa face too, so
 amounts look identical whichever duo is selected.
 
-**Text size** is set per face in `Settings › Font size`, through `Comfortaa S` /
-`Comfortaa L` and `VIP Rawy S` / `VIP Rawy L` — the same files again with
-`size-adjust` (90 % and 114 %). The Arabic variants are limited to the Arabic
-Unicode blocks, so raising the Arabic size never touches Latin letters or digits.
+**Text size** is set per face in `Settings › Font size`, through `Comfortaa S/M/L/XL`
+and `VIP Rawy S/M/L/XL` — the same files again with `size-adjust` at 100 %, 150 %,
+200 % and 250 %. The Arabic variants are limited to the Arabic Unicode blocks, so
+raising the Arabic size never touches Latin letters or digits, and the step applies
+to both faces equally, so the duo keeps its balance at every size.
 
 VIP Rawy is a commercial face: it is **not committed** (see `.gitignore`), copy
 it into `static/fonts/` for each deployment if you are licensed for it. The PDF

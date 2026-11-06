@@ -289,10 +289,39 @@ lang_table! {
 }
 
 /// Translate `key`; falls back to the key itself so a missing label is obvious.
-/// Bilingual label: the duo's Latin language plus Arabic, e.g.
-/// `Suppliers · الموردون`. Both halves are always present, so every screen shows
-/// the two languages at once; a key whose two sides are identical prints once.
+/// Bilingual label as markup: `<span class="bi"><span class="lat">Suppliers</span><span class="ar">الموردون</span></span>`.
+///
+/// Both halves are always present, so every screen shows the two languages at
+/// once. The wrapper decides the arrangement in CSS: labels put English on the
+/// left and Arabic at the right end, while buttons and table headers stack them
+/// with Arabic on top and the Latin text underneath. A key whose two sides are
+/// identical (a brand name, a proper noun) prints once, in a single span.
 pub fn tr(lang: Lang, key: &str) -> String {
+    let (first, second) = match lang {
+        Lang::Ar => (one(Lang::Ar, key), one(Lang::En, key)),
+        l => (one(l, key), one(Lang::Ar, key)),
+    };
+    if first.is_empty() {
+        // Unknown key: show it, escaped, so a stray `?m=` value cannot inject HTML.
+        return format!(
+            "<span class=\"bi\"><span class=\"lat\">{}</span></span>",
+            crate::util::esc(key)
+        );
+    }
+    let esc = crate::util::esc;
+    if second.is_empty() || first == second {
+        return format!("<span class=\"bi\"><span class=\"lat\">{}</span></span>", esc(first));
+    }
+    format!(
+        "<span class=\"bi\"><span class=\"lat\">{}</span><span class=\"sep\"> · </span><span class=\"ar\">{}</span></span>",
+        esc(first),
+        esc(second)
+    )
+}
+
+/// The same label as plain text — for attributes, `<title>`, PDFs and POS
+/// tickets, where markup would show up literally.
+pub fn tr_text(lang: Lang, key: &str) -> String {
     let (first, second) = match lang {
         Lang::Ar => (one(Lang::Ar, key), one(Lang::En, key)),
         l => (one(l, key), one(Lang::Ar, key)),

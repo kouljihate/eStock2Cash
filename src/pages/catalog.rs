@@ -86,10 +86,10 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
                 format!(
                     "<form class=\"search\" method=\"get\" action=\"/products\"><input name=\"q\" value=\"{}\" placeholder=\"{}\"/><label class=\"mini-check\"><input type=\"checkbox\" name=\"low\" value=\"1\"{} onchange=\"this.form.submit()\"/>{}</label><button class=\"btn btn-sm\" type=\"submit\">{}</button></form>",
                     esc(&search),
-                    esc(&tr(l, "lbl_search")),
+                    crate::i18n::tr_text(l, "lbl_search"),
                     if low_only { " checked" } else { "" },
-                    esc(&tr(l, "m_low_stock")),
-                    esc(&tr(l, "a_search"))
+                    tr(l, "m_low_stock"),
+                    tr(l, "a_search")
                 ),
                 views::link_btn("/products/new", &format!("+ {}", tr(l, "a_new"))),
             ]
@@ -295,9 +295,9 @@ pub async fn product_movements(ctx: Ctx, Path(id): Path<String>) -> Result<Respo
                    <button class=\"btn btn-primary\" type=\"submit\">{}</button>\
                  </form>",
                 esc(&p.id),
-                esc(&tr(l, "lbl_quantity")),
-                esc(&tr(l, "lbl_notes")),
-                esc(&tr(l, "a_apply")),
+                tr(l, "lbl_quantity"),
+                tr(l, "lbl_notes"),
+                tr(l, "a_apply"),
             )
         ),
         views::card(

@@ -167,7 +167,8 @@ pub fn cookie_lang(headers: &HeaderMap, default: &str) -> Lang {
     Lang::from_code(default).unwrap_or(Lang::En)
 }
 
-/// Text size for one face, read from `si_fs_lat` / `si_fs_ar`.
+/// Text size for one face (`s`, `m`, `l` or `xl`), read from `si_fs_lat` /
+/// `si_fs_ar`; anything unknown falls back to `m`, the 150 % default.
 pub fn cookie_size(headers: &HeaderMap, name: &str) -> &'static str {
     if let Some(cookies) = header_value(headers, COOKIE.as_str()) {
         for pair in cookies.split(';') {
@@ -176,6 +177,7 @@ pub fn cookie_size(headers: &HeaderMap, name: &str) -> &'static str {
                 return match it.next().map(str::trim) {
                     Some("s") => "s",
                     Some("l") => "l",
+                    Some("xl") => "xl",
                     _ => "m",
                 };
             }

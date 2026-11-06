@@ -132,7 +132,7 @@ pub async fn po_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::input_step(&tr(l, "lbl_tax_rate"), "default_tax", "0", "0.01", false),
         format!(
             "<h3 class=\"section-title\">{}</h3>{}",
-            esc(&tr(l, "lbl_lines")),
+            tr(l, "lbl_lines"),
             super::lines_editor(&ctx, &list, &[], 0.0, true)
         ),
         format!(
@@ -529,11 +529,11 @@ pub async fn gr_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::input(&tr(l, "lbl_receipt_date"), "receipt_date", &today(), "date", true),
         views::input(&tr(l, "lbl_supplier"), "supplier_name", &supplier_name, "text", false),
         views::input_step(&tr(l, "lbl_tax_rate"), "default_tax", &qty(tax), "0.01", false),
-        esc(&tr(l, "lbl_product")),
-        esc(&tr(l, "lbl_description")),
-        esc(&tr(l, "lbl_qty_received")),
-        esc(&tr(l, "lbl_cost")),
-        esc(&tr(l, "a_add_line")),
+        tr(l, "lbl_product"),
+        tr(l, "lbl_description"),
+        tr(l, "lbl_qty_received"),
+        tr(l, "lbl_cost"),
+        tr(l, "a_add_line"),
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/goods-receipts", &tr(l, "a_back")),
     );
@@ -873,7 +873,7 @@ pub async fn si_new(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resul
         views::input(&tr(l, "lbl_due_date"), "due_date", &due, "date", true),
         views::input_step(&tr(l, "lbl_tax_rate"), "default_tax", "0", "0.01", false),
         format!("<input type=\"hidden\" name=\"source_id\" value=\"{}\"/>", esc(&source_id)),
-        esc(&tr(l, "lbl_lines")),
+        tr(l, "lbl_lines"),
         super::lines_editor(&ctx, &list, &lines, 0.0, true),
         views::textarea(&tr(l, "lbl_notes"), "notes", ""),
         views::form_actions(&tr(l, "a_save"), "/supplier-invoices", &tr(l, "a_back")),

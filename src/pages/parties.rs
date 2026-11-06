@@ -85,8 +85,8 @@ pub async fn suppliers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
                 format!(
                     "<form class=\"search\" method=\"get\" action=\"/suppliers\"><input name=\"q\" value=\"{}\" placeholder=\"{}\"/><button class=\"btn btn-sm\" type=\"submit\">{}</button></form>",
                     esc(&search),
-                    esc(&tr(l, "lbl_search")),
-                    esc(&tr(l, "a_search"))
+                    crate::i18n::tr_text(l, "lbl_search"),
+                    tr(l, "a_search")
                 ),
                 views::link_btn("/suppliers/new", &format!("+ {}", tr(l, "a_new"))),
             ]
@@ -300,8 +300,8 @@ pub async fn customers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
                 format!(
                     "<form class=\"search\" method=\"get\" action=\"/customers\"><input name=\"q\" value=\"{}\" placeholder=\"{}\"/><button class=\"btn btn-sm\" type=\"submit\">{}</button></form>",
                     esc(&search),
-                    esc(&tr(l, "lbl_search")),
-                    esc(&tr(l, "a_search"))
+                    crate::i18n::tr_text(l, "lbl_search"),
+                    tr(l, "a_search")
                 ),
                 views::link_btn("/customers/new", &format!("+ {}", tr(l, "a_new"))),
             ]

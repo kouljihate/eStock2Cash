@@ -44,16 +44,16 @@ fn nav_item(active: bool, href: &str, label: &str, ico: &str) -> String {
         "<a class=\"nav-item{}\" href=\"{}\" title=\"{}\">{}<span>{}</span></a>",
         if active { " active" } else { "" },
         href,
-        esc(label),
+        esc(&crate::util::text_of(label)),
         icon(ico),
-        esc(label)
+        label
     )
 }
 
 fn nav_section(title: &str, items: &[&str]) -> String {
     format!(
         "<div class=\"nav-section\"><span class=\"nav-title\">{}</span>{}</div>",
-        esc(title),
+        title,
         items.join("")
     )
 }
@@ -70,7 +70,7 @@ fn nav_html(ctx: &Ctx) -> String {
     let l = ctx.lang;
 
     let mut out = String::new();
-    out.push_str(&nav_item(on("/"), &tr(l, "nav_dashboard"), &tr(l, "nav_dashboard"), "dashboard"));
+    out.push_str(&nav_item(on("/"), "/", &tr(l, "nav_dashboard"), "dashboard"));
 
     out.push_str(&nav_section(
         &tr(l, "nav_purchasing"),
@@ -166,7 +166,7 @@ pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> Strin
     };
 
     let sizes = |face: &str, cur: &str| -> String {
-        [("s", "S"), ("m", "M"), ("l", "L")]
+        [("s", "S"), ("m", "M"), ("l", "L"), ("xl", "XL")]
             .iter()
             .map(|(code, label)| {
                 format!(
@@ -179,8 +179,9 @@ pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> Strin
     };
 
     format!(
-        "<details class=\"settings\"><summary class=\"settings-trigger\" title=\"{label}\">{gear}<span class=\"settings-name\">{label}</span></summary><div class=\"settings-panel\"><details class=\"sub\"><summary class=\"sub-head\">{langs}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\">{en}{fr}</div></details><details class=\"sub\"><summary class=\"sub-head\">{font_size}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\"><div class=\"fsrow\"><span class=\"fsname\">Comfortaa</span>{lat_sizes}</div><div class=\"fsrow\"><span class=\"fsname ar\">VIP Rawy</span>{ar_sizes}</div></div></details></div></details>",
+        "<details class=\"settings\"><summary class=\"settings-trigger\" title=\"{title}\">{gear}<span class=\"settings-name\">{label}</span></summary><div class=\"settings-panel\"><details class=\"sub\"><summary class=\"sub-head\">{langs}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\">{en}{fr}</div></details><details class=\"sub\"><summary class=\"sub-head\">{font_size}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\"><div class=\"fsrow\"><span class=\"fsname\">Comfortaa</span>{lat_sizes}</div><div class=\"fsrow\"><span class=\"fsname ar\">VIP Rawy</span>{ar_sizes}</div></div></details></div></details>",
         label = tr(lang, "lbl_settings"),
+        title = esc(&crate::i18n::tr_text(lang, "lbl_settings")),
         gear = icon("cog"),
         langs = tr(lang, "lbl_languages"),
         font_size = tr(lang, "lbl_font_size"),
@@ -204,7 +205,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
         Some(f) => format!(
             "<div class=\"flash {}\">{}<button class=\"flash-x\" onclick=\"this.parentNode.remove()\">×</button></div>",
             if f.kind == "err" { "err" } else { "ok" },
-            esc(&f.message)
+            f.message
         ),
         None => String::new(),
     };
@@ -216,10 +217,10 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let tagline1 = tr(lang, "app_tagline_1");
     let tagline2 = tr(lang, "app_tagline_2");
     let app_name = tr(lang, "app_name");
-    let sign_out = tr(lang, "a_logout");
+    let sign_out_text = crate::i18n::tr_text(lang, "a_logout");
     let signed_in = tr(lang, "m_signed_in_as");
     let signed_in_ar = tr_ar("m_signed_in_as");
-    let nav_toggle = tr(lang, "lbl_toggle_menu");
+    let nav_toggle_text = crate::i18n::tr_text(lang, "lbl_toggle_menu");
     let year = chrono::Utc::now().format("%Y").to_string();
 
     let view = view! {
@@ -239,11 +240,11 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                             <div class="brand-mark">"S2C"</div>
                             <div class="brand-text">
                                 <strong>{company_name}</strong>
-                                <small>{tagline1}</small>
-                                <small>{tagline2}</small>
+                                <small inner_html=tagline1.clone()></small>
+                                <small inner_html=tagline2.clone()></small>
                             </div>
                         </div>
-                        <button class="side-toggle" type="button" data-nav-toggle aria-expanded="true" aria-controls="side-nav" title=nav_toggle.clone() inner_html=icon("panel")></button>
+                        <button class="side-toggle" type="button" data-nav-toggle aria-expanded="true" aria-controls="side-nav" title=nav_toggle_text.clone() inner_html=icon("panel")></button>
                     </div>
                     <nav class="nav" id="side-nav" inner_html=nav></nav>
                     <div class="side-foot">
@@ -254,24 +255,24 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                     <header class="topbar">
                         <div class="tb-col tb-lat">
                             <h1>{title_lat}</h1>
-                            <span class="muted">{signed_in} " " {username.clone()}</span>
+                            <span class="muted" inner_html=format!("{} {}", signed_in, username.clone())></span>
                         </div>
                         <div class="tb-col tb-mid">
                             <form method="post" action="/logout" class="inline">
-                                <button class="btn btn-ghost btn-icon" type="submit" title=sign_out.clone() aria-label=sign_out.clone() inner_html=icon("logout")></button>
+                                <button class="btn btn-ghost btn-icon" type="submit" title=sign_out_text.clone() aria-label=sign_out_text.clone() inner_html=icon("logout")></button>
                             </form>
                             <div class="tb-settings" inner_html=settings></div>
                         </div>
                         <div class="tb-col tb-ar">
                             <h1 class="ar">{title_ar}</h1>
-                            <span class="muted">{signed_in_ar} " " {username}</span>
+                            <span class="muted" inner_html=format!("<span class=\"ar\">{}</span> {}", signed_in_ar, username)></span>
                         </div>
                     </header>
                     <div class="flash-wrap" inner_html=flash_html></div>
                     <main class="content" inner_html=body></main>
                     <footer class="appfoot">
                         <span class="foot-id">
-                            {app_name}
+                            <span inner_html=app_name.clone()></span>
                             <span class="foot-ver">{ concat!("v", env!("CARGO_PKG_VERSION")) }</span>
                         </span>
                         <span class="foot-year">"© " {year}</span>
@@ -318,12 +319,12 @@ pub fn table(lang: Lang, headers: &[&str], rows: Vec<Vec<String>>, empty_key: &s
     if rows.is_empty() {
         return format!(
             "<div class=\"empty\">{}</div>",
-            esc(&tr(lang, empty_key))
+            tr(lang, empty_key)
         );
     }
     let head = headers
         .iter()
-        .map(|h| format!("<th>{}</th>", esc(h)))
+        .map(|h| format!("<th>{}</th>", h))
         .collect::<String>();
     let body = rows
         .into_iter()
@@ -359,14 +360,14 @@ pub fn status_badge(lang: Lang, key: &str) -> String {
     format!(
         "<span class=\"badge {}\">{}</span>",
         status_tone(key),
-        esc(&tr(lang, key))
+        tr(lang, key)
     )
 }
 
 pub fn card(title: &str, body: String) -> String {
     format!(
         "<section class=\"card\"><header class=\"card-head\"><h2>{}</h2></header><div class=\"card-body\">{}</div></section>",
-        esc(title),
+        title,
         body
     )
 }
@@ -374,9 +375,9 @@ pub fn card(title: &str, body: String) -> String {
 pub fn stat(label: &str, value: &str, hint: &str) -> String {
     format!(
         "<div class=\"stat\"><span class=\"stat-label\">{}</span><strong>{}</strong><small>{}</small></div>",
-        esc(label),
-        esc(value),
-        esc(hint)
+        label,
+        value,
+        hint
     )
 }
 
@@ -387,7 +388,7 @@ pub fn money_text(v: f64, currency: &str) -> String {
 pub fn input(label: &str, name: &str, value: &str, kind: &str, required: bool) -> String {
     format!(
         "<label class=\"field\"><span>{}</span><input type=\"{kind}\" name=\"{}\" value=\"{}\"{}/></label>",
-        esc(label),
+        label,
         esc(name),
         esc(value),
         if required { " required" } else { "" }
@@ -397,7 +398,7 @@ pub fn input(label: &str, name: &str, value: &str, kind: &str, required: bool) -
 pub fn input_step(label: &str, name: &str, value: &str, step: &str, required: bool) -> String {
     format!(
         "<label class=\"field\"><span>{}</span><input type=\"number\" step=\"{step}\" name=\"{}\" value=\"{}\"{}/></label>",
-        esc(label),
+        label,
         esc(name),
         esc(value),
         if required { " required" } else { "" }
@@ -407,7 +408,7 @@ pub fn input_step(label: &str, name: &str, value: &str, step: &str, required: bo
 pub fn textarea(label: &str, name: &str, value: &str) -> String {
     format!(
         "<label class=\"field field-wide\"><span>{}</span><textarea name=\"{}\" rows=\"3\">{}</textarea></label>",
-        esc(label),
+        label,
         esc(name),
         esc(value)
     )
@@ -418,7 +419,7 @@ pub fn checkbox(label: &str, name: &str, checked: bool) -> String {
         "<label class=\"field check\"><input type=\"checkbox\" name=\"{}\"{} /><span>{}</span></label>",
         esc(name),
         if checked { " checked" } else { "" },
-        esc(label)
+        label
     )
 }
 
@@ -431,13 +432,13 @@ pub fn select(label: &str, name: &str, options: &[(String, String, bool)], requi
                 "<option value=\"{}\"{}>{}</option>",
                 esc(v),
                 if *s { " selected" } else { "" },
-                esc(l)
+                esc(&crate::util::text_of(l))
             )
         })
         .collect::<String>();
     format!(
         "<label class=\"field\"><span>{}</span><select name=\"{}\"{}>{opts}</select></label>",
-        esc(label),
+        label,
         esc(name),
         if required { " required" } else { "" }
     )
@@ -447,14 +448,14 @@ pub fn form_actions(submit_label: &str, back_href: &str, back_label: &str) -> St
     format!(
         "<div class=\"form-actions\"><button class=\"btn btn-primary\" type=\"submit\">{}</button>\
          <a class=\"btn btn-ghost\" href=\"{}\">{}</a></div>",
-        esc(submit_label),
+        submit_label,
         esc(back_href),
-        esc(back_label)
+        back_label
     )
 }
 
 pub fn link_btn(href: &str, label: &str) -> String {
-    format!("<a class=\"btn btn-sm\" href=\"{}\">{}</a>", esc(href), esc(label))
+    format!("<a class=\"btn btn-sm\" href=\"{}\">{}</a>", esc(href), label)
 }
 
 pub fn post_btn(action: &str, label: &str, tone: &str) -> String {
@@ -462,7 +463,7 @@ pub fn post_btn(action: &str, label: &str, tone: &str) -> String {
         "<form method=\"post\" action=\"{}\" class=\"inline\"><button class=\"btn btn-sm {}\" type=\"submit\">{}</button></form>",
         esc(action),
         tone,
-        esc(label)
+        label
     )
 }
 
@@ -475,7 +476,7 @@ pub fn notice(lang: Lang, key: &str, tone: &str) -> String {
     format!(
         "<div class=\"notice {}\">{}</div>",
         tone,
-        esc(&tr(lang, key))
+        tr(lang, key)
     )
 }
 
@@ -485,9 +486,9 @@ pub fn doc_chain(steps: Vec<(String, String, bool)>) -> String {
         .map(|(label, href, done)| {
             let class = if done { "chain-step done" } else { "chain-step" };
             if href.is_empty() || !done {
-                format!("<span class=\"{class}\">{}</span>", esc(&label))
+                format!("<span class=\"{class}\">{}</span>", label)
             } else {
-                format!("<a class=\"{class}\" href=\"{}\">{}</a>", esc(&href), esc(&label))
+                format!("<a class=\"{class}\" href=\"{}\">{}</a>", esc(&href), label)
             }
         })
         .collect::<Vec<_>>()
@@ -500,12 +501,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn table_escapes_headers_and_shows_empty_state() {
+    fn table_takes_markup_and_keeps_escaped_cells() {
         let empty = table(Lang::En, &["A"], vec![], "msg_no_records");
         assert!(empty.contains("No records"));
-        let t = table(Lang::En, &["<x>"], vec![vec!["cell".into()]], "msg_no_records");
-        assert!(t.contains("&lt;x&gt;"));
-        assert!(t.contains("<td>cell</td>"));
+        // Headers arrive pre-formatted by `tr()` and cells carry badges/links, so the
+        // table inserts both as markup; every caller passes data through `esc()`.
+        let t = table(
+            Lang::En,
+            &["<b>H</b>"],
+            vec![vec![esc("<x>")]],
+            "msg_no_records",
+        );
+        assert!(t.contains("<b>H</b>"));
+        assert!(t.contains("<td>&lt;x&gt;</td>"));
     }
 
     #[test]

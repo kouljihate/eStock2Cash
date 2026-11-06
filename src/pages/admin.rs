@@ -37,7 +37,7 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
                 esc(&u.full_name),
                 esc(&u.username)
             ),
-            format!("<span class=\"badge green\">{}</span>", esc(&tr(l, "lbl_role"))),
+            format!("<span class=\"badge green\">{}</span>", tr(l, "lbl_role")),
             esc(&u.locale),
             views::post_btn(
                 &format!("/admin/users/{}/delete", u.id),
@@ -59,9 +59,9 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
         views::input(&tr(l, "lbl_currency"), "currency", &c.currency, "text", true),
         views::input(&tr(l, "lbl_phone"), "phone", &c.phone, "text", false),
         views::input(&tr(l, "lbl_email"), "email", &c.email, "email", false),
-        esc(&tr(l, "lbl_logo")),
+        tr(l, "lbl_logo"),
         esc(&c.logo),
-        esc(&tr(l, "lbl_address")),
+        tr(l, "lbl_address"),
         esc(&c.address),
         views::form_actions(&tr(l, "a_save"), "/admin", &tr(l, "a_back")),
     );
@@ -318,11 +318,11 @@ pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
     let info = events::broker_info(&ctx.state.cfg).await;
 
     let status = if !info.configured {
-        format!("<span class=\"badge slate\">{}</span>", esc(&tr(l, "m_not_configured")))
+        format!("<span class=\"badge slate\">{}</span>", tr(l, "m_not_configured"))
     } else if info.online {
-        format!("<span class=\"badge green\">{}</span>", esc(&tr(l, "m_connected")))
+        format!("<span class=\"badge green\">{}</span>", tr(l, "m_connected"))
     } else {
-        format!("<span class=\"badge red\">{}</span>", esc(&tr(l, "m_disconnected")))
+        format!("<span class=\"badge red\">{}</span>", tr(l, "m_disconnected"))
     };
 
     let mut body = format!(
@@ -342,7 +342,7 @@ pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
     if let Some(err) = &info.error {
         body.push_str(&format!(
             "<div class=\"notice warn\">{}<div class=\"mono small\">{}</div></div>",
-            esc(&tr(l, "m_broker_offline")),
+            tr(l, "m_broker_offline"),
             esc(err)
         ));
     }

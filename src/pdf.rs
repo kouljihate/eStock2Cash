@@ -16,7 +16,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as B64;
 
 use crate::fonts::{self, Piece, TrueTypeFont};
-use crate::i18n::{Lang, tr};
+use crate::i18n::Lang;
 use crate::models::{Company, Invoice, InvoiceTemplate, Ticket};
 use crate::util::{money, qty};
 
@@ -590,7 +590,7 @@ impl PdfLabels {
         } else {
             lang
         };
-        let t = |key: &str| tr(l, key);
+        let t = |key: &str| crate::i18n::tr_text(l, key);
         Self {
             arabic,
             invoice: match l {

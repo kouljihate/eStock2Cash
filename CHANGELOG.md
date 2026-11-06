@@ -3,6 +3,41 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.6.0 — 2026-11-06
+
+Labels are arranged by element type, and text size gained a fourth step.
+
+### Changed
+
+- **One layout rule per element type.** `tr()` now returns the bilingual pair as
+  markup (`<span class="bi">` holding `.lat` and `.ar`), so CSS decides how the two
+  languages sit: **buttons and table headers stack them with Arabic on top and
+  EN/FR underneath**, while labels, field hints, cells, cards, titles, badges and
+  the sidebar keep them **in one line, English at the left and Arabic at the right
+  end**. All pages follow the same rule, because the arrangement lives in the
+  stylesheet rather than in each template.
+- **`tr_text()`** returns the same pair as plain `English · Arabic` for places that
+  cannot hold markup: attributes, `title` tooltips, `<title>` and the PDF writer.
+  The `.sep` span that separates the halves is hidden by CSS, so `<option>` text and
+  copy/paste read naturally too.
+- **Font size has four steps per face: `S` 100 %, `M` 150 % (default), `L` 200 %,
+  `XL` 250 %.** They replace the previous 90/114 % and 120/160 % scales and apply
+  the same ratio to Comfortaa and VIP Rawy, so the duo keeps its balance at every
+  size. `si_fs_lat` / `si_fs_ar` accept `xl` and `/font/{face}/{size}` serves it.
+
+### Fixed
+
+- Search boxes, line-item descriptions and the panel button no longer print the
+  label markup inside their `placeholder` / `title` attributes — attributes now use
+  the plain `tr_text()` string.
+- Ageing rows on the dashboard, the empty state and the form action buttons showed
+  escaped markup (`&lt;span class="bi"`) after the labels became markup; they are
+  inserted as HTML again.
+- Line-item table headers align from the top, so the stacked halves stay level when
+  a column is narrow at the larger text steps.
+- `table()` documents and tests its contract: headers and cells arrive as markup
+  built by `tr()` / badges, and every caller escapes its data.
+
 ## 0.5.1 — 2026-11-06
 
 The sidebar menu collapses.

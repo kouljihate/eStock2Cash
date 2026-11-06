@@ -30,7 +30,7 @@ fn shell(
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <title>{format!("{} · {}", tr(lang, "a_login"), brand)}</title>
+                <title>{format!("{} · {}", crate::i18n::tr_text(lang, "a_login"), brand)}</title>
                 <link rel="stylesheet" href=format!("/static/app.css?v={}", crate::routes::asset_token())/>
                 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
             </head>
@@ -40,9 +40,9 @@ fn shell(
                     <div class="login-brand">
                         <div class="brand-mark lg">"S2C"</div>
                         <h1>{esc(brand)}</h1>
-                        <p>{tagline1}</p>
+                        <p inner_html=tagline1></p>
                         <br/>
-                        <p>{tagline2}</p>
+                        <p inner_html=tagline2></p>
                     </div>
                     <div inner_html=body></div>
                 </div>
@@ -78,7 +78,7 @@ pub async fn form(
     let err_html = if error.is_empty() {
         String::new()
     } else {
-        format!("<div class=\"flash err\">{}</div>", esc(&error))
+        format!("<div class=\"flash err\">{}</div>", error)
     };
 
     let body = format!(
@@ -91,12 +91,12 @@ pub async fn form(
           </form>\
           <p class=\"hint\">{default_hint}</p>\
         </div>",
-        user = esc(&tr(lang, "lbl_username")),
-        pass = esc(&tr(lang, "lbl_password")),
-        submit = esc(&tr(lang, "a_login")),
+        user = tr(lang, "lbl_username"),
+        pass = tr(lang, "lbl_password"),
+        submit = tr(lang, "a_login"),
         next = esc(&next),
         last_user = esc(q.get("u").map(|s| s.as_str()).unwrap_or("")),
-        default_hint = esc(&tr(lang, "m_sample_admin")),
+        default_hint = tr(lang, "m_sample_admin"),
     );
     Ok(shell(
         lang,
@@ -193,7 +193,7 @@ pub async fn switch_lang(
 }
 
 /// `/font/{face}/{size}` — the Settings › Font size options. `face` is `lat`
-/// (Comfortaa) or `ar` (VIP Rawy); `size` is `s`, `m` or `l`.
+/// (Comfortaa) or `ar` (VIP Rawy); `size` is `s`, `m` or `l`, or `xl`.
 pub async fn switch_font(
     State(st): State<AppState>,
     Path((face, size)): Path<(String, String)>,
@@ -206,6 +206,7 @@ pub async fn switch_font(
     let value = match size.as_str() {
         "s" => "s",
         "l" => "l",
+        "xl" => "xl",
         _ => "m",
     };
     let next = q

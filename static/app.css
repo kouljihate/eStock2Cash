@@ -70,17 +70,31 @@
 /* Text size is per face, so it can be set for each half of every bilingual label
    without splitting the label apart: these are the same files as above with a
    `size-adjust`, and the Arabic ones are limited to Arabic blocks so they never
-   take over Latin letters or the digits (which stay in Comfortaa). */
-@font-face { font-family: "Comfortaa S"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 90%; }
-@font-face { font-family: "Comfortaa S"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 90%; }
-@font-face { font-family: "Comfortaa S"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 90%; }
-@font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 114%; }
-@font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 114%; }
-@font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 114%; }
-@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 120%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
-@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 120%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
-@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 160%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
-@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 160%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+   take over Latin letters or the digits (which stay in Comfortaa).
+
+   The four steps are 100 %, 150 %, 200 % and 250 % of the base type size, so the
+   scale is the same for both faces: S is the plain size, M (the default) is one
+   and a half times it, L double, XL two and a half times. */
+@font-face { font-family: "Comfortaa S"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 100%; }
+@font-face { font-family: "Comfortaa S"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 100%; }
+@font-face { font-family: "Comfortaa S"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 100%; }
+@font-face { font-family: "Comfortaa M"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 150%; }
+@font-face { font-family: "Comfortaa M"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 150%; }
+@font-face { font-family: "Comfortaa M"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 150%; }
+@font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 200%; }
+@font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 200%; }
+@font-face { font-family: "Comfortaa L"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 200%; }
+@font-face { font-family: "Comfortaa XL"; src: url("/static/fonts/Comfortaa-Light.ttf") format("truetype"); font-weight: 300; font-style: normal; font-display: swap; size-adjust: 250%; }
+@font-face { font-family: "Comfortaa XL"; src: url("/static/fonts/Comfortaa-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 250%; }
+@font-face { font-family: "Comfortaa XL"; src: url("/static/fonts/Comfortaa-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 250%; }
+@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 100%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy S"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 100%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy M"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 150%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy M"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 150%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 200%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy L"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 200%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy XL"; src: url("/static/fonts/VIP-Rawy-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; size-adjust: 250%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
+@font-face { font-family: "VIP Rawy XL"; src: url("/static/fonts/VIP-Rawy-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; size-adjust: 250%; unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200D; }
 
 :root {
   /* surfaces */
@@ -123,8 +137,8 @@
 
   /* the Latin face resolves first, Arabic glyphs fall through to VIP Rawy, so
      one label can hold both languages at once */
-  --face-lat: "Comfortaa";
-  --face-ar: "VIP Rawy";
+  --face-lat: "Comfortaa M";
+  --face-ar: "VIP Rawy M";
   --font: var(--face-lat), var(--face-ar), "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
   --font-ar: var(--face-lat), var(--face-ar), "Cairo", "Segoe UI", Tahoma, sans-serif;
   --font-num: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -132,12 +146,48 @@
 }
 
 /* Settings › Font size: one scale per face, applied to the whole UI at once.
-   `s`/`l` only override the face used for that language, so the Arabic half of a
-   label can grow while the Latin half keeps its size (and vice versa). */
+   Each step only overrides the face used for that language, so the Arabic half of
+   a label can grow while the Latin half keeps its size (and vice versa). M is the
+   default and is already set in :root. */
 html[data-fs-lat="s"] { --face-lat: "Comfortaa S"; }
 html[data-fs-lat="l"] { --face-lat: "Comfortaa L"; }
+html[data-fs-lat="xl"] { --face-lat: "Comfortaa XL"; }
 html[data-fs-ar="s"] { --face-ar: "VIP Rawy S"; }
 html[data-fs-ar="l"] { --face-ar: "VIP Rawy L"; }
+html[data-fs-ar="xl"] { --face-ar: "VIP Rawy XL"; }
+html[data-fs-ar="l"] { --face-ar: "VIP Rawy L"; }
+
+/* Every label is a `.bi` wrapper holding two halves: `.lat` (Comfortaa) and
+   `.ar` (VIP Rawy). Labels put English at the left and Arabic at the right end of
+   the line; buttons and table headers stack them, Arabic on top. The `.sep` span
+   only exists so the plain text reads "English · Arabic" where CSS does not
+   apply (select options, copy/paste); the flex layout hides it. */
+.bi {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.bi > .lat { min-width: 0; }
+.bi > .sep { display: none; }
+.bi > .ar {
+  text-align: right;
+  white-space: normal;
+}
+/* buttons and table headers: Arabic first, the duo's Latin language below */
+.btn .bi,
+button .bi,
+thead th .bi {
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  line-height: 1.25;
+}
+.btn .bi > .ar,
+button .bi > .ar,
+thead th .bi > .ar { text-align: start; }
 
 * { box-sizing: border-box; }
 
@@ -302,6 +352,7 @@ html.nav-closed .side-foot { margin-top: 6px; }
   transition: background .16s ease, color .16s ease, transform .16s ease;
 }
 .nav-item svg { width: 17px; height: 17px; flex: 0 0 17px; opacity: .82; }
+.nav-item > span { flex: 1; min-width: 0; }
 .nav-item:hover {
   background: rgba(255, 255, 255, .06);
   color: #fff;
@@ -926,7 +977,7 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   line-height: 1.25;
   letter-spacing: .04em;
   font-size: 8.6px;
-  vertical-align: bottom;
+  vertical-align: top;
 }
 .lines-table td { padding: 6px 8px; border-bottom: 1px solid var(--line-2); }
 .lines-table tbody tr:hover { background: #fbfcff; }
