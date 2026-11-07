@@ -45,9 +45,7 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
     let l = ctx.lang;
     let cur_code = ctx.company.currency.clone();
     let mut rows = Vec::new();
-    let mut stock_value = 0.0;
     while let Some(p) = cur.try_next().await? {
-        stock_value += p.qty_on_hand.max(0.0) * p.cost;
         if low_only && !p.is_low() {
             continue;
         }
@@ -72,44 +70,34 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
         ]);
     }
 
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_products",
-            &format!(
-                "{}: {}",
-                tr(l, "m_stock_value"),
-                views::money_text(stock_value, &cur_code)
-            ),
-            vec![
-                super::search_form(
-                    l,
-                    "/products",
-                    &search,
-                    &format!(
-                        "<label class=\"mini-check\"><input type=\"checkbox\" name=\"low\" value=\"1\"{} onchange=\"this.form.submit()\"/>{}</label>",
-                        if low_only { " checked" } else { "" },
-                        tr(l, "m_low_stock")
-                    ),
-                ),
-                views::link_btn("/products/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table_actions(
+        super::search_form(
             l,
-            &[
-                &tr(l, "lbl_product"),
-                &tr(l, "lbl_category"),
-                &tr(l, "lbl_unit"),
-                &tr(l, "lbl_cost"),
-                &tr(l, "lbl_price"),
-                &tr(l, "lbl_stock"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+            "/products",
+            &search,
+            &format!(
+                "<label class=\"mini-check\"><input type=\"checkbox\" name=\"low\" value=\"1\"{} onchange=\"this.form.submit()\"/>{}</label>",
+                if low_only { " checked" } else { "" },
+                tr(l, "m_low_stock")
+            ),
+        ),
+        views::link_btn("/products/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_product"),
+            &tr(l, "lbl_category"),
+            &tr(l, "lbl_unit"),
+            &tr(l, "lbl_cost"),
+            &tr(l, "lbl_price"),
+            &tr(l, "lbl_stock"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_products");
     Ok(views::respond(views::page(&ctx, &title, body)))

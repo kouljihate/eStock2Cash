@@ -1,10 +1,11 @@
 //! Administration: company profile, invoice branding, users, event log and
 //! the RabbitMQ monitor.
 
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::response::{IntoResponse, Response};
 use futures_util::TryStreamExt;
 use mongodb::bson::doc;
+use std::collections::HashMap;
 
 use crate::auth::{self, Ctx};
 use crate::error::AppError;
@@ -259,8 +260,12 @@ pub async fn user_delete(ctx: Ctx, Path(id): Path<String>) -> Result<Response, A
     Ok(ctx.back("/admin", "msg_deleted", "ok").into_response())
 }
 
-pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn events(
+    ctx: Ctx,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Response, AppError> {
     let l = ctx.lang;
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
@@ -271,6 +276,9 @@ pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
         .await?;
     let mut rows = Vec::new();
     while let Some(ev) = cur.try_next().await? {
+        if !super::row_matches(&search, &[&ev.routing_key, &ev.event_type, &ev.received_at]) {
+            continue;
+        }
         rows.push(vec![
             format!(
                 "<span class=\"muted small\">{}</span>",
@@ -282,9 +290,9 @@ pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
         ]);
     }
 
+    let tools = super::search_form(l, "/admin/events", &search, "");
     let body = format!(
-        "{}{}{}",
-        super::page_head(&ctx, "nav_events", "", vec![]),
+        "{}{}",
         if ctx.state.cfg.rabbit_enabled() {
             String::new()
         } else {
@@ -292,7 +300,7 @@ pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
         },
         views::card(
             &tr(l, "m_event_log"),
-            views::table(
+            views::list_table(
                 l,
                 &[
                     &tr(l, "lbl_days"),
@@ -301,7 +309,8 @@ pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
                     &tr(l, "lbl_date"),
                 ],
                 rows,
-                "msg_no_records"
+                "msg_no_records",
+                &tools
             )
         )
     );
@@ -309,8 +318,12 @@ pub async fn events(ctx: Ctx) -> Result<Response, AppError> {
     Ok(views::respond(views::page(&ctx, &title, body)))
 }
 
-pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn broker(
+    ctx: Ctx,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Response, AppError> {
     let l = ctx.lang;
+    let search = q.get("q").cloned().unwrap_or_default();
     let info = events::broker_info(&ctx.state.cfg).await;
 
     let status = if !info.configured {
@@ -322,8 +335,7 @@ pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
     };
 
     let mut body = format!(
-        "{}{}",
-        super::page_head(&ctx, "nav_broker", &info.mgmt_url, vec![]),
+        "{}",
         views::card(
             &tr(l, "m_rabbitmq"),
             super::meta_grid(vec![
@@ -346,19 +358,21 @@ pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
     let rows = info
         .queues
         .iter()
-        .map(|q| {
+        .filter(|queue| super::row_matches(&search, &[&queue.name]))
+        .map(|queue| {
             vec![
-                format!("<code>{}</code>", esc(&q.name)),
-                format!("<span class=\"num\">{}</span>", q.messages),
-                format!("<span class=\"num\">{}</span>", q.consumers),
-                esc(&q.state),
+                format!("<code>{}</code>", esc(&queue.name)),
+                format!("<span class=\"num\">{}</span>", queue.messages),
+                format!("<span class=\"num\">{}</span>", queue.consumers),
+                esc(&queue.state),
             ]
         })
         .collect::<Vec<_>>();
+    let tools = super::search_form(l, "/admin/broker", &search, "");
 
     body.push_str(&views::card(
         &tr(l, "m_queues"),
-        views::table(
+        views::list_table(
             l,
             &[
                 &tr(l, "lbl_name"),
@@ -368,6 +382,7 @@ pub async fn broker(ctx: Ctx) -> Result<Response, AppError> {
             ],
             rows,
             "msg_no_records",
+            &tools,
         ),
     ));
     body.push_str(&views::notice(l, "m_ticket_hint", "info"));

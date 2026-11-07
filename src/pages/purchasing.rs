@@ -64,30 +64,24 @@ pub async fn po_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
         ]);
     }
 
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_purchase_orders",
-            "",
-            vec![
-                super::search_form(l, "/purchase-orders", &search, ""),
-                views::link_btn("/purchase-orders/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table_actions(
-            l,
-            &[
-                &tr(l, "lbl_number"),
-                &tr(l, "lbl_supplier"),
-                &tr(l, "lbl_date"),
-                &tr(l, "lbl_status"),
-                &tr(l, "lbl_total"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/purchase-orders", &search, ""),
+        views::link_btn("/purchase-orders/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_number"),
+            &tr(l, "lbl_supplier"),
+            &tr(l, "lbl_date"),
+            &tr(l, "lbl_status"),
+            &tr(l, "lbl_total"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_purchase_orders");
     Ok(views::respond(views::page(&ctx, &title, body)))
@@ -409,29 +403,23 @@ pub async fn gr_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
             views::status_badge(l, &g.status.key()),
         ]);
     }
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_goods_receipts",
-            "",
-            vec![
-                super::search_form(l, "/goods-receipts", &search, ""),
-                views::link_btn("/goods-receipts/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table(
-            l,
-            &[
-                &tr(l, "lbl_number"),
-                &tr(l, "nav_purchase_orders"),
-                &tr(l, "lbl_supplier"),
-                &tr(l, "lbl_date"),
-                &tr(l, "lbl_status"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/goods-receipts", &search, ""),
+        views::link_btn("/goods-receipts/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table(
+        l,
+        &[
+            &tr(l, "lbl_number"),
+            &tr(l, "nav_purchase_orders"),
+            &tr(l, "lbl_supplier"),
+            &tr(l, "lbl_date"),
+            &tr(l, "lbl_status"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_goods_receipts");
     Ok(views::respond(views::page(&ctx, &title, body)))
@@ -804,31 +792,25 @@ pub async fn si_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
             ),
         ]);
     }
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_supplier_invoices",
-            "",
-            vec![
-                super::search_form(l, "/supplier-invoices", &search, ""),
-                views::link_btn("/supplier-invoices/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table_actions(
-            l,
-            &[
-                &tr(l, "lbl_number"),
-                &tr(l, "lbl_supplier"),
-                &tr(l, "lbl_date"),
-                &tr(l, "lbl_due_date"),
-                &tr(l, "lbl_status"),
-                &tr(l, "lbl_outstanding"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/supplier-invoices", &search, ""),
+        views::link_btn("/supplier-invoices/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_number"),
+            &tr(l, "lbl_supplier"),
+            &tr(l, "lbl_date"),
+            &tr(l, "lbl_due_date"),
+            &tr(l, "lbl_status"),
+            &tr(l, "lbl_outstanding"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_supplier_invoices");
     Ok(views::respond(views::page(&ctx, &title, body)))

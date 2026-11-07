@@ -852,6 +852,21 @@ thead th {
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
+/* The first header row of a list is its toolbar: the search box and the new button,
+   centred over the columns they filter. It is a header cell, so it shares the card
+   with the table and scrolls sideways with it, unlike a row floating above. */
+thead tr.thead-tools th {
+  padding: 10px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line-2);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: normal;
+}
+/* a search that matches nothing keeps its box: the message sits in the body */
+tbody tr.row-empty td { padding: 4px; }
 tbody td {
   padding: 10px 16px;
   border-bottom: 1px solid var(--line-2);

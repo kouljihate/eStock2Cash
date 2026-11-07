@@ -94,32 +94,26 @@ pub async fn ci_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
             ),
         ]);
     }
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_customer_invoices",
-            "",
-            vec![
-                super::search_form(l, "/customer-invoices", &search, ""),
-                views::link_btn("/customer-invoices/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table_actions(
-            l,
-            &[
-                &tr(l, "lbl_number"),
-                &tr(l, "lbl_customer"),
-                &tr(l, "lbl_date"),
-                &tr(l, "lbl_due_date"),
-                &tr(l, "lbl_status"),
-                &tr(l, "lbl_total"),
-                &tr(l, "lbl_outstanding"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/customer-invoices", &search, ""),
+        views::link_btn("/customer-invoices/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_number"),
+            &tr(l, "lbl_customer"),
+            &tr(l, "lbl_date"),
+            &tr(l, "lbl_due_date"),
+            &tr(l, "lbl_status"),
+            &tr(l, "lbl_total"),
+            &tr(l, "lbl_outstanding"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_customer_invoices");
     Ok(views::respond(views::page(&ctx, &title, body)))
@@ -447,31 +441,25 @@ pub async fn payment_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) ->
             ),
         ]);
     }
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_payments",
-            "",
-            vec![
-                super::search_form(l, "/payments", &search, ""),
-                views::link_btn("/payments/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table(
-            l,
-            &[
-                &tr(l, "lbl_number"),
-                &tr(l, "lbl_document"),
-                &tr(l, "lbl_name"),
-                &tr(l, "lbl_reference"),
-                &tr(l, "lbl_date"),
-                &tr(l, "lbl_method"),
-                &tr(l, "lbl_amount"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/payments", &search, ""),
+        views::link_btn("/payments/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table(
+        l,
+        &[
+            &tr(l, "lbl_number"),
+            &tr(l, "lbl_document"),
+            &tr(l, "lbl_name"),
+            &tr(l, "lbl_reference"),
+            &tr(l, "lbl_date"),
+            &tr(l, "lbl_method"),
+            &tr(l, "lbl_amount"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_payments");
     Ok(views::respond(views::page(&ctx, &title, body)))
@@ -644,8 +632,12 @@ pub async fn payment_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError
 // Credit
 // ---------------------------------------------------------------------------
 
-pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn credit(
+    ctx: Ctx,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Response, AppError> {
     let l = ctx.lang;
+    let search = q.get("q").cloned().unwrap_or_default();
     let cur = ctx.company.currency.clone();
     let aging = services::aging_report(&ctx.state.db, &ctx.company.id).await?;
 
@@ -658,6 +650,9 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
         .await?;
     let mut rows = Vec::new();
     while let Some(c) = cur_c.try_next().await? {
+        if !super::row_matches(&search, &[&c.name, &c.code]) {
+            continue;
+        }
         let pos = services::credit_position(&ctx.state.db, &ctx.company.id, &c).await?;
         let limit_cell = if pos.unlimited() {
             tr(l, "m_unlimited")
@@ -714,9 +709,9 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
         esc(&views::money_text(aging.d90, &cur)),
     );
 
+    let tools = super::search_form(l, "/credit", &search, "");
     let body = format!(
-        "{}{}{}",
-        super::page_head(&ctx, "nav_credit", "", vec![]),
+        "{}{}",
         views::card(
             &tr(l, "m_aging"),
             format!(
@@ -727,7 +722,7 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
         ),
         views::card(
             &tr(l, "m_credit_usage"),
-            views::table(
+            views::list_table(
                 l,
                 &[
                     &tr(l, "lbl_customer"),
@@ -738,6 +733,7 @@ pub async fn credit(ctx: Ctx) -> Result<Response, AppError> {
                 ],
                 rows,
                 "msg_no_records",
+                &tools,
             )
         )
     );

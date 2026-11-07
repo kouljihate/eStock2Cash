@@ -75,29 +75,23 @@ pub async fn suppliers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
         })
         .collect::<Vec<_>>();
 
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_suppliers",
-            "",
-            vec![
-                super::search_form(l, "/suppliers", &search, ""),
-                views::link_btn("/suppliers/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table_actions(
-            l,
-            &[
-                &tr(l, "lbl_name"),
-                &tr(l, "lbl_contact"),
-                &tr(l, "lbl_email"),
-                &tr(l, "lbl_status"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/suppliers", &search, ""),
+        views::link_btn("/suppliers/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_name"),
+            &tr(l, "lbl_contact"),
+            &tr(l, "lbl_email"),
+            &tr(l, "lbl_status"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_suppliers");
     Ok(views::respond(views::page(&ctx, &title, body)))
@@ -285,30 +279,24 @@ pub async fn customers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
         ]);
     }
 
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_customers",
-            "",
-            vec![
-                super::search_form(l, "/customers", &search, ""),
-                views::link_btn("/customers/new", &format!("+ {}", tr(l, "a_new"))),
-            ]
-        ),
-        views::table_actions(
-            l,
-            &[
-                &tr(l, "lbl_name"),
-                &tr(l, "lbl_contact"),
-                &tr(l, "lbl_email"),
-                &tr(l, "lbl_credit_limit"),
-                &tr(l, "lbl_exposure"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/customers", &search, ""),
+        views::link_btn("/customers/new", &format!("+ {}", tr(l, "a_new"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_name"),
+            &tr(l, "lbl_contact"),
+            &tr(l, "lbl_email"),
+            &tr(l, "lbl_credit_limit"),
+            &tr(l, "lbl_exposure"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_customers");
     Ok(views::respond(views::page(&ctx, &title, body)))

@@ -59,6 +59,14 @@ pub fn list_filter(company_id: &str, q: &str, fields: &[&str]) -> mongodb::bson:
     doc! { "company_id": company_id, "$or": any }
 }
 
+/// Does any of `parts` hold `term` as literal text, ignoring case? The search box of
+/// a report whose rows are already in memory (credit, the event log) filters with this
+/// instead of a query, so it searches exactly what the table shows.
+pub fn row_matches(term: &str, parts: &[&str]) -> bool {
+    let t = term.trim().to_lowercase();
+    t.is_empty() || parts.iter().any(|p| p.to_lowercase().contains(&t))
+}
+
 /// Escape a user search string before using it as a MongoDB regex.
 pub fn regex_escape(s: &str) -> String {
     s.chars()

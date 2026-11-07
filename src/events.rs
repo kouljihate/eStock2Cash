@@ -248,7 +248,6 @@ pub struct QueueRow {
 #[derive(Debug, Clone, Default)]
 pub struct BrokerInfo {
     pub configured: bool,
-    pub mgmt_url: String,
     pub online: bool,
     pub version: String,
     pub node: String,
@@ -296,7 +295,6 @@ pub async fn broker_info(cfg: &Config) -> BrokerInfo {
     };
     let mut info = BrokerInfo {
         configured: true,
-        mgmt_url: base.clone(),
         ..Default::default()
     };
 

@@ -43,30 +43,24 @@ pub async fn list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<
             views::icon_link(&format!("/tickets/{}", t.id), "print", &tr(l, "a_print")),
         ]);
     }
-    let body = format!(
+    let tools = format!(
         "{}{}",
-        super::page_head(
-            &ctx,
-            "nav_tickets",
-            "",
-            vec![
-                super::search_form(l, "/tickets", &search, ""),
-                views::link_btn("/tickets/new", &format!("+ {}", tr(l, "m_direct_purchase"))),
-            ]
-        ),
-        views::table_actions(
-            l,
-            &[
-                &tr(l, "lbl_number"),
-                &tr(l, "lbl_date"),
-                &tr(l, "lbl_cashier"),
-                &tr(l, "lbl_lines"),
-                &tr(l, "lbl_total"),
-                &tr(l, "lbl_actions"),
-            ],
-            rows,
-            "msg_no_records",
-        )
+        super::search_form(l, "/tickets", &search, ""),
+        views::link_btn("/tickets/new", &format!("+ {}", tr(l, "m_direct_purchase"))),
+    );
+    let body = views::list_table_actions(
+        l,
+        &[
+            &tr(l, "lbl_number"),
+            &tr(l, "lbl_date"),
+            &tr(l, "lbl_cashier"),
+            &tr(l, "lbl_lines"),
+            &tr(l, "lbl_total"),
+            &tr(l, "lbl_actions"),
+        ],
+        rows,
+        "msg_no_records",
+        &tools,
     );
     let title = views::Title::of(l, "nav_tickets");
     Ok(views::respond(views::page(&ctx, &title, body)))

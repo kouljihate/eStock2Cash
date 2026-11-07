@@ -3,6 +3,26 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.8 — 2026-11-07
+
+Every table in a page opens with two header rows.
+
+### Changed
+
+- **The tools are the table's first header row.** The search box and the `+ New`
+  button no longer float above the card: they sit in a header cell spanning every
+  column, centred, in the same card that holds the column names — `views::list_table()`
+  and `views::list_table_actions()`. The second header row still names the columns.
+- The credit workspace, the event log and the broker queues had no search box; they
+  have one now in the same place, with no `+ New` because none of the three can create
+  a record. They filter the rows already in hand with `pages::row_matches()`.
+
+### Fixed
+
+- A search that matches nothing now keeps the table's two header rows and shows
+  "No records yet" in the body, so the box that produced the empty result can be
+  seen and cleared instead of disappearing with the table.
+
 ## 0.7.7 — 2026-11-07
 
 Every list heads its table with the same row.

@@ -337,7 +337,7 @@ pub fn binary_response(bytes: Vec<u8>, content_type: &'static str) -> Response {
 
 /// Table with headers and pre-rendered row cells.
 pub fn table(lang: Lang, headers: &[&str], rows: Vec<Vec<String>>, empty_key: &str) -> String {
-    table_layout(lang, headers, rows, empty_key, false)
+    table_layout(lang, headers, rows, empty_key, false, "")
 }
 
 /// The same table for a list whose last column holds the row actions: that cell is
@@ -348,7 +348,31 @@ pub fn table_actions(
     rows: Vec<Vec<String>>,
     empty_key: &str,
 ) -> String {
-    table_layout(lang, headers, rows, empty_key, true)
+    table_layout(lang, headers, rows, empty_key, true, "")
+}
+
+/// A list table, headed by two rows: the first spans every column and holds the
+/// page's own tools (the search box and the new button), the second names the
+/// columns. `tools` is empty for a table that offers neither.
+pub fn list_table(
+    lang: Lang,
+    headers: &[&str],
+    rows: Vec<Vec<String>>,
+    empty_key: &str,
+    tools: &str,
+) -> String {
+    table_layout(lang, headers, rows, empty_key, false, tools)
+}
+
+/// The same, for a list whose last column holds the row actions.
+pub fn list_table_actions(
+    lang: Lang,
+    headers: &[&str],
+    rows: Vec<Vec<String>>,
+    empty_key: &str,
+    tools: &str,
+) -> String {
+    table_layout(lang, headers, rows, empty_key, true, tools)
 }
 
 fn table_layout(
@@ -357,37 +381,48 @@ fn table_layout(
     rows: Vec<Vec<String>>,
     empty_key: &str,
     actions: bool,
+    tools: &str,
 ) -> String {
-    if rows.is_empty() {
-        return format!(
-            "<div class=\"empty\">{}</div>",
-            tr(lang, empty_key)
-        );
-    }
+    let cols = headers.len();
     let head = headers
         .iter()
         .map(|h| format!("<th>{}</th>", h))
         .collect::<String>();
-    let body = rows
-        .into_iter()
-        .map(|cells| {
-            let last = cells.len().saturating_sub(1);
-            format!(
-                "<tr>{}</tr>",
-                cells
-                    .into_iter()
-                    .enumerate()
-                    .map(|(i, c)| if actions && i == last {
-                        format!("<td class=\"acts\">{c}</td>")
-                    } else {
-                        format!("<td>{c}</td>")
-                    })
-                    .collect::<String>()
-            )
-        })
-        .collect::<String>();
+    let body = if rows.is_empty() {
+        // the header rows stay, so a search that matches nothing can still be
+        // read and cleared from the box that made it
+        format!(
+            "<tr class=\"row-empty\"><td colspan=\"{cols}\"><div class=\"empty\">{}</div></td></tr>",
+            tr(lang, empty_key)
+        )
+    } else {
+        rows.into_iter()
+            .map(|cells| {
+                let last = cells.len().saturating_sub(1);
+                format!(
+                    "<tr>{}</tr>",
+                    cells
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, c)| if actions && i == last {
+                            format!("<td class=\"acts\">{c}</td>")
+                        } else {
+                            format!("<td>{c}</td>")
+                        })
+                        .collect::<String>()
+                )
+            })
+            .collect::<String>()
+    };
+    let tools_row = if tools.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "<tr class=\"thead-tools\"><th colspan=\"{cols}\"><div class=\"page-actions\">{tools}</div></th></tr>"
+        )
+    };
     format!(
-        "<div class=\"table-wrap\"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>"
+        "<div class=\"table-wrap\"><table><thead>{tools_row}<tr>{head}</tr></thead><tbody>{body}</tbody></table></div>"
     )
 }
 
@@ -642,4 +677,34 @@ mod tests {
         assert_eq!(status_tone("st_overdue"), "red");
         assert!(status_badge(Lang::Fr, "st_draft").contains("Brouillon"));
     }
+    #[test]
+    fn a_list_table_heads_with_tools_then_columns() {
+        let t = list_table(
+            Lang::En,
+            &["<b>H</b>", "<b>N</b>"],
+            vec![vec!["1".into(), "2".into()]],
+            "msg_no_records",
+            "<form class=\"search\"></form>",
+        );
+        // two header rows: the tools span every column, the second names them
+        assert!(t.contains(
+            "<thead><tr class=\"thead-tools\"><th colspan=\"2\"><div class=\"page-actions\"><form class=\"search\"></form></div></th></tr><tr><th><b>H</b></th><th><b>N</b></th></tr></thead>"
+        ));
+        // an empty list keeps both rows, so a search that found nothing can be cleared
+        let e = list_table(
+            Lang::En,
+            &["<b>H</b>"],
+            vec![],
+            "msg_no_records",
+            "<form></form>",
+        );
+        assert!(e.contains("<th colspan=\"1\"><div class=\"page-actions\"><form></form></div></th>"));
+        assert!(e.contains("<th><b>H</b></th>"));
+        assert!(e.contains("<td colspan=\"1\"><div class=\"empty\">"));
+        assert!(e.contains("No records"));
+        // a table without tools gets no first row
+        assert!(!table(Lang::En, &["<b>H</b>"], vec![vec!["1".into()]], "msg_no_records")
+            .contains("thead-tools"));
+    }
+
 }

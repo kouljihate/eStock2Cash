@@ -334,16 +334,31 @@ hovering (or a screen reader) still says `Open · فتح` while the column keeps
 in every language. `views::table()` leaves the cells plain for tables that only
 display data.
 
-### The row above a table
+### Two header rows
 
-Every list table is headed by one centred row: the search box first, then the
-`+ New` button. Both come from `pages::search_form()`, so the box, its placeholder
-and its button are the same on all of them, and the term stays in the box after the
-search.
+Every table in a page opens with two header rows. The first spans all columns and
+holds the page's tools — the search box first, then `+ New` — centred; the second
+names the columns, Arabic stacked above the Latin. `views::list_table()` and
+`views::list_table_actions()` build the table, so a list cannot drift from the
+house style by rendering its own toolbar.
 
-Search runs on the server. `pages::list_filter()` builds the Mongo filter — the
-company's rows, narrowed to those whose columns hold the term as literal,
-case-insensitive text — so each list names the columns it searches:
+```
+<thead>
+  <tr class="thead-tools"><th colspan="6">  search · + New  </th></tr>
+  <tr><th>الرقم NUMBER</th> … </tr>
+</thead>
+```
+
+Because the box lives in the header, it is in the same card as the table (and
+scrolls sideways with it), and it stays there even when a search matches nothing:
+the message moves into the body as a row spanning the columns, so the term can be
+seen and cleared instead of vanishing with the table.
+
+Both parts come from `pages::search_form()`: the same box, placeholder and button
+everywhere, with the term still in it after the search. Search runs on the server.
+`pages::list_filter()` builds the Mongo filter — the company's rows, narrowed to
+those whose columns hold the term as literal, case-insensitive text — so each list
+names the columns it searches:
 
 | list | columns searched |
 | --- | --- |
@@ -357,6 +372,13 @@ case-insensitive text — so each list names the columns it searches:
 | Customer invoices | number, customer |
 | Payments | number, party, invoice |
 | Tickets | number, cashier |
+| Credit | customer name, code |
+| Event log | routing key, event type, date |
+| Broker queues | queue name |
+
+The last three are reports: they have no `+ New` because none of them can create a
+record, and their rows are already in hand, so they filter with
+`pages::row_matches()` rather than a query.
 
 ### Settings › Font size
 
