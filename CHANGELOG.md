@@ -3,6 +3,17 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.5 — 2026-11-07
+
+The group headers keep a name whole.
+
+### Fixed
+
+- A group whose Latin name did not fit beside the Arabic half was broken at one of its
+  hyphens (`PROCURE-TO-` / `PAY`); it now moves whole onto a second line, while a short
+  group name (`In stock`, `Administration`) stays on one line with its Arabic half.
+- The fold chevron sits outside the flow, so the label keeps the full width of the row.
+
 ## 0.7.4 — 2026-11-07
 
 The sidebar groups fold.

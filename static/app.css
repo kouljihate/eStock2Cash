@@ -345,6 +345,7 @@ html.nav-closed .side-foot { margin-top: 6px; }
    rule, so the folded state is spelled out here */
 .nav-section:not([open]) > .nav-links { display: none; }
 .nav-title {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -353,7 +354,7 @@ html.nav-closed .side-foot { margin-top: 6px; }
   text-transform: uppercase;
   letter-spacing: .16em;
   color: #66779c;
-  padding: 2px 12px 7px;
+  padding: 2px 26px 7px 12px;
   border-radius: 8px;
   cursor: pointer;
   user-select: none;
@@ -364,7 +365,21 @@ html.nav-closed .side-foot { margin-top: 6px; }
 .nav-title:hover { color: #a9b8d6; }
 .nav-title:focus-visible { outline: 2px solid rgba(129, 140, 248, .8); outline-offset: 1px; }
 .nav-title-text { flex: 1; min-width: 0; }
-.nav-title svg { width: 13px; height: 13px; flex: none; transition: transform .18s ease; }
+/* a group name that does not fit beside its Arabic half moves whole onto a second
+   line instead of breaking at one of its hyphens */
+.nav-title .bi { flex-wrap: wrap; row-gap: 0; }
+/* the chevron sits outside the flow, so the label keeps the width of the row */
+.nav-title svg {
+  position: absolute;
+  inset-inline-end: 9px;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  margin-top: -6px;
+  flex: none;
+  transition: transform .18s ease;
+  transform-origin: 50% 50%;
+}
 .nav-section:not([open]) .nav-title svg { transform: rotate(-90deg); }
 /* the icon rail hides the group headers, so it shows every link again */
 html.nav-closed .nav-section > .nav-links { display: flex; }
