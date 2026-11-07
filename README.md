@@ -329,6 +329,14 @@ The last column of a list table is the **actions** column, and every action in i
 an **icon-only circle** — open, receive, PDF, pay, deliver, invoice, print, movements
 and delete. `views::table_actions()` marks that cell, `views::icon_link()` /
 `views::icon_post()` build the buttons, and the stylesheet centres them in the cell.
+
+Each circle is 34 px at the `M` icon size, drawn as a pale tinted disc with a ring
+round it and the glyph in the deep brand ink (`#4338ca` on `#eef1fe`, 8.4:1 — well
+over WCAG AA), so an action reads as a button instead of a glyph floating in the row;
+a delete is the same disc in red (`#a52a1a` on `#fdeeee`). Hovering or tabbing to one
+inverts it: solid disc, white glyph, and the ring does the work of the mouse cursor.
+The disc scales with the **Icon size** setting, so the glyph keeps the same share of
+it at every step.
 The bilingual label is not drawn: it becomes the button's `title` and `aria-label`, so
 hovering (or a screen reader) still says `Open · فتح` while the column keeps one width
 in every language. `views::table()` leaves the cells plain for tables that only

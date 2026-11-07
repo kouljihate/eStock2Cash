@@ -56,7 +56,12 @@ for pap in wanted:
     vb = re.search(r'viewBox="([^"]+)"', attrs)
     view_box = vb.group(1) if vb else '0 0 24 24'
     body = body.strip()
-    body = re.sub(r'\s*\n\s*', '', body)
+    # One line per glyph: a break between two tags is noise and closes up, but a
+    # break between two attributes is the space that keeps them apart (`<path d=`
+    # must not become `<pathd=`), so it folds to a single space.
+    body = re.sub(r'>\s+<', '><', body)
+    body = re.sub(r'\s*\n\s*', ' ', body)
+    body = re.sub(r'\s{2,}', ' ', body)
     # the set is drawn in black; the frame's fill is what colours it here
     body = body.replace('fill="black"', 'fill="currentColor"')
     body = body.replace('stroke="black"', 'stroke="currentColor"')

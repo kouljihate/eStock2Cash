@@ -529,7 +529,7 @@ html.nav-closed .nav-section > .nav-links { display: flex; }
   gap: 7px;
   padding: 7px 10px;
   border-radius: 9px;
-  font-size: 12.5px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--ink-2);
   text-decoration: none;
@@ -902,13 +902,46 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .row-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
 
 /* the last column of a list table is the actions column: it holds icon-only
-   buttons, centred in the cell, each one a circle that tints on hover — brand for
-   an action, red for the delete */
+   buttons, centred in the cell, each one a circle. At rest the circle is a pale
+   tinted disc with a ring round it and the glyph in the deep brand ink (8.4:1, well
+   over 4.5:1), so the actions read as buttons rather than glyphs floating in the
+   row; hovering or focusing inverts it — solid disc, white glyph. The disc grows
+   with --ico so the glyph keeps the same share of it at every icon size */
 td.acts { text-align: center; }
-td.acts .row-actions { justify-content: center; align-items: center; }
-td.acts .btn-icon { border-radius: 50%; background: transparent; }
-td.acts .btn-icon:hover { background: rgba(79, 70, 229, .09); color: var(--brand-600); }
-td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
+td.acts .row-actions {
+  justify-content: center;
+  align-items: center;
+  gap: calc(7px * var(--ico));
+  /* one row of circles at every icon size: the disc grows with --ico, so wrapping
+     would stack the actions instead of widening their column, and the table already
+     scrolls sideways inside its wrapper */
+  flex-wrap: nowrap;
+}
+td.acts .btn-icon {
+  width: calc(34px * var(--ico));
+  height: calc(34px * var(--ico));
+  border: 1px solid rgba(79, 70, 229, .24);
+  background: #eef1fe;
+  color: var(--brand-600);
+  box-shadow: 0 1px 2px rgba(12, 18, 34, .06);
+  transition: background .14s ease, color .14s ease, border-color .14s ease, box-shadow .14s ease;
+}
+td.acts .btn-icon:hover,
+td.acts .btn-icon:focus-visible {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 7px 16px -7px rgba(79, 70, 229, .8);
+}
+td.acts .btn-icon.danger { border-color: rgba(180, 35, 24, .24); background: #fdeeee; color: #a52a1a; }
+td.acts .btn-icon svg { width: calc(16px * var(--ico)); height: calc(16px * var(--ico)); }
+td.acts .btn-icon.danger:hover,
+td.acts .btn-icon.danger:focus-visible {
+  background: #b42318;
+  border-color: #b42318;
+  color: #fff;
+  box-shadow: 0 7px 16px -7px rgba(180, 35, 24, .75);
+}
 
 /* =============================================================  badges */
 

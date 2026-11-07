@@ -649,6 +649,22 @@ mod tests {
     }
 
     #[test]
+    fn every_glyph_carries_its_path_data() {
+        // the generator once glued `<path` to `d=`, so the trash drew nothing; a
+        // glyph without path data in its body would fail here
+        for name in [
+            "dashboard", "suppliers", "po", "receipt", "bill", "wallet", "customers",
+            "quote", "order", "delivery", "products", "credit", "ticket", "admin",
+            "events", "broker", "cog", "logout", "panel", "chevron", "eye", "pencil",
+            "trash", "file", "print", "globe", "unknown-glyph",
+        ] {
+            let svg = icon(name);
+            assert!(svg.contains(" d=\""), "{} has no path data", name);
+            assert!(!svg.contains("pathd="), "{} has a glued attribute", name);
+        }
+    }
+
+    #[test]
     fn settings_offer_a_size_for_every_icon() {
         // the fourth step of the icon row is the current one, and every step keeps
         // the page the menu was opened from

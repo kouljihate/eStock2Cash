@@ -3,6 +3,26 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.11 — 2026-11-07
+
+The table actions became buttons.
+
+### Changed
+
+- Row actions in every list are 34 px circles — a pale tinted disc with a ring and
+  the glyph in the deep brand ink (8.4:1, over WCAG AA), red for delete, inverting to
+  a solid disc with a white glyph on hover or focus. They used to be a bare 15 px
+  glyph in a transparent 30 px circle, which read as decoration rather than
+  something to click. The disc scales with the icon size setting.
+
+### Fixed
+
+- The trash glyph was missing from `src/icons.rs`: the Papicons generator removed the
+  whitespace between a tag and its first attribute, so `<path d=…>` shipped as
+  `<pathd=…>` and the delete buttons in every list drew an empty circle. The
+  generator now folds a line break to a space and only closes `> <` up, and a test
+  checks every shipped glyph still carries its path data.
+
 ## 0.7.10 — 2026-11-07
 
 Icon size is a setting.
