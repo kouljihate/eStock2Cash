@@ -91,7 +91,7 @@ pub async fn suppliers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
                 views::link_btn("/suppliers/new", &format!("+ {}", tr(l, "a_new"))),
             ]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_name"),
@@ -306,7 +306,7 @@ pub async fn customers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
                 views::link_btn("/customers/new", &format!("+ {}", tr(l, "a_new"))),
             ]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_name"),

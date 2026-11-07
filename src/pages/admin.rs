@@ -126,7 +126,7 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
             &tr(l, "m_users"),
             format!(
                 "{}{}",
-                views::table(
+                views::table_actions(
                     l,
                     &[
                         &tr(l, "lbl_name"),

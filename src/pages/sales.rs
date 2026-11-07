@@ -432,7 +432,7 @@ pub async fn order_list(ctx: Ctx) -> Result<Response, AppError> {
             "",
             vec![views::link_btn("/customer-orders/new", &format!("+ {}", tr(l, "a_new")))]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_number"),

@@ -3,6 +3,24 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.6.1 — 2026-11-07
+
+Table headers are centred and the actions column holds round, centred buttons.
+
+### Changed
+
+- **Every table header is centred**, both axes, in all list and document tables. The
+  stacked bilingual halves centre against each other, so the Arabic half no longer
+  hangs left under a wide Latin label. Column headers stay centred for numeric
+  columns too; the values underneath keep their right alignment.
+- **The actions column is a column of round buttons in the middle of the cell.**
+  `views::table_actions()` marks its last cell, so only lists that really end with
+  an actions column are affected; labelled actions become pills and icon-only
+  buttons — including the remove-line button on a document editor — become circles.
+  Headers and the actions column follow the same rule in RTL.
+- **`views::table_actions()`** joins `views::table()`; both share one renderer, and
+  the plain table keeps plain cells for display-only lists.
+
 ## 0.6.0 — 2026-11-06
 
 Labels are arranged by element type, and text size gained a fourth step.

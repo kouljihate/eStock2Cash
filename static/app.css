@@ -185,6 +185,8 @@ thead th .bi {
   gap: 0;
   line-height: 1.25;
 }
+/* a header cell centres its stacked pair, so the short half sits under the long one */
+thead th .bi { align-items: center; }
 .btn .bi > .ar,
 button .bi > .ar,
 thead th .bi > .ar { text-align: start; }
@@ -786,7 +788,8 @@ html[dir="rtl"] .stat strong { font-family: var(--font-num); font-size: 19px; }
 table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
 
 thead th {
-  text-align: left;
+  text-align: center;
+  vertical-align: middle;
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -808,8 +811,16 @@ tbody tr:hover { background: #f8f9ff; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody td a { font-weight: 700; color: var(--ink); }
 tbody td a:hover { color: var(--brand); }
-th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+th.num { text-align: center; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .row-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* the last column of a list table is the actions column: its buttons sit in the
+   middle of the cell and are round instead of square-cornered */
+td.acts { text-align: center; }
+td.acts .row-actions { justify-content: center; align-items: center; }
+td.acts .btn { border-radius: 999px; }
+td.acts .btn-icon { border-radius: 50%; }
 
 /* =============================================================  badges */
 
@@ -894,7 +905,7 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   width: 30px; height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 50%;
   background: #f3f5fa;
   color: var(--muted);
   font-size: 15px;
@@ -977,9 +988,11 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
   line-height: 1.25;
   letter-spacing: .04em;
   font-size: 8.6px;
-  vertical-align: top;
+  vertical-align: middle;
 }
 .lines-table td { padding: 6px 8px; border-bottom: 1px solid var(--line-2); }
+/* the last cell of a line table is its remove button: centre it like the list tables */
+.lines-table td:last-child { text-align: center; }
 .lines-table tbody tr:hover { background: #fbfcff; }
 .lines-table input, .lines-table select {
   width: 100%;
@@ -1232,12 +1245,12 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* The direction attribute already mirrors flow, ordering and inline margins;
    only the physical alignments and the arrow pipeline need help. */
 html[dir="rtl"] .sidebar { border-right: 0; border-left: 1px solid rgba(255, 255, 255, .05); }
-html[dir="rtl"] thead th { text-align: right; }
-html[dir="rtl"] th.num, html[dir="rtl"] td.num { text-align: left; }
+html[dir="rtl"] thead th { text-align: center; }
+html[dir="rtl"] td.num { text-align: left; }
 html[dir="rtl"] .chain { direction: ltr; }
 html[dir="rtl"] .lines-table input.num { text-align: left; }
 html[dir="rtl"] .lines-table td.line-total { text-align: left; }
-html[dir="rtl"] .row-actions { justify-content: flex-start; }
+html[dir="rtl"] .row-actions { justify-content: center; }
 
 /* =============================================================  responsive */
 

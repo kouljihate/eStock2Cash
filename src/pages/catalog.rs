@@ -94,7 +94,7 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
                 views::link_btn("/products/new", &format!("+ {}", tr(l, "a_new"))),
             ]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_product"),

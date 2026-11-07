@@ -70,7 +70,7 @@ pub async fn po_list(ctx: Ctx) -> Result<Response, AppError> {
             "",
             vec![views::link_btn("/purchase-orders/new", &format!("+ {}", tr(l, "a_new")))]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_number"),
@@ -802,7 +802,7 @@ pub async fn si_list(ctx: Ctx) -> Result<Response, AppError> {
             "",
             vec![views::link_btn("/supplier-invoices/new", &format!("+ {}", tr(l, "a_new")))]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_number"),

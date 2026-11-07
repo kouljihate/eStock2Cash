@@ -279,6 +279,19 @@ is stored in `localStorage` (`s2c-nav`) and re-applied by a small inline script 
 `<head>`, so a collapsed menu never flashes open while a page loads. On a phone the
 sidebar is a stacked block and the toggle is hidden.
 
+### Tables
+
+Every column header is centred, horizontally and vertically, and the two languages
+of a header stack under each other with the short half centred beneath the long one.
+Body cells keep their own alignment — numbers stay right-aligned, text stays
+left-aligned — so columns remain easy to scan.
+
+The last column of a list table is the **actions** column. `views::table_actions()`
+marks that cell, and the stylesheet puts it in the middle of the cell with its
+buttons **round**: a pill for a labelled action (the full bilingual label needs the
+room) and a circle for an icon-only one. `views::table()` leaves the cells plain for
+tables that only display data.
+
 ### Settings › Font size
 
 Text size is set **per font**, in a submenu for each face: `Comfortaa` (the Latin

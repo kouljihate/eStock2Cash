@@ -316,6 +316,27 @@ pub fn binary_response(bytes: Vec<u8>, content_type: &'static str) -> Response {
 
 /// Table with headers and pre-rendered row cells.
 pub fn table(lang: Lang, headers: &[&str], rows: Vec<Vec<String>>, empty_key: &str) -> String {
+    table_layout(lang, headers, rows, empty_key, false)
+}
+
+/// The same table for a list whose last column holds the row actions: that cell is
+/// marked so the stylesheet can centre its round buttons.
+pub fn table_actions(
+    lang: Lang,
+    headers: &[&str],
+    rows: Vec<Vec<String>>,
+    empty_key: &str,
+) -> String {
+    table_layout(lang, headers, rows, empty_key, true)
+}
+
+fn table_layout(
+    lang: Lang,
+    headers: &[&str],
+    rows: Vec<Vec<String>>,
+    empty_key: &str,
+    actions: bool,
+) -> String {
     if rows.is_empty() {
         return format!(
             "<div class=\"empty\">{}</div>",
@@ -329,11 +350,17 @@ pub fn table(lang: Lang, headers: &[&str], rows: Vec<Vec<String>>, empty_key: &s
     let body = rows
         .into_iter()
         .map(|cells| {
+            let last = cells.len().saturating_sub(1);
             format!(
                 "<tr>{}</tr>",
                 cells
                     .into_iter()
-                    .map(|c| format!("<td>{c}</td>"))
+                    .enumerate()
+                    .map(|(i, c)| if actions && i == last {
+                        format!("<td class=\"acts\">{c}</td>")
+                    } else {
+                        format!("<td>{c}</td>")
+                    })
                     .collect::<String>()
             )
         })
@@ -514,6 +541,15 @@ mod tests {
         );
         assert!(t.contains("<b>H</b>"));
         assert!(t.contains("<td>&lt;x&gt;</td>"));
+        // only a list with an actions column marks that cell
+        assert!(!t.contains("class=\"acts\""));
+        let a = table_actions(
+            Lang::En,
+            &["<b>H</b>", "<b>A</b>"],
+            vec![vec!["1".into(), "x".into()]],
+            "msg_no_records",
+        );
+        assert!(a.contains("<td>1</td><td class=\"acts\">x</td>"));
     }
 
     #[test]

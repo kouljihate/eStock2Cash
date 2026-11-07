@@ -49,7 +49,7 @@ pub async fn list(ctx: Ctx) -> Result<Response, AppError> {
             "",
             vec![views::link_btn("/tickets/new", &format!("+ {}", tr(l, "m_direct_purchase")))]
         ),
-        views::table(
+        views::table_actions(
             l,
             &[
                 &tr(l, "lbl_number"),
