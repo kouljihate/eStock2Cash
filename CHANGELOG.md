@@ -3,6 +3,16 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.14 — 2026-11-07
+
+The page behind the confirmation steps back.
+
+### Changed
+
+- The delete dialog's backdrop blurs the page by 7 px and drops the saturation a
+  little, fading in over 180 ms, instead of laying a flat grey sheet over it. The
+  table rows that were shouting through the question are now out of focus behind it.
+
 ## 0.7.13 — 2026-11-07
 
 The delete dialog got the room it needed.

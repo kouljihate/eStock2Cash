@@ -1048,7 +1048,18 @@ td.acts .btn-icon.danger:focus-visible {
   max-width: min(560px, calc(100vw - 32px));
   color: var(--ink);
 }
-.modal::backdrop { background: rgba(12, 18, 34, .46); backdrop-filter: blur(2px); }
+/* the page behind softens out of focus: a flat dim leaves the table rows shouting
+   through the question, which is the one thing worth reading at that moment */
+.modal::backdrop {
+  background: rgba(12, 18, 34, .40);
+  -webkit-backdrop-filter: blur(7px) saturate(.9);
+  backdrop-filter: blur(7px) saturate(.9);
+  animation: backdrop-in .18s ease-out;
+}
+@keyframes backdrop-in {
+  from { background: rgba(12, 18, 34, 0); backdrop-filter: blur(0); }
+  to { background: rgba(12, 18, 34, .40); backdrop-filter: blur(7px) saturate(.9); }
+}
 .modal[open] { animation: modal-in .16s ease-out; }
 @keyframes modal-in {
   from { opacity: 0; transform: translateY(7px) scale(.985); }

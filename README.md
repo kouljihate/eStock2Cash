@@ -343,7 +343,8 @@ it at every step.
 A delete never posts on the first click. The form carries `data-confirm` (and
 `data-confirm-note` naming the record), `views::confirm_dialog()` draws one `<dialog>`
 in the shell, and `app.js` opens it: the question is asked in both languages, the page
-behind dims, the focus moves to **Cancel** and Escape closes it. Only **Delete** posts
+behind softens out of focus behind a 7 px blur, the focus moves to **Cancel** and
+Escape closes it. Only **Delete** posts
 the form. There is no backdrop dismissal, so a stray click cannot wave a deletion
 through. Browsers without `<dialog>` fall back to their own confirm box.
 
