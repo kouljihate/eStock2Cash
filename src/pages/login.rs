@@ -25,6 +25,10 @@ fn shell(
     let settings = crate::views::settings_menu(lang, "/login", fs_lat, fs_ar);
     let tagline1 = tr(lang, "app_tagline_1");
     let tagline2 = tr(lang, "app_tagline_2");
+    // The fixed header carries both names of the app, the footer its credits.
+    let app_en = esc(brand);
+    let app_ar = crate::i18n::tr_ar("app_name");
+    let credits = format!("© {} (koul)", chrono::Utc::now().format("%Y"));
     let view = view! {
         <html lang=lang.code() dir=lang.dir() data-fs-lat=fs_lat data-fs-ar=fs_ar>
             <head>
@@ -35,17 +39,32 @@ fn shell(
                 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
             </head>
             <body class=format!("login-body lang-{}", lang.code())>
+                <header class="login-head">
+                    <div class="lh-col lh-lat">
+                        <div class="brand-mark">"S2C"</div>
+                        <span class="lh-name">{app_en}</span>
+                    </div>
+                    <div class="lh-col lh-mid">
+                        <div class="tb-settings" inner_html=settings></div>
+                    </div>
+                    <div class="lh-col lh-ar">
+                        <span class="lh-name ar">{app_ar}</span>
+                    </div>
+                </header>
                 <div class="login-wrap">
-                    <div class="login-top" inner_html=settings></div>
                     <div class="login-brand">
                         <div class="brand-mark lg">"S2C"</div>
-                        <h1>{esc(brand)}</h1>
                         <p inner_html=tagline1></p>
                         <br/>
                         <p inner_html=tagline2></p>
                     </div>
                     <div inner_html=body></div>
                 </div>
+                <footer class="login-foot">
+                    <div class="lf-col lf-lat">{credits}</div>
+                    <div class="lf-col lf-mid"></div>
+                    <div class="lf-col lf-ar"><span class="foot-ver">{ concat!("v", env!("CARGO_PKG_VERSION")) }</span></div>
+                </footer>
             </body>
         </html>
     };

@@ -271,6 +271,20 @@ text**:
 | middle (20 %) | sign-out button and the `Settings` dropdown |
 | right (40 %) | the same title in Arabic, right-aligned |
 
+### The sign-in page
+
+Before you are signed in, the page keeps a fixed header and footer in the same
+three columns as the app bar — **40 % English text, 20 % controls, 40 % Arabic
+text** — so the frame never scrolls with the form:
+
+| bar | left (40 %) | middle (20 %) | right (40 %) |
+| --- | --- | --- | --- |
+| header | `S2C` mark and the app name in the duo's Latin language | the `Settings` menu (`/login`) | the app name in Arabic, right-aligned |
+| footer | `© <year> (koul)` | — | the version badge (`v0.7.0`) |
+
+The card stays centred between the two bars, and the header keeps the 40 / 20 / 40
+split on a phone by tightening its type.
+
 ### The sidebar
 
 The menu collapses to a 78 px icon rail and expands back with the panel button in

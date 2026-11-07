@@ -3,6 +3,27 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.0 — 2026-11-07
+
+The sign-in page is framed by a fixed header and footer.
+
+### Added
+
+- **A fixed header on `/login`** in the same 40 / 20 / 40 columns as the app bar:
+  the `S2C` mark and the Latin app name, the `Settings` menu in the middle, and the
+  Arabic app name at the far end. It stays on screen while the form scrolls.
+- **A fixed footer** with the copyright (`© <year> (koul)`) at the left, an empty
+  middle column, and the version badge at the right — its pill palette adapted to
+  the dark sign-in background.
+
+### Changed
+
+- The sign-in card is centred between the two bars instead of the whole viewport,
+  and the app name no longer repeats above the form: the hero keeps the `S2C` mark
+  and the two taglines, the names moved to the header.
+- The header keeps its 40 / 20 / 40 split on a phone, with tighter type and padding,
+  instead of stacking.
+
 ## 0.6.1 — 2026-11-07
 
 Table headers are centred and the actions column holds round, centred buttons.
