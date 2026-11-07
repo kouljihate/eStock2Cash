@@ -347,6 +347,10 @@ behind dims, the focus moves to **Cancel** and Escape closes it. Only **Delete**
 the form. There is no backdrop dismissal, so a stray click cannot wave a deletion
 through. Browsers without `<dialog>` fall back to their own confirm box.
 
+The card is 560 px wide at most (the viewport minus its margins on a phone), with a
+50 px badge, a 20 px title and a 28 px pad, so the record it names is read at a glance
+rather than squinted at.
+
 The dialog answers through its two buttons rather than through the `close` event,
 because some Chromium builds never deliver that event — and a confirmation that
 silently does nothing is the worst possible outcome for a delete.

@@ -3,6 +3,16 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.13 — 2026-11-07
+
+The delete dialog got the room it needed.
+
+### Changed
+
+- The confirmation card is 560 px wide instead of 430, with a 28 px pad, a 50 px trash
+  badge, a 20 px title, 14 px body text and roomier buttons, so the question and the
+  record it names read at a glance.
+
 ## 0.7.12 — 2026-11-07
 
 Deletes ask in the app, not in the browser.

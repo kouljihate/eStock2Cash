@@ -1045,7 +1045,7 @@ td.acts .btn-icon.danger:focus-visible {
   border: 0;
   padding: 0;
   background: transparent;
-  max-width: min(430px, calc(100vw - 32px));
+  max-width: min(560px, calc(100vw - 32px));
   color: var(--ink);
 }
 .modal::backdrop { background: rgba(12, 18, 34, .46); backdrop-filter: blur(2px); }
@@ -1057,42 +1057,42 @@ td.acts .btn-icon.danger:focus-visible {
 .modal-card {
   display: block;
   margin: 0;
-  padding: 22px 22px 18px;
+  padding: 28px 30px 24px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--card);
   box-shadow: 0 30px 64px -26px rgba(12, 18, 34, .55);
 }
 .modal-mark {
-  width: 42px;
-  height: 42px;
+  width: 50px;
+  height: 50px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: #feeceb;
   color: #b42318;
-  margin-bottom: 13px;
+  margin-bottom: 16px;
 }
-.modal-mark svg { width: 20px; height: 20px; }
+.modal-mark svg { width: 24px; height: 24px; }
 .modal-title {
-  margin: 0 0 7px;
-  font-size: 17px;
+  margin: 0 0 9px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.35;
 }
 .modal-title .bi { flex-direction: column-reverse; align-items: flex-start; gap: 1px; }
-.modal-text { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.modal-text { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
 /* the two halves of a sentence stack instead of running into each other: the Arabic
    face is set large, and side by side the two would overlap */
 .modal-text .bi { flex-direction: column-reverse; align-items: flex-start; gap: 3px; }
 .modal-text .bi > *,
 .modal-title .bi > * { text-align: left; }
 .modal-subject {
-  margin: 11px 0 0;
-  padding: 8px 11px;
-  border-radius: 10px;
+  margin: 14px 0 0;
+  padding: 11px 14px;
+  border-radius: 11px;
   background: var(--line-2);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   word-break: break-word;
 }
@@ -1100,9 +1100,10 @@ td.acts .btn-icon.danger:focus-visible {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
+  gap: 10px;
+  margin-top: 24px;
 }
+.modal-actions .btn { padding: 10px 20px; font-size: 12.5px; border-radius: 11px; }
 .btn-danger-solid {
   background: #b42318;
   border-color: #b42318;
