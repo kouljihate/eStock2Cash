@@ -40,7 +40,12 @@ pub async fn index(ctx: Ctx) -> Result<Response, AppError> {
             ),
             format!("<span class=\"badge green\">{}</span>", tr(l, "lbl_role")),
             esc(&u.locale),
-            views::icon_post(&format!("/admin/users/{}/delete", u.id), "trash", &tr(l, "a_delete")),
+            views::icon_post_of(
+                &format!("/admin/users/{}/delete", u.id),
+                "trash",
+                &tr(l, "a_delete"),
+                &format!("{} · {}", u.full_name, u.username),
+            ),
         ]);
     }
 

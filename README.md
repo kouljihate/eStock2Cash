@@ -337,6 +337,19 @@ a delete is the same disc in red (`#a52a1a` on `#fdeeee`). Hovering or tabbing t
 inverts it: solid disc, white glyph, and the ring does the work of the mouse cursor.
 The disc scales with the **Icon size** setting, so the glyph keeps the same share of
 it at every step.
+
+### Delete confirmation
+
+A delete never posts on the first click. The form carries `data-confirm` (and
+`data-confirm-note` naming the record), `views::confirm_dialog()` draws one `<dialog>`
+in the shell, and `app.js` opens it: the question is asked in both languages, the page
+behind dims, the focus moves to **Cancel** and Escape closes it. Only **Delete** posts
+the form. There is no backdrop dismissal, so a stray click cannot wave a deletion
+through. Browsers without `<dialog>` fall back to their own confirm box.
+
+The dialog answers through its two buttons rather than through the `close` event,
+because some Chromium builds never deliver that event — and a confirmation that
+silently does nothing is the worst possible outcome for a delete.
 The bilingual label is not drawn: it becomes the button's `title` and `aria-label`, so
 hovering (or a screen reader) still says `Open · فتح` while the column keeps one width
 in every language. `views::table()` leaves the cells plain for tables that only

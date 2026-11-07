@@ -1037,6 +1037,80 @@ td.acts .btn-icon.danger:focus-visible {
 .btn-icon:hover { background: #feeceb; color: #a52a1a; }
 .btn-icon svg { width: calc(15px * var(--ico)); height: calc(15px * var(--ico)); }
 
+/* ================================================================  modal */
+
+/* a delete asks through this, not through the browser's own box: a <dialog> in the
+   top layer, so the page behind dims, the focus stays inside and Escape closes it */
+.modal {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: min(430px, calc(100vw - 32px));
+  color: var(--ink);
+}
+.modal::backdrop { background: rgba(12, 18, 34, .46); backdrop-filter: blur(2px); }
+.modal[open] { animation: modal-in .16s ease-out; }
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(7px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+.modal-card {
+  display: block;
+  margin: 0;
+  padding: 22px 22px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 30px 64px -26px rgba(12, 18, 34, .55);
+}
+.modal-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #feeceb;
+  color: #b42318;
+  margin-bottom: 13px;
+}
+.modal-mark svg { width: 20px; height: 20px; }
+.modal-title {
+  margin: 0 0 7px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.modal-title .bi { flex-direction: column-reverse; align-items: flex-start; gap: 1px; }
+.modal-text { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+/* the two halves of a sentence stack instead of running into each other: the Arabic
+   face is set large, and side by side the two would overlap */
+.modal-text .bi { flex-direction: column-reverse; align-items: flex-start; gap: 3px; }
+.modal-text .bi > *,
+.modal-title .bi > * { text-align: left; }
+.modal-subject {
+  margin: 11px 0 0;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: var(--line-2);
+  font-size: 13px;
+  font-weight: 700;
+  word-break: break-word;
+}
+.modal-subject[hidden] { display: none; }
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.btn-danger-solid {
+  background: #b42318;
+  border-color: #b42318;
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(180, 35, 24, .9);
+}
+.btn-danger-solid:hover { background: #971c12; border-color: #971c12; color: #fff; }
+
 /* ================================================================  forms */
 
 .form { padding: 20px; display: flex; flex-direction: column; gap: 18px; }

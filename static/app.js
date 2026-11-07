@@ -99,24 +99,83 @@
   /* ---------------- double submit guard ---------------- */
   function initForms() {
     document.querySelectorAll("form").forEach(function (form) {
-      form.addEventListener("submit", function () {
+      form.addEventListener("submit", function (e) {
         var btn = form.querySelector('button[type="submit"]');
-        if (btn) {
-          setTimeout(function () { btn.disabled = true; }, 0);
-        }
+        if (!btn) return;
+        // the delete confirmation cancels the first submit, so only the one that
+        // really posts may disable its button
+        setTimeout(function () {
+          if (!e.defaultPrevented) btn.disabled = true;
+        }, 0);
       });
     });
   }
 
   /* ---------------- delete confirmation ---------------- */
+  /* A form that carries `data-confirm` does not post straight away: it opens the
+     <dialog> the shell drew, which names the record and asks in both languages. The
+     answer comes back as the dialog's returnValue, and only then does the form post.
+     Browsers without dialog support fall back to their own box. */
   function initConfirm() {
-    document.querySelectorAll("form").forEach(function (form) {
-      if (form.action && /\/delete$/.test(form.action)) {
+    var forms = document.querySelectorAll("form[data-confirm]");
+    if (!forms.length) return;
+    var dlg = document.getElementById("confirm-dialog");
+
+    if (!dlg || typeof dlg.showModal !== "function") {
+      forms.forEach(function (form) {
         form.addEventListener("submit", function (e) {
-          if (!window.confirm("Delete this record?")) e.preventDefault();
+          var text = form.getAttribute("data-confirm-note") || form.getAttribute("data-confirm");
+          if (!window.confirm(text)) e.preventDefault();
         });
-      }
+      });
+      return;
+    }
+
+    var pending = null;
+    var subject = dlg.querySelector("[data-confirm-subject]");
+    var yes = dlg.querySelector("[data-confirm-ok]");
+    var no = dlg.querySelector("[data-confirm-cancel]");
+
+    forms.forEach(function (form) {
+      form.addEventListener("submit", function (e) {
+        if (form.getAttribute("data-confirmed") === "1") return; // the second pass posts
+        e.preventDefault();
+        pending = form;
+        var text = form.getAttribute("data-confirm-note") || form.getAttribute("data-confirm") || "";
+        if (subject) {
+          subject.textContent = text;
+          subject.hidden = !text;
+        }
+        dlg.showModal();
+        if (no) no.focus();
+      });
     });
+
+    /* The answer is read from the buttons rather than from the dialog's close event:
+       some builds never deliver one, and a confirmation that silently does nothing is
+       the worst outcome for a delete. Escape closes the dialog through the browser,
+       which leaves `pending` alone — the next submit overwrites it. */
+    if (no) {
+      no.addEventListener("click", function () {
+        pending = null;
+        dlg.close();
+      });
+    }
+
+    if (yes) {
+      yes.addEventListener("click", function () {
+        var form = pending;
+        pending = null;
+        dlg.close();
+        if (!form) return;
+        form.setAttribute("data-confirmed", "1");
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+      });
+    }
   }
 
   /* ---------------- Bluetooth ESC/POS printing ---------------- */

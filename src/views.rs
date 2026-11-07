@@ -236,6 +236,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let signed_in_ar = tr_ar("m_signed_in_as");
     let nav_toggle_text = crate::i18n::tr_text(lang, "lbl_toggle_menu");
     let foot_html = foot(lang);
+    let confirm_html = confirm_dialog(lang);
 
     let view = view! {
         <html lang=lang.code() dir=lang.dir() data-fs-lat=ctx.fs_lat data-fs-ar=ctx.fs_ar data-ico=ctx.ico>
@@ -286,6 +287,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                     <main class="content" inner_html=body></main>
                     <footer class="appfoot" inner_html=foot_html></footer>
                 </div>
+                <div class="modal-host" inner_html=confirm_html></div>
                 <script src=format!("/static/app.js?v={}", crate::routes::asset_token())></script>
             </body>
         </html>
@@ -550,15 +552,56 @@ pub fn icon_link(href: &str, ico: &str, label: &str) -> String {
     )
 }
 
-/// The same as a form post, so a delete is an icon too.
+/// The same as a form post, so a delete is an icon too. The form asks for the
+/// confirmation (`data-confirm`) that `app.js` turns into the dialog below.
 pub fn icon_post(action: &str, ico: &str, label: &str) -> String {
+    icon_post_of(action, ico, label, "")
+}
+
+/// `icon_post`, with `note` — plain text, escaped here — naming the record the button
+/// deletes, so the dialog says which one is about to go.
+pub fn icon_post_of(action: &str, ico: &str, label: &str, note: &str) -> String {
     let text = esc(&crate::util::text_of(label));
+    let note_attr = if note.is_empty() {
+        String::new()
+    } else {
+        format!(" data-confirm-note=\"{}\"", esc(note))
+    };
     format!(
-        "<form method=\"post\" action=\"{}\" class=\"inline\"><button class=\"btn-icon danger\" type=\"submit\" title=\"{}\" aria-label=\"{}\">{}</button></form>",
+        "<form method=\"post\" action=\"{}\" class=\"inline\" data-confirm=\"{}\"{}><button class=\"btn-icon danger\" type=\"submit\" title=\"{}\" aria-label=\"{}\">{}</button></form>",
         esc(action),
+        text,
+        note_attr,
         text,
         text,
         icon(ico)
+    )
+}
+
+/// The confirmation a delete asks for: a `<dialog>` the browser centres and keeps the
+/// focus inside, opened by `app.js` from `data-confirm` on the form. It replaces the
+/// browser's own box, so the question is asked in the app's two languages and drawn
+/// like the rest of it. `Cancel` comes first, so Enter on a keyboard closes the dialog
+/// instead of deleting anything.
+pub fn confirm_dialog(lang: Lang) -> String {
+    format!(
+        "<dialog class=\"modal\" id=\"confirm-dialog\" aria-labelledby=\"confirm-title\" aria-describedby=\"confirm-text\">\
+           <div class=\"modal-card\">\
+             <div class=\"modal-mark\">{mark}</div>\
+             <h2 class=\"modal-title\" id=\"confirm-title\">{title}</h2>\
+             <p class=\"modal-text\" id=\"confirm-text\">{note}</p>\
+             <p class=\"modal-subject\" data-confirm-subject hidden></p>\
+             <div class=\"modal-actions\">\
+               <button class=\"btn btn-ghost\" type=\"button\" data-confirm-cancel>{cancel}</button>\
+               <button class=\"btn btn-danger-solid\" type=\"button\" data-confirm-ok>{delete}</button>\
+             </div>\
+           </div>\
+         </dialog>",
+        mark = icon("trash"),
+        title = tr(lang, "m_confirm_delete"),
+        note = tr(lang, "m_confirm_note"),
+        cancel = tr(lang, "a_cancel"),
+        delete = tr(lang, "a_delete"),
     )
 }
 
@@ -633,6 +676,20 @@ mod tests {
         let p = icon_post("/suppliers/1/delete", "trash", &tr(Lang::En, "a_delete"));
         assert!(p.contains("class=\"btn-icon danger\""));
         assert!(p.contains("<svg") && !p.contains("\"lat\""));
+        // a delete asks through the dialog, and names the record it would remove
+        assert!(p.contains("data-confirm=\"Delete · حذف\""));
+        let named =
+            icon_post_of("/customers/9/delete", "trash", &tr(Lang::En, "a_delete"), "Acme <b>");
+        assert!(named.contains("data-confirm-note=\"Acme &lt;b&gt;\""));
+
+        // the dialog itself: two answers, cancel first, and it names nothing until a
+        // form fills the subject in
+        let d = confirm_dialog(Lang::En);
+        assert!(d.starts_with("<dialog class=\"modal\" id=\"confirm-dialog\""));
+        assert!(d.contains("data-confirm-cancel") && d.contains("data-confirm-ok"));
+        assert!(d.contains("data-confirm-subject hidden"));
+        // the two answers are plain buttons: the script asks the dialog, not a form
+        assert_eq!(d.matches("type=\"button\"").count(), 2);
     }
 
     #[test]

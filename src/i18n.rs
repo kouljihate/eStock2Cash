@@ -228,6 +228,8 @@ lang_table! {
 
     "msg_saved" => ("Saved successfully.", "Enregistré avec succès.", "تم الحفظ بنجاح."),
     "msg_deleted" => ("Record deleted.", "Enregistrement supprimé.", "تم حذف السجل."),
+    "m_confirm_delete" => ("Delete this record?", "Supprimer cet enregistrement ?", "حذف هذا السجل؟"),
+    "m_confirm_note" => ("It is removed for good and cannot be brought back.", "Il sera supprimé définitivement, sans retour possible.", "سيُحذف نهائيًا ولا يمكن استعادته."),
     "msg_posted" => ("Document posted and stock updated.", "Document validé et stock mis à jour.", "تم ترحيل المستند وتحديث المخزون."),
     "msg_issued" => ("Document issued.", "Document émis.", "تم إصدار المستند."),
     "msg_sent" => ("Document marked as sent.", "Document marqué comme envoyé.", "تم وضع المستند كمُرسل."),

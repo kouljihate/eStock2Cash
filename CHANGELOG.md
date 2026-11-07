@@ -3,6 +3,22 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.12 — 2026-11-07
+
+Deletes ask in the app, not in the browser.
+
+### Changed
+
+- Every delete opens a modal instead of the browser's `confirm()` box: a `<dialog>`
+  centred over a dimmed page, asking the question in both languages, naming the record
+  (`Acme SARL · CUS-1`), with **Cancel** focused first and Escape to close. Only
+  **Delete** posts. `views::confirm_dialog()` draws it once in the shell, `app.js`
+  opens it from `data-confirm` on the form, and `views::icon_post_of()` fills in the
+  record it would remove.
+- The dialog answers through its own buttons, not the `close` event, which some
+  Chromium builds never fire; the double-submit guard no longer disables a button whose
+  submit was held back for confirmation.
+
 ## 0.7.11 — 2026-11-07
 
 The table actions became buttons.
