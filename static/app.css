@@ -1065,14 +1065,24 @@ td.acts .btn-icon.danger:focus-visible {
   from { opacity: 0; transform: translateY(7px) scale(.985); }
   to { opacity: 1; transform: none; }
 }
+/* three bands: a red head, a pale red body, a deeper red foot. The question and the
+   record it names sit on the tint, so the red is a frame rather than a wash over the
+   text that has to be read. */
 .modal-card {
   display: block;
   margin: 0;
-  padding: 28px 30px 24px;
-  border: 1px solid var(--line);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #f0cfca;
   border-radius: 20px;
-  background: var(--card);
+  background: #fdf3f2;
   box-shadow: 0 30px 64px -26px rgba(12, 18, 34, .55);
+}
+.modal-head {
+  display: block;
+  padding: 26px 30px 22px;
+  background: linear-gradient(180deg, #bf2a1d, #b42318);
+  border-bottom: 1px solid #9b1c14;
 }
 .modal-mark {
   width: 50px;
@@ -1080,19 +1090,24 @@ td.acts .btn-icon.danger:focus-visible {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #feeceb;
-  color: #b42318;
-  margin-bottom: 16px;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  margin-bottom: 14px;
 }
 .modal-mark svg { width: 24px; height: 24px; }
 .modal-title {
-  margin: 0 0 9px;
+  margin: 0;
   font-size: 20px;
   font-weight: 700;
   line-height: 1.35;
+  color: #fff;
+}
+.modal-body {
+  padding: 22px 30px 24px;
+  background: #fdf3f2;
 }
 .modal-title .bi { flex-direction: column-reverse; align-items: flex-start; gap: 1px; }
-.modal-text { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
+.modal-text { margin: 0; color: #7a352c; font-size: 14px; line-height: 1.65; }
 /* the two halves of a sentence stack instead of running into each other: the Arabic
    face is set large, and side by side the two would overlap */
 .modal-text .bi { flex-direction: column-reverse; align-items: flex-start; gap: 3px; }
@@ -1102,7 +1117,9 @@ td.acts .btn-icon.danger:focus-visible {
   margin: 14px 0 0;
   padding: 11px 14px;
   border-radius: 11px;
-  background: var(--line-2);
+  background: #fbe1dd;
+  border: 1px solid #f3cdc7;
+  color: #7f1d1d;
   font-size: 14px;
   font-weight: 700;
   word-break: break-word;
@@ -1112,9 +1129,23 @@ td.acts .btn-icon.danger:focus-visible {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 24px;
+  margin: 0;
+  padding: 16px 26px;
+  background: #9b1c14;
+  border-top: 1px solid #89170f;
 }
 .modal-actions .btn { padding: 10px 20px; font-size: 12.5px; border-radius: 11px; }
+/* on a red foot the ghost has to be drawn in white, or Cancel disappears */
+.modal-actions .btn-ghost {
+  background: rgba(255, 255, 255, .12);
+  border-color: rgba(255, 255, 255, .46);
+  color: #fff;
+}
+.modal-actions .btn-ghost:hover {
+  background: rgba(255, 255, 255, .22);
+  border-color: rgba(255, 255, 255, .7);
+  color: #fff;
+}
 .btn-danger-solid {
   background: #b42318;
   border-color: #b42318;
@@ -1122,6 +1153,18 @@ td.acts .btn-icon.danger:focus-visible {
   box-shadow: 0 8px 18px -10px rgba(180, 35, 24, .9);
 }
 .btn-danger-solid:hover { background: #971c12; border-color: #971c12; color: #fff; }
+/* Delete sits on the red foot, so it inverts: white plate, red word, unmistakable */
+.modal-actions .btn-danger-solid {
+  background: #fff;
+  border-color: #fff;
+  color: #b42318;
+  box-shadow: 0 8px 18px -12px rgba(12, 18, 34, .8);
+}
+.modal-actions .btn-danger-solid:hover {
+  background: #feeceb;
+  border-color: #feeceb;
+  color: #971c12;
+}
 
 /* ================================================================  forms */
 

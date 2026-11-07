@@ -342,6 +342,10 @@ it at every step.
 
 ### Delete confirmation
 
+The card is framed in red: a solid red head carrying the trash mark and the question,
+a pale red body holding the sentence and the record's name, and a deeper red foot with
+the two answers. Red is the frame, not a wash over the text that has to be read.
+
 A delete never posts on the first click. The form carries `data-confirm` (and
 `data-confirm-note` naming the record), `views::confirm_dialog()` draws one `<dialog>`
 in the shell, and `app.js` opens it: the question is asked in both languages, the page

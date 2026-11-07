@@ -3,6 +3,18 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.8.1 — 2026-11-07
+
+The delete dialog is framed in red.
+
+### Changed
+
+- The confirmation card is now three bands instead of one white block: a solid red head
+  with the trash mark and the question in white, a pale red body holding the sentence and
+  the record's name, and a deeper red foot with the answers. **Cancel** is outlined in
+  white for the red foot, and **Delete** inverts to a white plate with the red word, so it
+  still reads as the action that must not be pressed by accident.
+
 ## 0.8.0 — 2026-11-07
 
 The ledger reaches the phone.

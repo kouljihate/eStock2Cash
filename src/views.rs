@@ -587,14 +587,18 @@ pub fn confirm_dialog(lang: Lang) -> String {
     format!(
         "<dialog class=\"modal\" id=\"confirm-dialog\" aria-labelledby=\"confirm-title\" aria-describedby=\"confirm-text\">\
            <div class=\"modal-card\">\
-             <div class=\"modal-mark\">{mark}</div>\
-             <h2 class=\"modal-title\" id=\"confirm-title\">{title}</h2>\
-             <p class=\"modal-text\" id=\"confirm-text\">{note}</p>\
-             <p class=\"modal-subject\" data-confirm-subject hidden></p>\
-             <div class=\"modal-actions\">\
+             <header class=\"modal-head\">\
+               <div class=\"modal-mark\">{mark}</div>\
+               <h2 class=\"modal-title\" id=\"confirm-title\">{title}</h2>\
+             </header>\
+             <div class=\"modal-body\">\
+               <p class=\"modal-text\" id=\"confirm-text\">{note}</p>\
+               <p class=\"modal-subject\" data-confirm-subject hidden></p>\
+             </div>\
+             <footer class=\"modal-actions\">\
                <button class=\"btn btn-ghost\" type=\"button\" data-confirm-cancel>{cancel}</button>\
                <button class=\"btn btn-danger-solid\" type=\"button\" data-confirm-ok>{delete}</button>\
-             </div>\
+             </footer>\
            </div>\
          </dialog>",
         mark = icon("trash"),
@@ -688,6 +692,11 @@ mod tests {
         assert!(d.starts_with("<dialog class=\"modal\" id=\"confirm-dialog\""));
         assert!(d.contains("data-confirm-cancel") && d.contains("data-confirm-ok"));
         assert!(d.contains("data-confirm-subject hidden"));
+        // red head, pale red body, red foot: three bands, in that order
+        let head = d.find("modal-head").unwrap();
+        let body = d.find("modal-body").unwrap();
+        let foot = d.find("modal-actions").unwrap();
+        assert!(head < body && body < foot);
         // the two answers are plain buttons: the script asks the dialog, not a form
         assert_eq!(d.matches("type=\"button\"").count(), 2);
     }
