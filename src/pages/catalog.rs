@@ -68,7 +68,7 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
             format!("<span class=\"num\">{}</span>", esc(&views::money_text(p.cost, &cur_code))),
             format!("<span class=\"num\">{}</span>", esc(&views::money_text(p.price, &cur_code))),
             stock_cell,
-            views::link_btn(&format!("/products/{}/movements", p.id), &tr(l, "nav_events")),
+            views::icon_link(&format!("/products/{}/movements", p.id), "events", &tr(l, "nav_events")),
         ]);
     }
 

@@ -31,6 +31,11 @@ fn icon(name: &str) -> String {
         "cog" => r#"<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>"#,
         "logout" => r#"<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/>"#,
         "panel" => r#"<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>"#,
+        "eye" => r#"<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>"#,
+        "pencil" => r#"<path d="M4 20h4L18 10l-4-4L4 16z"/><path d="M13.5 5.5l4 4"/>"#,
+        "trash" => r#"<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>"#,
+        "file" => r#"<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13h6M9 17h4"/>"#,
+        "print" => r#"<path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M7 16h10v5H7z"/>"#,
         _ => r#"<circle cx="12" cy="12" r="8"/>"#,
     };
     format!(
@@ -494,6 +499,31 @@ pub fn post_btn(action: &str, label: &str, tone: &str) -> String {
     )
 }
 
+/// A row action in a table's last column is the icon only: the bilingual label the
+/// button would have carried moves to its tooltip, so the cell stays a row of circles.
+pub fn icon_link(href: &str, ico: &str, label: &str) -> String {
+    let text = esc(&crate::util::text_of(label));
+    format!(
+        "<a class=\"btn-icon\" href=\"{}\" title=\"{}\" aria-label=\"{}\">{}</a>",
+        esc(href),
+        text,
+        text,
+        icon(ico)
+    )
+}
+
+/// The same as a form post, so a delete is an icon too.
+pub fn icon_post(action: &str, ico: &str, label: &str) -> String {
+    let text = esc(&crate::util::text_of(label));
+    format!(
+        "<form method=\"post\" action=\"{}\" class=\"inline\"><button class=\"btn-icon danger\" type=\"submit\" title=\"{}\" aria-label=\"{}\">{}</button></form>",
+        esc(action),
+        text,
+        text,
+        icon(ico)
+    )
+}
+
 /// Card grid for stat blocks.
 pub fn stats_grid(items: Vec<String>) -> String {
     format!("<div class=\"stats\">{}</div>", items.join(""))
@@ -550,6 +580,21 @@ mod tests {
             "msg_no_records",
         );
         assert!(a.contains("<td>1</td><td class=\"acts\">x</td>"));
+    }
+
+    #[test]
+    fn row_actions_are_icons_only() {
+        // the label the button used to show becomes the tooltip; the cell itself is
+        // just the circle, so nothing but the svg is left inside the anchor
+        let a = icon_link("/suppliers/1/edit", "pencil", &tr(Lang::En, "a_edit"));
+        assert!(a.contains("class=\"btn-icon\""));
+        assert!(a.contains("title=\"Edit · تعديل\""));
+        assert!(a.contains("aria-label=\"Edit · تعديل\""));
+        assert!(a.contains("<svg"));
+        assert!(!a.contains("\"lat\"") && !a.contains("\"ar\""));
+        let p = icon_post("/suppliers/1/delete", "trash", &tr(Lang::En, "a_delete"));
+        assert!(p.contains("class=\"btn-icon danger\""));
+        assert!(p.contains("<svg") && !p.contains("\"lat\""));
     }
 
     #[test]

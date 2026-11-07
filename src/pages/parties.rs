@@ -68,8 +68,8 @@ pub async fn suppliers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
                 ),
                 format!(
                     "<div class=\"row-actions\">{}{}</div>",
-                    views::link_btn(&format!("/purchase-orders/new?supplier={}", s.id), &tr(l, "nav_purchase_orders")),
-                    views::post_btn(&format!("/suppliers/{}/delete", s.id), &tr(l, "a_delete"), "btn-danger")
+                    views::icon_link(&format!("/purchase-orders/new?supplier={}", s.id), "po", &tr(l, "nav_purchase_orders")),
+                    views::icon_post(&format!("/suppliers/{}/delete", s.id), "trash", &tr(l, "a_delete"))
                 ),
             ]
         })
@@ -284,8 +284,8 @@ pub async fn customers(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Re
             ),
             format!(
                 "<div class=\"row-actions\">{}{}</div>",
-                views::link_btn(&format!("/quotes/new?customer={}", c.id), &tr(l, "nav_quotes")),
-                views::post_btn(&format!("/customers/{}/delete", c.id), &tr(l, "a_delete"), "btn-danger")
+                views::icon_link(&format!("/quotes/new?customer={}", c.id), "quote", &tr(l, "nav_quotes")),
+                views::icon_post(&format!("/customers/{}/delete", c.id), "trash", &tr(l, "a_delete"))
             ),
         ]);
     }

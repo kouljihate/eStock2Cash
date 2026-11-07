@@ -38,7 +38,7 @@ pub async fn list(ctx: Ctx) -> Result<Response, AppError> {
                 "<span class=\"num\">{}</span>",
                 esc(&views::money_text(t.total, &cur_code))
             ),
-            views::link_btn(&format!("/tickets/{}", t.id), &tr(l, "a_print")),
+            views::icon_link(&format!("/tickets/{}", t.id), "print", &tr(l, "a_print")),
         ]);
     }
     let body = format!(

@@ -3,6 +3,20 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.3 — 2026-11-07
+
+Row actions in tables are icons only.
+
+### Changed
+
+- Every action in a list table's last column is now an **icon-only circle** — open,
+  receive, PDF, record payment, deliver, invoice, print, event log and delete — so the
+  column keeps one width whatever the duo. The bilingual label moves to `title` and
+  `aria-label`, so hovering or a screen reader still reads `Open · فتح`.
+- `views::icon_link()` and `views::icon_post()` build them; a circle tints brand blue
+  on hover and only the delete turns red.
+- The pill rule for labelled action buttons is gone with the labels.
+
 ## 0.7.2 — 2026-11-07
 
 Table headers get the spacing buttons already had.

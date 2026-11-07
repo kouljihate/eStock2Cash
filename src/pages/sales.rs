@@ -412,12 +412,12 @@ pub async fn order_list(ctx: Ctx) -> Result<Response, AppError> {
             format!(
                 "<div class=\"row-actions\">{}{}</div>",
                 if matches!(o.status, OrderStatus::Confirmed) {
-                    views::link_btn(&format!("/delivery-notes/new?order={}", o.id), &tr(l, "a_deliver"))
+                    views::icon_link(&format!("/delivery-notes/new?order={}", o.id), "delivery", &tr(l, "a_deliver"))
                 } else {
                     String::new()
                 },
                 if matches!(o.status, OrderStatus::Confirmed | OrderStatus::Delivered) && o.invoice_id.is_empty() {
-                    views::link_btn(&format!("/customer-invoices/new?order={}", o.id), &tr(l, "a_invoice"))
+                    views::icon_link(&format!("/customer-invoices/new?order={}", o.id), "bill", &tr(l, "a_invoice"))
                 } else {
                     String::new()
                 }

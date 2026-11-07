@@ -84,9 +84,9 @@ pub async fn ci_list(ctx: Ctx) -> Result<Response, AppError> {
             ),
             format!(
                 "<div class=\"row-actions\">{}{}</div>",
-                views::link_btn(&format!("/customer-invoices/{}/pdf", inv.id), &tr(l, "a_pdf")),
+                views::icon_link(&format!("/customer-invoices/{}/pdf", inv.id), "file", &tr(l, "a_pdf")),
                 if inv.display_status().is_payable() {
-                    views::link_btn(&format!("/payments/new?invoice={}&kind=customer", inv.id), &tr(l, "a_pay"))
+                    views::icon_link(&format!("/payments/new?invoice={}&kind=customer", inv.id), "wallet", &tr(l, "a_pay"))
                 } else {
                     String::new()
                 }

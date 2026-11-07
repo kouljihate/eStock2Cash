@@ -301,11 +301,14 @@ of a header stack under each other with the short half centred beneath the long 
 Body cells keep their own alignment — numbers stay right-aligned, text stays
 left-aligned — so columns remain easy to scan.
 
-The last column of a list table is the **actions** column. `views::table_actions()`
-marks that cell, and the stylesheet puts it in the middle of the cell with its
-buttons **round**: a pill for a labelled action (the full bilingual label needs the
-room) and a circle for an icon-only one. `views::table()` leaves the cells plain for
-tables that only display data.
+The last column of a list table is the **actions** column, and every action in it is
+an **icon-only circle** — open, receive, PDF, pay, deliver, invoice, print, movements
+and delete. `views::table_actions()` marks that cell, `views::icon_link()` /
+`views::icon_post()` build the buttons, and the stylesheet centres them in the cell.
+The bilingual label is not drawn: it becomes the button's `title` and `aria-label`, so
+hovering (or a screen reader) still says `Open · فتح` while the column keeps one width
+in every language. `views::table()` leaves the cells plain for tables that only
+display data.
 
 ### Settings › Font size
 

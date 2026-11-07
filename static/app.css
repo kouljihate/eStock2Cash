@@ -823,12 +823,14 @@ th.num { text-align: center; }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .row-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
 
-/* the last column of a list table is the actions column: its buttons sit in the
-   middle of the cell and are round instead of square-cornered */
+/* the last column of a list table is the actions column: it holds icon-only
+   buttons, centred in the cell, each one a circle that tints on hover — brand for
+   an action, red for the delete */
 td.acts { text-align: center; }
 td.acts .row-actions { justify-content: center; align-items: center; }
-td.acts .btn { border-radius: 999px; }
-td.acts .btn-icon { border-radius: 50%; }
+td.acts .btn-icon { border-radius: 50%; background: transparent; }
+td.acts .btn-icon:hover { background: rgba(79, 70, 229, .09); color: var(--brand-600); }
+td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
 
 /* =============================================================  badges */
 
