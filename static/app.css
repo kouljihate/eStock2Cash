@@ -175,20 +175,27 @@ html[data-fs-ar="l"] { --face-ar: "VIP Rawy L"; }
   text-align: right;
   white-space: normal;
 }
-/* buttons and table headers: Arabic first, the duo's Latin language below */
+/* buttons: the stacked pair is centred in the button — both across it and down it —
+   with a little air between the Arabic half and the Latin half below it */
 .btn .bi,
-button .bi,
+button .bi {
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1.2;
+  text-align: center;
+}
+/* a header cell centres its stacked pair too, so the short half sits under the long one */
 thead th .bi {
   flex-direction: column-reverse;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-start;
   gap: 0;
   line-height: 1.25;
 }
-/* a header cell centres its stacked pair, so the short half sits under the long one */
-thead th .bi { align-items: center; }
 .btn .bi > .ar,
-button .bi > .ar,
+button .bi > .ar { text-align: center; }
 thead th .bi > .ar { text-align: start; }
 
 * { box-sizing: border-box; }

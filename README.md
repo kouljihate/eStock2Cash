@@ -241,7 +241,8 @@ element type:
 
 | element | arrangement |
 | --- | --- |
-| buttons, table headers | stacked — **Arabic on top, EN/FR underneath** |
+| table headers | stacked — **Arabic on top, EN/FR underneath**, the pair centred in the cell |
+| buttons | stacked the same way, but the pair is **centred across and down the button** with 3 px of air between the two lines |
 | labels, fields, cells, cards, nav, titles, badges | one line — **English at the left, Arabic at the right end** |
 
 The `.sep` span between the halves is hidden by CSS, so contexts without styles —

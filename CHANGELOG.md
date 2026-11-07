@@ -3,6 +3,18 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.1 — 2026-11-07
+
+Buttons centre their bilingual label.
+
+### Changed
+
+- A button's stacked pair was aligned to the top-left of its box; it is now
+  **centred horizontally and vertically** in the button, whatever the length of the
+  two halves, and the lines sit **3 px** apart instead of touching.
+- Table headers keep their own spacing and left-aligned second line, so only
+  buttons changed.
+
 ## 0.7.0 — 2026-11-07
 
 The sign-in page is framed by a fixed header and footer.
