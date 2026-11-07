@@ -178,6 +178,38 @@
     });
   }
 
+  /* ---------------- collapsible menu groups ---------------- */
+  /* <details> folds on its own; this only remembers the choice, and always opens
+     the group that holds the current page so the active link is never hidden. */
+  function initNavSections() {
+    var secs = document.querySelectorAll("details.nav-section[data-nav-sec]");
+    if (!secs.length) return;
+
+    var KEY = "s2c-nav-secs";
+    var folded = {};
+    try {
+      folded = JSON.parse(localStorage.getItem(KEY) || "{}") || {};
+    } catch (e) {
+      folded = {};
+    }
+
+    secs.forEach(function (sec) {
+      var key = sec.getAttribute("data-nav-sec");
+      sec.addEventListener("toggle", function () {
+        folded[key] = !sec.open;
+        try {
+          localStorage.setItem(KEY, JSON.stringify(folded));
+        } catch (e) {}
+      });
+      // restore the folded groups, but never hide the page you are on
+      if (sec.querySelector(".nav-item.active")) {
+        sec.open = true;
+      } else if (folded[key]) {
+        sec.open = false;
+      }
+    });
+  }
+
   /* ---------------- header settings menu ---------------- */
   function closeSettings() {
     document.querySelectorAll("details.settings[open]").forEach(function (d) {
@@ -211,6 +243,7 @@
       initBluetooth();
       initSettingsMenu();
       initSidebarToggle();
+      initNavSections();
     });
   });
 })();

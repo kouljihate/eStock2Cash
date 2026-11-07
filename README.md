@@ -294,6 +294,14 @@ is stored in `localStorage` (`s2c-nav`) and re-applied by a small inline script 
 `<head>`, so a collapsed menu never flashes open while a page loads. On a phone the
 sidebar is a stacked block and the toggle is hidden.
 
+The four groups — Procure-to-Pay, Quote-to-Cash, In Stock and Administration — are
+collapsible: each is a `<details>` whose header row folds its links away, so the
+folding works without JavaScript. `views::nav_section()` emits them (the header is
+the `<summary>`, the links sit in `.nav-links`) and `app.js` only remembers the
+choice in `localStorage` (`s2c-nav-secs`); the group holding the current page is
+always reopened, and the icon rail keeps every link visible because it hides the
+headers.
+
 ### Tables
 
 Every column header is centred, horizontally and vertically, and the two languages

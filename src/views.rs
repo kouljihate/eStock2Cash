@@ -35,6 +35,7 @@ fn icon(name: &str) -> String {
         "pencil" => r#"<path d="M4 20h4L18 10l-4-4L4 16z"/><path d="M13.5 5.5l4 4"/>"#,
         "trash" => r#"<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>"#,
         "file" => r#"<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13h6M9 17h4"/>"#,
+        "chevron" => r#"<path d="M6 9.5l6 6 6-6"/>"#,
         "print" => r#"<path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M7 16h10v5H7z"/>"#,
         _ => r#"<circle cx="12" cy="12" r="8"/>"#,
     };
@@ -55,10 +56,15 @@ fn nav_item(active: bool, href: &str, label: &str, ico: &str) -> String {
     )
 }
 
-fn nav_section(title: &str, items: &[&str]) -> String {
+/// One collapsible group of the sidebar. `<details>` does the folding, so the menu
+/// works without JS; `app.js` only remembers which groups the user folded away.
+fn nav_section(key: &str, title: &str, items: &[&str]) -> String {
     format!(
-        "<div class=\"nav-section\"><span class=\"nav-title\">{}</span>{}</div>",
+        "<details class=\"nav-section\" data-nav-sec=\"{}\" open>         <summary class=\"nav-title\" title=\"{}\">         <span class=\"nav-title-text\">{}</span>{}</summary>         <div class=\"nav-links\">{}</div></details>",
+        key,
+        esc(&crate::util::text_of(title)),
         title,
+        icon("chevron"),
         items.join("")
     )
 }
@@ -78,6 +84,7 @@ fn nav_html(ctx: &Ctx) -> String {
     out.push_str(&nav_item(on("/"), "/", &tr(l, "nav_dashboard"), "dashboard"));
 
     out.push_str(&nav_section(
+        "buy",
         &tr(l, "nav_purchasing"),
         &[
             &nav_item(on("/suppliers"), "/suppliers", &tr(l, "nav_suppliers"), "suppliers"),
@@ -88,6 +95,7 @@ fn nav_html(ctx: &Ctx) -> String {
         ],
     ));
     out.push_str(&nav_section(
+        "sell",
         &tr(l, "nav_sales"),
         &[
             &nav_item(on("/customers"), "/customers", &tr(l, "nav_customers"), "customers"),
@@ -98,6 +106,7 @@ fn nav_html(ctx: &Ctx) -> String {
         ],
     ));
     out.push_str(&nav_section(
+        "stock",
         &tr(l, "lbl_stock"),
         &[
             &nav_item(on("/products"), "/products", &tr(l, "nav_products"), "products"),
@@ -106,6 +115,7 @@ fn nav_html(ctx: &Ctx) -> String {
         ],
     ));
     out.push_str(&nav_section(
+        "admin",
         &tr(l, "nav_admin"),
         &[
             &nav_item(on("/admin"), "/admin", &tr(l, "nav_admin"), "admin"),
@@ -595,6 +605,18 @@ mod tests {
         let p = icon_post("/suppliers/1/delete", "trash", &tr(Lang::En, "a_delete"));
         assert!(p.contains("class=\"btn-icon danger\""));
         assert!(p.contains("<svg") && !p.contains("\"lat\""));
+    }
+
+    #[test]
+    fn sidebar_groups_fold() {
+        // each group is a <details>: the header is its <summary>, so the browser
+        // folds the links without any script
+        let s = nav_section("buy", "Procure-to-Pay", &["<a class=\"nav-item\">x</a>"]);
+        assert!(s.starts_with("<details class=\"nav-section\" data-nav-sec=\"buy\" open>"));
+        assert!(s.contains("<summary class=\"nav-title\" title=\"Procure-to-Pay\">"));
+        assert!(s.contains("<path d=\"M6 9.5l6 6 6-6\"/>"));
+        assert!(s.contains("<div class=\"nav-links\"><a class=\"nav-item\">x</a></div>"));
+        assert!(s.ends_with("</details>"));
     }
 
     #[test]

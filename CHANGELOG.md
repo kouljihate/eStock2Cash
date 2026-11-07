@@ -3,6 +3,20 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.4 — 2026-11-07
+
+The sidebar groups fold.
+
+### Added
+
+- **Procure-to-Pay**, **Quote-to-Cash**, **In Stock** and **Administration** are now
+  collapsible: clicking a group header folds its links away, with a chevron that
+  turns as it opens. Each group is a `<details>`, so folding works without
+  JavaScript; `app.js` only remembers the folded groups in `localStorage`
+  (`s2c-nav-secs`).
+- The group holding the current page is always reopened, so the active link is never
+  hidden, and the icon rail keeps every link visible since it hides the headers.
+
 ## 0.7.3 — 2026-11-07
 
 Row actions in tables are icons only.
