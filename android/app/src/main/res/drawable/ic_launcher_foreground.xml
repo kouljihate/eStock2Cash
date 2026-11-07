@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- three rising bars, the same idea as the web app's ledger: stock in, stock out, cash -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,58h9v18h-9z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M49.5,48h9v28h-9z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65,38h9v38h-9z" />
+    <path
+        android:fillColor="#C7D2FE"
+        android:pathData="M32,80h44v3h-44z" />
+</vector>

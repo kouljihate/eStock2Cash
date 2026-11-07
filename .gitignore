@@ -15,3 +15,12 @@ static/fonts/*
 
 # cache of the downloaded SVGs behind /tools/fetch_papicons.py
 .paplicons_tmp/
+
+# Android client build output and machine-local paths
+/android/.gradle
+/android/build
+/android/app/build
+/android/local.properties
+/android/.idea
+*.apk
+!android/dist/*.apk

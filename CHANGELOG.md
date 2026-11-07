@@ -3,6 +3,27 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.8.0 — 2026-11-07
+
+The ledger reaches the phone.
+
+### Added
+
+- **Android client** in `android/`: a native Java app (no WebView, no third-party SDK)
+  that signs in against `/api/v1` and keeps the bearer token, shows the dashboard figures
+  and receivable aging, and reads every list — suppliers, purchase orders, supplier
+  invoices, payments, customers, quotes, customer orders, customer invoices, products.
+  Bilingual like the web app: Arabic stacked above the Latin, always left-to-right.
+- `tools/build_android.sh` builds `android/dist/s2c-maroc-0.1.0-debug.apk` with the JDK
+  bundled with Android Studio, since the machine's own `java` is a JRE 1.8 with no javac.
+- `android/README.md` covers building, installing, pointing it at the office server and
+  what the next slice needs.
+
+### Changed
+
+- The README's platform table and limitations now describe the client as built and
+  read-only, instead of "not included".
+
 ## 0.7.14 — 2026-11-07
 
 The page behind the confirmation steps back.

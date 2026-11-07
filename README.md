@@ -42,7 +42,7 @@ Cross-cutting    Products & stock, Credit limits & aging, Direct POS tickets,
 | **i18n** | Bilingual Arabic + English/French on every screen, chosen in `Settings` | Ready |
 | **RabbitMQ** | Topic events, MongoDB mirror, management monitor | Ready |
 | **Docker** | App + local MongoDB + local RabbitMQ | Ready |
-| **Android app** | Client not built; the JSON API it needs is ready | Partial |
+| **Android app** | Native client (Java, no WebView): sign in, dashboard, every list | Ready |
 
 ---
 
@@ -143,7 +143,9 @@ src/
   views.rs       Leptos shell (sidebar, topbar), tables, form components
   pages/         one module per domain (handlers + rendered bodies)
   routes.rs      web routing
-  api.rs         /api/v1 JSON API (Bearer JWT) for the Android client  static/app.css, app.js, favicon, fonts/ (arabic.ttf is bundled)
+  api.rs         /api/v1 JSON API (Bearer JWT) for the Android client
+static/          app.css, app.js, favicon, fonts/ (arabic.ttf is bundled)
+android/         the phone client (see android/README.md)
 ```
 
 ### Data model
@@ -517,6 +519,23 @@ totals, cash drawer, cut).
 
 ---
 
+## Android app
+
+The phone client lives in [`android/`](android/README.md): a native Java app, no WebView
+and no third-party SDK, speaking the same `/api/v1` this server exposes.
+
+```bash
+bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.1.0-debug.apk
+adb install -r android/dist/s2c-maroc-0.1.0-debug.apk
+```
+
+It signs in with a server address you type (remembered afterwards), shows the dashboard
+figures and reads every list — suppliers, purchase orders, supplier invoices, payments,
+customers, quotes, customer orders, customer invoices, products. The emulator reaches
+this machine on `http://10.0.2.2:8080`; a phone needs the PC's LAN address, e.g.
+`http://192.168.1.20:8080`. It is read-only for now: the write endpoints and Bluetooth
+printing are the next slice, listed in the client's README.
+
 ## API (Android client)
 
 The JSON API lives under `/api/v1`, authenticated with a Bearer token from
@@ -550,8 +569,10 @@ rejection; tenant isolation; EN/FR/AR switching.
 
 ## Known limitations
 
-- **Android app is not included.** The API it needs (auth, dashboard, master
-  data, documents, tickets, PDF) is implemented and documented.
+- **The Android app reads, it does not write.** Sign-in, dashboard and every list are
+  in; creating records, document actions and Bluetooth printing are still web-only, and
+  the document write endpoints would need to exist first.
+- **The APK is debug-signed.** Fine for a phone on your desk, not for a store.
 - Arabic PDFs keep the left-to-right grid (column order, totals block); the
   text itself is shaped and runs right to left, but the layout is not mirrored.
 - PDF fonts are embedded whole (no subsetting), so an Arabic document is ~210 KB
