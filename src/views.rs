@@ -290,10 +290,10 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                             </form>
                             <div class="tb-settings" inner_html=settings></div>
                         </div>
-                        <div class="tb-col tb-ar">
-                            <h1 class="ar">{title_ar}</h1>
-                            <span class="muted" inner_html=format!("<span class=\"ar\">{}</span> {}", signed_in_ar, username)></span>
-                        </div>
+                        // <div class="tb-col tb-ar">
+                        //     <h1 class="ar">{title_ar}</h1>
+                        //     <span class="muted" inner_html=format!("<span class=\"ar\">{}</span> {}", signed_in_ar, username)></span>
+                        // </div>
                     </header>
                     <div class="flash-wrap" inner_html=flash_html></div>
                     <main class="content" inner_html=body></main>

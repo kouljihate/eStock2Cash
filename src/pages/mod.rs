@@ -14,16 +14,49 @@ use crate::auth::Ctx;
 use crate::i18n::tr;
 use crate::models::{DocLine, Product};
 use crate::util::{esc, money, qty};
+use mongodb::bson::doc;
 
-/// Small header with a title and action buttons.
-/// Toolbar row of a page. The title is already in the top bar (page name, or the
-/// document number on a detail page), so repeating it here only produced a
+/// The row that heads a page: the search box and the "new" button of a list, or
+/// the actions of a document. The title is already in the top bar (page name, or
+/// the document number on a detail page), so repeating it here only produced a
 /// second, larger copy right above the card that names the section again.
 pub fn page_head(_ctx: &Ctx, _title_key: &str, _subtitle: &str, actions: Vec<String>) -> String {
     format!(
         "<div class=\"page-head solo\"><div class=\"page-actions\">{}</div></div>",
         actions.join("")
     )
+}
+
+/// The search box that heads a list table: one form, one button, one look on every
+/// list page. `extra` holds controls that belong to a single list (the low-stock
+/// filter of the products page).
+pub fn search_form(l: crate::i18n::Lang, action: &str, q: &str, extra: &str) -> String {
+    format!(
+        "<form class=\"search\" method=\"get\" action=\"{action}\"><input name=\"q\" value=\"{}\" placeholder=\"{}\"/>{extra}<button class=\"btn btn-sm\" type=\"submit\">{}</button></form>",
+        esc(q),
+        crate::i18n::tr_text(l, "lbl_search"),
+        tr(l, "a_search")
+    )
+}
+
+/// The filter behind a list's search box: the company's rows, narrowed to those
+/// whose `fields` hold the term as literal, case-insensitive text.
+pub fn list_filter(company_id: &str, q: &str, fields: &[&str]) -> mongodb::bson::Document {
+    let term = q.trim();
+    if term.is_empty() {
+        return doc! { "company_id": company_id };
+    }
+    let re = mongodb::bson::Regex {
+        pattern: regex_escape(term),
+        options: "i".into(),
+    };
+    let mut any = Vec::with_capacity(fields.len());
+    for field in fields {
+        let mut one = mongodb::bson::Document::new();
+        one.insert(*field, doc! { "$regex": re.clone() });
+        any.push(one);
+    }
+    doc! { "company_id": company_id, "$or": any }
 }
 
 /// Escape a user search string before using it as a MongoDB regex.
@@ -255,4 +288,43 @@ pub fn totals_block(ctx: &Ctx, totals: &crate::models::Totals, paid: Option<f64>
         tr(ctx.lang, "lbl_total"),
         esc(&money_text(totals.total, currency))
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::i18n::Lang;
+
+    #[test]
+    fn list_filter_is_the_company_alone_without_a_term() {
+        let f = list_filter("c1", "   ", &["number", "supplier_name"]);
+        assert_eq!(f.len(), 1);
+        assert!(f.get("$or").is_none());
+    }
+
+    #[test]
+    fn list_filter_ors_every_field_and_escapes_the_term() {
+        let f = list_filter("c1", "PO (12)", &["number", "supplier_name"]);
+        let any = f.get_array("$or").expect("$or").clone();
+        assert_eq!(any.len(), 2);
+        for one in any {
+            let doc = one.as_document().expect("$or item");
+            let inner = doc.values().next().expect("field").as_document().expect("regex");
+            let re = match inner.get("$regex") {
+                Some(mongodb::bson::Bson::RegularExpression(re)) => re.pattern.clone(),
+                other => panic!("expected a regex, got {other:?}"),
+            };
+            assert_eq!(re, r"PO \(12\)");
+        }
+    }
+
+    #[test]
+    fn search_form_carries_the_page_the_term_and_the_button() {
+        let html = search_form(Lang::En, "/quotes", "ACME & Co", "");
+        assert!(html.contains("action=\"/quotes\""));
+        assert!(html.contains("name=\"q\""));
+        assert!(html.contains("value=\"ACME &amp; Co\""));
+        assert!(html.contains("Search"));
+        assert!(html.contains("</button></form>"));
+    }
 }

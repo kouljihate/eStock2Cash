@@ -83,13 +83,15 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
                 views::money_text(stock_value, &cur_code)
             ),
             vec![
-                format!(
-                    "<form class=\"search\" method=\"get\" action=\"/products\"><input name=\"q\" value=\"{}\" placeholder=\"{}\"/><label class=\"mini-check\"><input type=\"checkbox\" name=\"low\" value=\"1\"{} onchange=\"this.form.submit()\"/>{}</label><button class=\"btn btn-sm\" type=\"submit\">{}</button></form>",
-                    esc(&search),
-                    crate::i18n::tr_text(l, "lbl_search"),
-                    if low_only { " checked" } else { "" },
-                    tr(l, "m_low_stock"),
-                    tr(l, "a_search")
+                super::search_form(
+                    l,
+                    "/products",
+                    &search,
+                    &format!(
+                        "<label class=\"mini-check\"><input type=\"checkbox\" name=\"low\" value=\"1\"{} onchange=\"this.form.submit()\"/>{}</label>",
+                        if low_only { " checked" } else { "" },
+                        tr(l, "m_low_stock")
+                    ),
                 ),
                 views::link_btn("/products/new", &format!("+ {}", tr(l, "a_new"))),
             ]

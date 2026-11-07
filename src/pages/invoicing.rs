@@ -51,12 +51,13 @@ pub async fn new_invoice_record(
     Ok(inv)
 }
 
-pub async fn ci_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn ci_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .customer_invoices()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "party_name"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -99,7 +100,10 @@ pub async fn ci_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_customer_invoices",
             "",
-            vec![views::link_btn("/customer-invoices/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/customer-invoices", &search, ""),
+                views::link_btn("/customer-invoices/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table_actions(
             l,
@@ -408,12 +412,13 @@ pub async fn ci_pdf(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
 // Payments
 // ---------------------------------------------------------------------------
 
-pub async fn payment_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn payment_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .payments()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "party_name", "invoice_number"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -448,7 +453,10 @@ pub async fn payment_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_payments",
             "",
-            vec![views::link_btn("/payments/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/payments", &search, ""),
+                views::link_btn("/payments/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table(
             l,

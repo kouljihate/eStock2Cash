@@ -334,6 +334,30 @@ hovering (or a screen reader) still says `Open · فتح` while the column keeps
 in every language. `views::table()` leaves the cells plain for tables that only
 display data.
 
+### The row above a table
+
+Every list table is headed by one centred row: the search box first, then the
+`+ New` button. Both come from `pages::search_form()`, so the box, its placeholder
+and its button are the same on all of them, and the term stays in the box after the
+search.
+
+Search runs on the server. `pages::list_filter()` builds the Mongo filter — the
+company's rows, narrowed to those whose columns hold the term as literal,
+case-insensitive text — so each list names the columns it searches:
+
+| list | columns searched |
+| --- | --- |
+| Products | name, SKU, category (plus the low-stock filter) |
+| Suppliers / Customers | name, code, email |
+| Purchase orders | number, supplier |
+| Goods receipts | number, purchase order, supplier |
+| Supplier invoices | number, supplier |
+| Quotes / Customer orders | number, customer |
+| Delivery notes | number, customer, order |
+| Customer invoices | number, customer |
+| Payments | number, party, invoice |
+| Tickets | number, cashier |
+
 ### Settings › Font size
 
 Text size is set **per font**, in a submenu for each face: `Comfortaa` (the Latin

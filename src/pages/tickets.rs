@@ -1,9 +1,10 @@
 //! Direct purchase tickets (POS) with printable receipt and ESC/POS output.
 
-use axum::extract::Path;
+use axum::extract::{Path, Query};
 use axum::response::{IntoResponse, Response};
 use futures_util::TryStreamExt;
 use mongodb::bson::doc;
+use std::collections::HashMap;
 
 use crate::auth::Ctx;
 use crate::error::AppError;
@@ -16,12 +17,13 @@ use crate::services;
 use crate::util::{esc, money, now_iso, qty, round2, today};
 use crate::views;
 
-pub async fn list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .tickets()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "cashier"]))
         .sort(doc! { "created_at": -1 })
         .limit(200)
         .await?;
@@ -47,7 +49,10 @@ pub async fn list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_tickets",
             "",
-            vec![views::link_btn("/tickets/new", &format!("+ {}", tr(l, "m_direct_purchase")))]
+            vec![
+                super::search_form(l, "/tickets", &search, ""),
+                views::link_btn("/tickets/new", &format!("+ {}", tr(l, "m_direct_purchase"))),
+            ]
         ),
         views::table_actions(
             l,

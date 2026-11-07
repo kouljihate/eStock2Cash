@@ -21,12 +21,13 @@ use crate::views;
 // Purchase orders
 // ---------------------------------------------------------------------------
 
-pub async fn po_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn po_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .purchase_orders()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "supplier_name"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -69,7 +70,10 @@ pub async fn po_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_purchase_orders",
             "",
-            vec![views::link_btn("/purchase-orders/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/purchase-orders", &search, ""),
+                views::link_btn("/purchase-orders/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table_actions(
             l,
@@ -380,12 +384,13 @@ pub async fn po_cancel(ctx: Ctx, Path(id): Path<String>) -> Result<Response, App
 // Goods receipts
 // ---------------------------------------------------------------------------
 
-pub async fn gr_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn gr_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .goods_receipts()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "po_number", "supplier_name"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -410,7 +415,10 @@ pub async fn gr_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_goods_receipts",
             "",
-            vec![views::link_btn("/goods-receipts/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/goods-receipts", &search, ""),
+                views::link_btn("/goods-receipts/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table(
             l,
@@ -757,12 +765,13 @@ pub async fn gr_post(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppEr
 // Supplier invoices
 // ---------------------------------------------------------------------------
 
-pub async fn si_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn si_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .supplier_invoices()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "party_name"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -801,7 +810,10 @@ pub async fn si_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_supplier_invoices",
             "",
-            vec![views::link_btn("/supplier-invoices/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/supplier-invoices", &search, ""),
+                views::link_btn("/supplier-invoices/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table_actions(
             l,

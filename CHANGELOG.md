@@ -3,6 +3,25 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.7 — 2026-11-07
+
+Every list heads its table with the same row.
+
+### Added
+
+- **A search box on every list**, not only on products, suppliers and customers:
+  purchase orders, goods receipts, supplier invoices, quotes, customer orders,
+  delivery notes, customer invoices, payments and tickets now filter by their
+  number and the party on the document. `pages::list_filter()` builds that Mongo
+  filter, so the term is matched as literal text (`PO (12)` finds `PO (12)`)
+  and the box keeps what was typed.
+
+### Changed
+
+- The row above a table — search box, then `+ New` — sits in the middle of the row
+  instead of the right edge, and both parts come from `pages::search_form()`, so the
+  box, its placeholder and its button are the same on every page.
+
 ## 0.7.6 — 2026-11-07
 
 One footer, on every page.

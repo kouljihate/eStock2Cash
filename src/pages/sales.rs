@@ -46,12 +46,13 @@ fn lines_template(ctx: &Ctx, list: &[Product], lines: &[DocLine], tax: f64) -> S
 // Quotes
 // ---------------------------------------------------------------------------
 
-pub async fn quote_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn quote_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .quotes()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "customer_name"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -77,7 +78,10 @@ pub async fn quote_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_quotes",
             "",
-            vec![views::link_btn("/quotes/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/quotes", &search, ""),
+                views::link_btn("/quotes/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table(
             l,
@@ -383,12 +387,13 @@ pub async fn quote_reject(ctx: Ctx, Path(id): Path<String>) -> Result<Response, 
 // Customer orders
 // ---------------------------------------------------------------------------
 
-pub async fn order_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn order_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .sales_orders()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "customer_name"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -430,7 +435,10 @@ pub async fn order_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_customer_orders",
             "",
-            vec![views::link_btn("/customer-orders/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/customer-orders", &search, ""),
+                views::link_btn("/customer-orders/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table_actions(
             l,
@@ -631,12 +639,13 @@ pub async fn order_confirm(ctx: Ctx, Path(id): Path<String>) -> Result<Response,
 // Delivery notes
 // ---------------------------------------------------------------------------
 
-pub async fn delivery_list(ctx: Ctx) -> Result<Response, AppError> {
+pub async fn delivery_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Result<Response, AppError> {
+    let search = q.get("q").cloned().unwrap_or_default();
     let mut cur = ctx
         .state
         .db
         .delivery_notes()
-        .find(doc! { "company_id": &ctx.company.id })
+        .find(super::list_filter(&ctx.company.id, &search, &["number", "customer_name", "order_number"]))
         .sort(doc! { "created_at": -1 })
         .limit(300)
         .await?;
@@ -661,7 +670,10 @@ pub async fn delivery_list(ctx: Ctx) -> Result<Response, AppError> {
             &ctx,
             "nav_delivery_notes",
             "",
-            vec![views::link_btn("/delivery-notes/new", &format!("+ {}", tr(l, "a_new")))]
+            vec![
+                super::search_form(l, "/delivery-notes", &search, ""),
+                views::link_btn("/delivery-notes/new", &format!("+ {}", tr(l, "a_new"))),
+            ]
         ),
         views::table(
             l,
