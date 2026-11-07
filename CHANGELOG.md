@@ -3,6 +3,19 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.10 — 2026-11-07
+
+Icon size is a setting.
+
+### Added
+
+- **Settings › Icon size**, with the same `S` / `M` / `L` / `XL` steps as the two
+  font sizes. It is one multiplier (`--ico`) for every glyph the app draws — the
+  sidebar, the panel and sign-out buttons, the settings gear and the round row
+  actions — so the frames keep the proportion they were designed at instead of one
+  part growing alone. The choice is a cookie (`si_ico`) set by `/icon/{size}` and
+  read into `Ctx::ico`, which the shell writes onto `<html data-ico="…">`.
+
 ## 0.7.9 — 2026-11-07
 
 The icon set is Papicons.

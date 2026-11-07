@@ -78,6 +78,8 @@ lang_table! {
     "lbl_settings" => ("Settings", "Réglages", "الإعدادات"),
     "lbl_toggle_menu" => ("Collapse or expand the menu", "Réduire ou déplier le menu", "طي القائمة أو توسيعها"),
     "lbl_font_size" => ("Font size", "Taille du texte", "حجم الخط"),
+    "lbl_icon_size" => ("Icon size", "Taille des icônes", "حجم الأيقونات"),
+    "lbl_icons" => ("Icons", "Icônes", "الأيقونات"),
     "nav_dashboard" => ("Dashboard", "Tableau de bord", "لوحة التحكم"),
     "nav_purchasing" => ("Procure-to-Pay", "Procure-to-Pay", "دورة الشراء"),
     "nav_sales" => ("Quote-to-Cash", "Quote-to-Cash", "دورة البيع"),

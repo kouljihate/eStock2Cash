@@ -132,10 +132,11 @@ impl Title {
 
 /// Settings dropdown shown in the middle column of every page header.
 ///
-/// It holds two submenus: `Languages`, listing the two duos (AR/EN and AR/FR)
-/// one per row, and `Font size`, which splits the choice per font — Comfortaa for
-/// the Latin half of every label, VIP Rawy for the Arabic half.
-pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> String {
+/// It holds three submenus: `Languages`, listing the two duos (AR/EN and AR/FR)
+/// one per row; `Font size`, which splits the choice per font — Comfortaa for the
+/// Latin half of every label, VIP Rawy for the Arabic half; and `Icon size`, one
+/// multiplier for every glyph the app draws.
+pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str, ico: &str) -> String {
     let next = crate::util::urlenc(next);
 
     let duo = |l: Lang, codes: &str| -> String {
@@ -163,17 +164,33 @@ pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> Strin
             .collect::<String>()
     };
 
+    let icon_sizes = |cur: &str| -> String {
+        [("s", "S"), ("m", "M"), ("l", "L"), ("xl", "XL")]
+            .iter()
+            .map(|(code, label)| {
+                format!(
+                    "<a class=\"fsopt{}\" href=\"/icon/{code}?next={next}\"{}>{label}</a>",
+                    if *code == cur { " active" } else { "" },
+                    if *code == cur { " aria-current=\"true\"" } else { "" },
+                )
+            })
+            .collect::<String>()
+    };
+
     format!(
-        "<details class=\"settings\"><summary class=\"settings-trigger\" title=\"{title}\">{gear}<span class=\"settings-name\">{label}</span></summary><div class=\"settings-panel\"><details class=\"sub\"><summary class=\"sub-head\">{langs}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\">{en}{fr}</div></details><details class=\"sub\"><summary class=\"sub-head\">{font_size}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\"><div class=\"fsrow\"><span class=\"fsname\">Comfortaa</span>{lat_sizes}</div><div class=\"fsrow\"><span class=\"fsname ar\">VIP Rawy</span>{ar_sizes}</div></div></details></div></details>",
+        "<details class=\"settings\"><summary class=\"settings-trigger\" title=\"{title}\">{gear}<span class=\"settings-name\">{label}</span></summary><div class=\"settings-panel\"><details class=\"sub\"><summary class=\"sub-head\">{langs}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\">{en}{fr}</div></details><details class=\"sub\"><summary class=\"sub-head\">{font_size}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\"><div class=\"fsrow\"><span class=\"fsname\">Comfortaa</span>{lat_sizes}</div><div class=\"fsrow\"><span class=\"fsname ar\">VIP Rawy</span>{ar_sizes}</div></div></details><details class=\"sub\"><summary class=\"sub-head\">{icon_size}<span class=\"sub-caret\">▸</span></summary><div class=\"sub-panel\"><div class=\"fsrow\"><span class=\"fsname\">{icons}</span>{ico_sizes}</div></div></details></div></details>",
         label = tr(lang, "lbl_settings"),
         title = esc(&crate::i18n::tr_text(lang, "lbl_settings")),
         gear = icon("cog"),
         langs = tr(lang, "lbl_languages"),
         font_size = tr(lang, "lbl_font_size"),
+        icon_size = tr(lang, "lbl_icon_size"),
+        icons = tr(lang, "lbl_icons"),
         en = duo(Lang::En, "EN"),
         fr = duo(Lang::Fr, "FR"),
         lat_sizes = sizes("lat", fs_lat),
         ar_sizes = sizes("ar", fs_ar),
+        ico_sizes = icon_sizes(ico),
     )
 }
 
@@ -199,7 +216,7 @@ pub fn foot(lang: Lang) -> String {
 pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let lang = ctx.lang;
     let nav = nav_html(ctx);
-    let settings = settings_menu(lang, &ctx.path, ctx.fs_lat, ctx.fs_ar);
+    let settings = settings_menu(lang, &ctx.path, ctx.fs_lat, ctx.fs_ar, ctx.ico);
     let flash_html = match &ctx.flash {
         Some(f) => format!(
             "<div class=\"flash {}\">{}<button class=\"flash-x\" onclick=\"this.parentNode.remove()\">×</button></div>",
@@ -221,7 +238,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let foot_html = foot(lang);
 
     let view = view! {
-        <html lang=lang.code() dir=lang.dir() data-fs-lat=ctx.fs_lat data-fs-ar=ctx.fs_ar>
+        <html lang=lang.code() dir=lang.dir() data-fs-lat=ctx.fs_lat data-fs-ar=ctx.fs_ar data-ico=ctx.ico>
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -629,6 +646,17 @@ mod tests {
         assert!(s.contains("<svg viewBox=\"0 0 24 24\" fill=\"currentColor\""));
         assert!(s.contains("<div class=\"nav-links\"><a class=\"nav-item\">x</a></div>"));
         assert!(s.ends_with("</details>"));
+    }
+
+    #[test]
+    fn settings_offer_a_size_for_every_icon() {
+        // the fourth step of the icon row is the current one, and every step keeps
+        // the page the menu was opened from
+        let m = settings_menu(Lang::En, "/customers", "m", "m", "l");
+        assert!(m.contains("Icon size"));
+        assert!(m.contains("href=\"/icon/l?next=%2Fcustomers\" aria-current=\"true\">L</a>"));
+        assert!(m.contains("href=\"/icon/s?next=%2Fcustomers\">S</a>"));
+        assert!(m.contains("href=\"/icon/xl?next=%2Fcustomers\">XL</a>"));
     }
 
     #[test]

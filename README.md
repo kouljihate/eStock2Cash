@@ -422,6 +422,24 @@ The sizes are cookie-backed (`si_fs_lat`, `si_fs_ar`, values `s`/`m`/`l`/`xl`) a
 implemented with `size-adjust` font faces, so a single bilingual label scales each
 half separately.
 
+### Settings › Icon size
+
+One step for every glyph the app draws, so the rail, the header buttons, the settings
+gear and the round row actions grow together instead of one part swelling out of
+proportion:
+
+| step | multiplier | nav icon | row-action icon |
+| --- | --- | --- | --- |
+| `S` | 0.85 | 14.5 px | 12.75 px |
+| `M` | 1 (default) | 17 px | 15 px |
+| `L` | 1.2 | 20.4 px | 18 px |
+| `XL` | 1.4 | 23.8 px | 21 px |
+
+The step is a cookie (`si_ico`, values `s`/`m`/`l`/`xl`), set by `/icon/{size}` and
+read into `Ctx::ico`, which the shell writes onto `<html data-ico="…">`. `app.css`
+turns it into `--ico`, and every icon rule is `calc(<design size> * var(--ico))`, so
+a frame keeps the proportion it was drawn at.
+
 ## Fonts
 
 The UI font is **Comfortaa** for Latin and **VIP Rawy** for Arabic; the PDF

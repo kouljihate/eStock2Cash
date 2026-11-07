@@ -130,6 +130,8 @@
   --side-2: #111a33;
   --radius: 16px;
   --radius-sm: 11px;
+  /* one multiplier for every glyph the app draws, chosen in Settings › Icon size */
+  --ico: 1;
   --shadow-xs: 0 1px 2px rgba(12, 18, 34, .05);
   --shadow-sm: 0 1px 2px rgba(12, 18, 34, .04), 0 6px 16px -10px rgba(12, 18, 34, .22);
   --shadow: 0 1px 2px rgba(12, 18, 34, .04), 0 18px 38px -26px rgba(12, 18, 34, .38);
@@ -156,6 +158,13 @@ html[data-fs-ar="s"] { --face-ar: "VIP Rawy S"; }
 html[data-fs-ar="l"] { --face-ar: "VIP Rawy L"; }
 html[data-fs-ar="xl"] { --face-ar: "VIP Rawy XL"; }
 html[data-fs-ar="l"] { --face-ar: "VIP Rawy L"; }
+
+/* Icon size. The steps are multipliers rather than fixed sizes, so the rail, the
+   header buttons and the round row actions grow together and every frame keeps the
+   proportion it was drawn at. M is the size the layout is designed for. */
+html[data-ico="s"] { --ico: .85; }
+html[data-ico="l"] { --ico: 1.2; }
+html[data-ico="xl"] { --ico: 1.4; }
 
 /* Every label is a `.bi` wrapper holding two halves: `.lat` (Comfortaa) and
    `.ar` (VIP Rawy). Labels put English at the left and Arabic at the right end of
@@ -306,7 +315,7 @@ h3 { font-size: 13.5px; }
   transition: background .14s ease, color .14s ease, transform .16s ease;
 }
 .side-toggle:hover { background: rgba(255, 255, 255, .16); color: #fff; }
-.side-toggle svg { width: 15px; height: 15px; }
+.side-toggle svg { width: calc(15px * var(--ico)); height: calc(15px * var(--ico)); }
 html.nav-closed .app { grid-template-columns: 78px minmax(0, 1fr); }
 html.nav-closed .sidebar { padding-inline: 9px; }
 html.nav-closed .side-head { flex-direction: column; align-items: center; }
@@ -373,9 +382,9 @@ html.nav-closed .side-foot { margin-top: 6px; }
   position: absolute;
   inset-inline-end: 9px;
   top: 50%;
-  width: 13px;
-  height: 13px;
-  margin-top: -6px;
+  width: calc(13px * var(--ico));
+  height: calc(13px * var(--ico));
+  margin-top: calc(-6px * var(--ico));
   flex: none;
   transition: transform .18s ease;
   transform-origin: 50% 50%;
@@ -397,7 +406,12 @@ html.nav-closed .nav-section > .nav-links { display: flex; }
   font-weight: 400;
   transition: background .16s ease, color .16s ease, transform .16s ease;
 }
-.nav-item svg { width: 17px; height: 17px; flex: 0 0 17px; opacity: .82; }
+.nav-item svg {
+  width: calc(17px * var(--ico));
+  height: calc(17px * var(--ico));
+  flex: 0 0 calc(17px * var(--ico));
+  opacity: .82;
+}
 .nav-item > span { flex: 1; min-width: 0; }
 .nav-item:hover {
   background: rgba(255, 255, 255, .06);
@@ -457,7 +471,12 @@ html.nav-closed .nav-section > .nav-links { display: flex; }
   transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
 }
 .settings-trigger:hover { border-color: rgba(79, 70, 229, .32); }
-.settings-trigger svg { width: 15px; height: 15px; color: var(--brand); flex: none; }
+.settings-trigger svg {
+  width: calc(15px * var(--ico));
+  height: calc(15px * var(--ico));
+  color: var(--brand);
+  flex: none;
+}
 .settings[open] .settings-trigger { border-color: rgba(79, 70, 229, .4); box-shadow: var(--ring); }
 .settings-panel {
   position: absolute;
@@ -983,7 +1002,7 @@ td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
   transition: background .14s ease, color .14s ease;
 }
 .btn-icon:hover { background: #feeceb; color: #a52a1a; }
-.btn-icon svg { width: 15px; height: 15px; }
+.btn-icon svg { width: calc(15px * var(--ico)); height: calc(15px * var(--ico)); }
 
 /* ================================================================  forms */
 

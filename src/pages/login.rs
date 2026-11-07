@@ -21,8 +21,9 @@ fn shell(
     body: String,
     fs_lat: &'static str,
     fs_ar: &'static str,
+    ico: &'static str,
 ) -> Response {
-    let settings = crate::views::settings_menu(lang, "/login", fs_lat, fs_ar);
+    let settings = crate::views::settings_menu(lang, "/login", fs_lat, fs_ar, ico);
     let tagline1 = tr(lang, "app_tagline_1");
     let tagline2 = tr(lang, "app_tagline_2");
     // The fixed header carries both names of the app; the shared page bar closes the
@@ -31,7 +32,7 @@ fn shell(
     let app_ar = crate::i18n::tr_ar("app_name");
     let foot_html = crate::views::foot(lang);
     let view = view! {
-        <html lang=lang.code() dir=lang.dir() data-fs-lat=fs_lat data-fs-ar=fs_ar>
+        <html lang=lang.code() dir=lang.dir() data-fs-lat=fs_lat data-fs-ar=fs_ar data-ico=ico>
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -120,6 +121,7 @@ pub async fn form(
         body,
         auth::cookie_size(&headers, auth::COOKIE_FS_LAT),
         auth::cookie_size(&headers, auth::COOKIE_FS_AR),
+        auth::cookie_size(&headers, auth::COOKIE_ICON),
     ))
 }
 
@@ -197,6 +199,38 @@ pub async fn switch_lang(
     let cookie = auth::set_cookie(
         auth::COOKIE_LANG,
         lang.code(),
+        Some(31_536_000),
+        st.cfg.cookie_secure,
+        false,
+    );
+    let mut resp = Redirect::to(&next).into_response();
+    if let Ok(v) = axum::http::HeaderValue::from_str(&cookie) {
+        resp.headers_mut().append(SET_COOKIE, v);
+    }
+    resp
+}
+
+/// `/icon/{size}` — the Settings › Icon size options: `s`, `m`, `l` or `xl`, one
+/// multiplier for every glyph the app draws.
+pub async fn switch_icon(
+    State(st): State<AppState>,
+    Path(size): Path<String>,
+    Query(q): Query<HashMap<String, String>>,
+) -> Response {
+    let value = match size.as_str() {
+        "s" => "s",
+        "l" => "l",
+        "xl" => "xl",
+        _ => "m",
+    };
+    let next = q
+        .get("next")
+        .filter(|n| n.starts_with('/'))
+        .cloned()
+        .unwrap_or_else(|| "/".into());
+    let cookie = auth::set_cookie(
+        auth::COOKIE_ICON,
+        value,
         Some(31_536_000),
         st.cfg.cookie_secure,
         false,

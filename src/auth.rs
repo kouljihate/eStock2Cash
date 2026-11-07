@@ -23,6 +23,7 @@ pub const COOKIE_LANG: &str = "si_lang";
 /// Text size of each face: `s`, `m` (default) or `l`.
 pub const COOKIE_FS_LAT: &str = "si_fs_lat";
 pub const COOKIE_FS_AR: &str = "si_fs_ar";
+pub const COOKIE_ICON: &str = "si_ico";
 
 fn hex(bytes: &[u8]) -> String {
     let mut s = String::with_capacity(bytes.len() * 2);
@@ -258,6 +259,8 @@ pub struct Ctx {
     /// Text size of the Latin and the Arabic face, chosen in Settings.
     pub fs_lat: &'static str,
     pub fs_ar: &'static str,
+    /// Size of every icon in the app, chosen in Settings.
+    pub ico: &'static str,
 }
 
 #[derive(Clone)]
@@ -326,6 +329,7 @@ impl FromRequestParts<AppState> for Ctx {
             path: parts.uri.path().to_string(),
             fs_lat: cookie_size(&parts.headers, COOKIE_FS_LAT),
             fs_ar: cookie_size(&parts.headers, COOKIE_FS_AR),
+            ico: cookie_size(&parts.headers, COOKIE_ICON),
         })
     }
 }

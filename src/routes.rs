@@ -96,6 +96,7 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/lang/{code}", get(pages::login::switch_lang))
         .route("/font/{face}/{size}", get(pages::login::switch_font))
+        .route("/icon/{size}", get(pages::login::switch_icon))
         .route("/static/app.css", get(|| async { asset(APP_CSS, "text/css; charset=utf-8") }))
         .route(
             "/static/app.js",
