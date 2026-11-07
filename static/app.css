@@ -680,7 +680,12 @@ html.nav-closed .nav-section > .nav-links { display: flex; }
   font-size: 11px;
   letter-spacing: .015em;
 }
-.foot-id { display: inline-flex; align-items: center; gap: 9px; }
+.foot-id { display: inline-flex; align-items: center; gap: 9px; flex-wrap: wrap; row-gap: 3px; }
+/* the bar is the one place where the pair is written as a single line —
+   "S2C MAROC · S2C المغرب" — the way the tooltip and the copy/paste text read it */
+.foot-brand { min-width: 0; }
+.foot-brand .bi { justify-content: flex-start; gap: 0; }
+.foot-brand .bi > .sep { display: inline; padding: 0 5px; }
 .foot-id::before {
   content: "";
   width: 7px;
@@ -698,7 +703,7 @@ html.nav-closed .nav-section > .nav-links { display: flex; }
   background: rgba(79, 70, 229, .08);
   border: 1px solid rgba(79, 70, 229, .14);
 }
-.foot-year { font-variant-numeric: tabular-nums; }
+.foot-year { font-variant-numeric: tabular-nums; margin-inline-start: auto; }
 
 .flash-wrap { padding: 0 28px; }
 .flash {
@@ -1209,34 +1214,42 @@ td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
 }
 .login-card .field > span { color: var(--ink-2); }
 .login-card .hint { margin: 0; text-align: center; font-size: 10.5px; color: var(--faint); }
-/* the fixed chrome of the login page: the same 40 / 20 / 40 split as the app
-   header — Latin name here, the Settings menu in the middle, the Arabic name at
-   the far end — and a footer with the copyright and the version badge */
-.login-head,
-.login-foot {
+/* the fixed header of the login page keeps the app bar's 40 / 20 / 40 split —
+   Latin name here, the Settings menu in the middle, the Arabic name at the far
+   end; the page footer below it is the shared `appfoot` bar, pinned down */
+.login-head {
   position: fixed;
   left: 0;
   right: 0;
+  top: 0;
   z-index: 30;
   display: grid;
   grid-template-columns: 40% 20% 40%;
   align-items: center;
   gap: 0;
   padding: 12px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, .09);
   background: rgba(8, 12, 26, .74);
   backdrop-filter: saturate(180%) blur(16px);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
 }
-.login-head { top: 0; border-bottom: 1px solid rgba(255, 255, 255, .09); }
-.login-foot {
+/* the one page bar, in the night palette and pinned to the bottom */
+body.login-body .appfoot {
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
+  z-index: 30;
+  padding: 12px 28px;
   border-top: 1px solid rgba(255, 255, 255, .09);
+  background: rgba(8, 12, 26, .74);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   color: #93a3c1;
   font-size: 11px;
   letter-spacing: .015em;
 }
-.lh-col, .lf-col { min-width: 0; }
-.lh-col { display: flex; align-items: center; gap: 10px; }
+.lh-col { min-width: 0; display: flex; align-items: center; gap: 10px; }
 .lh-mid { justify-content: center; }
 .lh-ar { justify-content: flex-end; }
 .lh-name {
@@ -1248,9 +1261,7 @@ td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.lf-mid { text-align: center; }
-.lf-ar { display: flex; justify-content: flex-end; }
-.login-foot .foot-ver {
+body.login-body .appfoot .foot-ver {
   color: #c7d2fe;
   background: rgba(129, 140, 248, .16);
   border-color: rgba(165, 180, 252, .32);
@@ -1322,9 +1333,11 @@ td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
 
 /* ===========================================================  error page */
 
-.errpage { display: grid; place-items: center; min-height: 100vh; padding: 24px; }
+.errpage { display: flex; flex-direction: column; min-height: 100vh; }
 .errbox {
   max-width: 420px;
+  /* centred in what the page bar leaves, and never flush with a narrow screen */
+  margin: auto 24px;
   padding: 32px;
   text-align: center;
   background: var(--card);
@@ -1332,6 +1345,8 @@ td.acts .btn-icon.danger:hover { background: #feeceb; color: #a52a1a; }
   border-radius: 20px;
   box-shadow: var(--shadow);
 }
+/* the box's two auto margins do the centring here, so the bar only follows it */
+.errpage .appfoot { margin-top: 0; }
 
 /* ====================================================================  RTL */
 
@@ -1408,8 +1423,8 @@ html[dir="rtl"] .row-actions { justify-content: center; }
 
 @media (max-width: 720px) {
   /* keep the 40 / 20 / 40 split on a phone, just tighter */
-  .login-head,
-  .login-foot { padding: 10px 14px; }
+  .login-head { padding: 10px 14px; }
+  body.login-body .appfoot { padding: 10px 14px; }
   .lh-name { font-size: 13px; }
   .lh-col { gap: 7px; }
   .login-body { padding: 78px 16px 74px; }

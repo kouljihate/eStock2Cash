@@ -272,19 +272,35 @@ text**:
 | middle (20 %) | sign-out button and the `Settings` dropdown |
 | right (40 %) | the same title in Arabic, right-aligned |
 
+### The page footer
+
+Every page ends on one bar, built by a single fragment (`views::foot`): the app's
+two names behind a brand dot, the version pill, and the credit at the far end —
+
+| part | content |
+| --- | --- |
+| left | gradient dot, `S2C MAROC` / `S2C المغرب`, `v<version>` |
+| right | `© <year> (koul)` |
+
+The app shell, the sign-in page and the error pages all insert that same fragment,
+so the bar cannot drift between them. It follows the content on a long page and
+sits at the bottom of the viewport on a short one; the sign-in page fixes it to
+the bottom of its dark chrome, in the night palette.
+
 ### The sign-in page
 
-Before you are signed in, the page keeps a fixed header and footer in the same
-three columns as the app bar — **40 % English text, 20 % controls, 40 % Arabic
-text** — so the frame never scrolls with the form:
+Before you are signed in, the page keeps a fixed header in the same three columns
+as the app bar — **40 % English text, 20 % controls, 40 % Arabic text**:
 
-| bar | left (40 %) | middle (20 %) | right (40 %) |
-| --- | --- | --- | --- |
-| header | `S2C` mark and the app name in the duo's Latin language | the `Settings` menu (`/login`) | the app name in Arabic, right-aligned |
-| footer | `© <year> (koul)` | — | the version badge (`v0.7.2`) |
+| column | content |
+| --- | --- |
+| left (40 %) | the `S2C` mark and the app name in the duo's Latin language |
+| middle (20 %) | the `Settings` menu (`/login`) |
+| right (40 %) | the app name in Arabic, right-aligned |
 
-The card stays centred between the two bars, and the header keeps the 40 / 20 / 40
-split on a phone by tightening its type.
+The shared page footer is pinned below the card in the night palette, so the frame
+never scrolls with the form. The card stays centred between the two bars, and the
+header keeps its split on a phone by tightening its type.
 
 ### The sidebar
 

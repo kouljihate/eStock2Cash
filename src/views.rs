@@ -211,6 +211,20 @@ pub fn settings_menu(lang: Lang, next: &str, fs_lat: &str, fs_ar: &str) -> Strin
 /// rail never flashes open on a page load.
 pub const NAV_STATE_SCRIPT: &str = "try{if(localStorage.getItem('s2c-nav')==='closed'){document.documentElement.classList.add('nav-closed')}}catch(e){}";
 
+/// Content of the bar that closes a page: the app's two names, the version pill and
+/// the credit. Every shell wraps it in `<footer class="appfoot">`, so the app, the
+/// sign-in page and the error page end on the same bar.
+pub fn foot(lang: Lang) -> String {
+    format!(
+        "<span class=\"foot-id\"><span class=\"foot-brand\">{}</span>\
+         <span class=\"foot-ver\">v{}</span></span>\
+         <span class=\"foot-year\">© {} (koul)</span>",
+        tr(lang, "app_name"),
+        env!("CARGO_PKG_VERSION"),
+        chrono::Utc::now().format("%Y")
+    )
+}
+
 /// Full page shell.
 pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let lang = ctx.lang;
@@ -231,12 +245,10 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
     let company_name = esc(&ctx.company.name);
     let tagline1 = tr(lang, "app_tagline_1");
     let tagline2 = tr(lang, "app_tagline_2");
-    let app_name = tr(lang, "app_name");
     let sign_out_text = crate::i18n::tr_text(lang, "a_logout");
-    let signed_in = tr(lang, "m_signed_in_as");
     let signed_in_ar = tr_ar("m_signed_in_as");
     let nav_toggle_text = crate::i18n::tr_text(lang, "lbl_toggle_menu");
-    let year = chrono::Utc::now().format("%Y").to_string();
+    let foot_html = foot(lang);
 
     let view = view! {
         <html lang=lang.code() dir=lang.dir() data-fs-lat=ctx.fs_lat data-fs-ar=ctx.fs_ar>
@@ -252,7 +264,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                 <aside class="sidebar">
                     <div class="side-head">
                         <div class="brand">
-                            <div class="brand-mark">"S2C"</div>
+                            // <div class="brand-mark">"S2C"</div>
                             <div class="brand-text">
                                 <strong>{company_name}</strong>
                                 <small inner_html=tagline1.clone()></small>
@@ -270,7 +282,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                     <header class="topbar">
                         <div class="tb-col tb-lat">
                             <h1>{title_lat}</h1>
-                            <span class="muted" inner_html=format!("{} {}", signed_in, username.clone())></span>
+                            // <span class="muted" inner_html=format!("{} {}", signed_in, username.clone())></span>
                         </div>
                         <div class="tb-col tb-mid">
                             <form method="post" action="/logout" class="inline">
@@ -285,13 +297,7 @@ pub fn page(ctx: &Ctx, title: &Title, body: String) -> String {
                     </header>
                     <div class="flash-wrap" inner_html=flash_html></div>
                     <main class="content" inner_html=body></main>
-                    <footer class="appfoot">
-                        <span class="foot-id">
-                            <span inner_html=app_name.clone()></span>
-                            <span class="foot-ver">{ concat!("v", env!("CARGO_PKG_VERSION")) }</span>
-                        </span>
-                        <span class="foot-year">"© " {year}</span>
-                    </footer>
+                    <footer class="appfoot" inner_html=foot_html></footer>
                 </div>
                 <script src=format!("/static/app.js?v={}", crate::routes::asset_token())></script>
             </body>
@@ -617,6 +623,17 @@ mod tests {
         assert!(s.contains("<path d=\"M6 9.5l6 6 6-6\"/>"));
         assert!(s.contains("<div class=\"nav-links\"><a class=\"nav-item\">x</a></div>"));
         assert!(s.ends_with("</details>"));
+    }
+
+    #[test]
+    fn one_footer_bar_serves_every_page() {
+        // both names, the running version and the credit: the app shell, the sign-in
+        // page and the error page all print this same content
+        let f = foot(Lang::En);
+        assert!(f.contains("S2C MAROC") && f.contains(&tr_ar("app_name")));
+        assert!(f.contains(concat!("v", env!("CARGO_PKG_VERSION"))));
+        assert!(f.contains("(koul)"));
+        assert!(f.starts_with("<span class=\"foot-id\">"));
     }
 
     #[test]

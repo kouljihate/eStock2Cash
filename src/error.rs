@@ -64,13 +64,18 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = self.status();
         let message = self.message();
+        // The error page closes on the same bar as every other page, in English since
+        // nothing here knows the session's language.
+        let foot = crate::views::foot(crate::i18n::Lang::En);
         let body = format!(
             "<!doctype html><html><head><meta charset=\"utf-8\"><title>{status}</title>\
-             <link rel=\"stylesheet\" href=\"/static/app.css\"></head>\
+             <link rel=\"stylesheet\" href=\"/static/app.css?v={css}\"></head>\
              <body class=\"errpage\"><div class=\"errbox\"><h1>{status}</h1>\
-             <p>{msg}</p><p><a class=\"btn\" href=\"/\">Dashboard</a></p></div></body></html>",
+             <p>{msg}</p><p><a class=\"btn\" href=\"/\">Dashboard</a></p></div>\
+             <footer class=\"appfoot\">{foot}</footer></body></html>",
             status = status.as_u16(),
-            msg = crate::util::esc(&message)
+            msg = crate::util::esc(&message),
+            css = crate::routes::asset_token()
         );
         let mut resp = Html(body).into_response();
         *resp.status_mut() = status;

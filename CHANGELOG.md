@@ -3,6 +3,25 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.6 — 2026-11-07
+
+One footer, on every page.
+
+### Changed
+
+- **The page bar** is one fragment (`views::foot`) now: brand dot, the app's two
+  names and the version pill at the left, the `© <year> (koul)` credit at the far
+  end. The app shell, the sign-in page and the error pages all insert it, so the
+  three of them can no longer disagree.
+
+### Fixed
+
+- The sign-in page and the error pages no longer carry a footer of their own — the
+  sign-in bar was a 40 / 20 / 40 grid of its own, and an error page had none at
+  all. They now end on the same bar as every list and form.
+- An error page centres its card in the space the bar leaves, instead of sitting
+  high because the bar was also claiming an auto margin.
+
 ## 0.7.5 — 2026-11-07
 
 The group headers keep a name whole.

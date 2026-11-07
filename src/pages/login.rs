@@ -25,10 +25,11 @@ fn shell(
     let settings = crate::views::settings_menu(lang, "/login", fs_lat, fs_ar);
     let tagline1 = tr(lang, "app_tagline_1");
     let tagline2 = tr(lang, "app_tagline_2");
-    // The fixed header carries both names of the app, the footer its credits.
+    // The fixed header carries both names of the app; the shared page bar closes the
+    // page below it.
     let app_en = esc(brand);
     let app_ar = crate::i18n::tr_ar("app_name");
-    let credits = format!("© {} (koul)", chrono::Utc::now().format("%Y"));
+    let foot_html = crate::views::foot(lang);
     let view = view! {
         <html lang=lang.code() dir=lang.dir() data-fs-lat=fs_lat data-fs-ar=fs_ar>
             <head>
@@ -60,11 +61,7 @@ fn shell(
                     </div>
                     <div inner_html=body></div>
                 </div>
-                <footer class="login-foot">
-                    <div class="lf-col lf-lat">{credits}</div>
-                    <div class="lf-col lf-mid"></div>
-                    <div class="lf-col lf-ar"><span class="foot-ver">{ concat!("v", env!("CARGO_PKG_VERSION")) }</span></div>
-                </footer>
+                <footer class="appfoot" inner_html=foot_html></footer>
             </body>
         </html>
     };
