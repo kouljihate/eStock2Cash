@@ -186,12 +186,13 @@ button .bi {
   line-height: 1.2;
   text-align: center;
 }
-/* a header cell centres its stacked pair too, so the short half sits under the long one */
+/* a header cell centres its stacked pair too, so the short half sits under the long
+   one, with the same air between the lines as a button */
 thead th .bi {
   flex-direction: column-reverse;
   align-items: center;
   justify-content: flex-start;
-  gap: 0;
+  gap: 3px;
   line-height: 1.25;
 }
 .btn .bi > .ar,

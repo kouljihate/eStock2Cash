@@ -241,7 +241,7 @@ element type:
 
 | element | arrangement |
 | --- | --- |
-| table headers | stacked — **Arabic on top, EN/FR underneath**, the pair centred in the cell |
+| table headers | stacked — **Arabic on top, EN/FR underneath**, the pair centred in the cell with 3 px between the lines |
 | buttons | stacked the same way, but the pair is **centred across and down the button** with 3 px of air between the two lines |
 | labels, fields, cells, cards, nav, titles, badges | one line — **English at the left, Arabic at the right end** |
 
@@ -281,7 +281,7 @@ text** — so the frame never scrolls with the form:
 | bar | left (40 %) | middle (20 %) | right (40 %) |
 | --- | --- | --- | --- |
 | header | `S2C` mark and the app name in the duo's Latin language | the `Settings` menu (`/login`) | the app name in Arabic, right-aligned |
-| footer | `© <year> (koul)` | — | the version badge (`v0.7.0`) |
+| footer | `© <year> (koul)` | — | the version badge (`v0.7.2`) |
 
 The card stays centred between the two bars, and the header keeps the 40 / 20 / 40
 split on a phone by tightening its type.

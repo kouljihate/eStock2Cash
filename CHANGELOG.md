@@ -3,6 +3,16 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.2 — 2026-11-07
+
+Table headers get the spacing buttons already had.
+
+### Changed
+
+- A header cell's stacked pair (Arabic over EN/FR) sat with its two lines touching;
+  it now keeps **3 px** between them, matching buttons, while staying centred in the
+  cell.
+
 ## 0.7.1 — 2026-11-07
 
 Buttons centre their bilingual label.
