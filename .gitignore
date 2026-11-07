@@ -12,3 +12,6 @@ static/fonts/*
 !static/fonts/Comfortaa-Regular.ttf
 !static/fonts/Comfortaa-Bold.ttf
 !static/fonts/OFL-Comfortaa.txt
+
+# cache of the downloaded SVGs behind /tools/fetch_papicons.py
+.paplicons_tmp/

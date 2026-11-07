@@ -3,6 +3,26 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.7.9 — 2026-11-07
+
+The icon set is Papicons.
+
+### Changed
+
+- **Every icon now comes from [Papicons](https://github.com/PapillonApp/Papicons)**
+  (MIT), in place of the hand-drawn stroke shapes: filled glyphs on a 24 px grid,
+  coloured `currentColor`, so the sidebar, the toolbar buttons, the row-action circles
+  and the settings gear all share one family. `src/icons.rs` holds the glyphs and maps
+  the app's names to them (`po` is a paper, `receipt` a checklist, `wallet` a card),
+  so `views::icon()` stays the only caller and pages never name the icon set.
+- A filled glyph reads heavier than a 1.6 px line at the same size, so the frames
+  keep their box and nothing about the layout moved.
+
+### Added
+
+- `docs/THIRD-PARTY.md` with the Papicons MIT notice, and `tools/fetch_papicons.py`,
+  which regenerates `src/icons.rs` from the set.
+
 ## 0.7.8 — 2026-11-07
 
 Every table in a page opens with two header rows.

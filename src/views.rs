@@ -9,40 +9,10 @@ use crate::auth::Ctx;
 use crate::i18n::{Lang, tr, tr_ar, tr_lat};
 use crate::util::{esc, money};
 
+/// One icon by the app's own name; the Papicons glyph behind it is filled with
+/// `currentColor`, so the stylesheet decides its size and its tone.
 fn icon(name: &str) -> String {
-    let path = match name {
-        "dashboard" => r#"<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>"#,
-        "suppliers" => r#"<path d="M3 17h18"/><path d="M5 17V8l7-4 7 4v9"/><path d="M9 17v-5h6v5"/>"#,
-        "po" => r#"<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h5M9 8h4"/>"#,
-        "receipt" => r#"<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>"#,
-        "bill" => r#"<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/><path d="M16 17h2"/>"#,
-        "wallet" => r#"<path d="M3 7h15a3 3 0 0 1 3 3v7H3z"/><path d="M3 7V5h13"/><circle cx="17" cy="13" r="1.5"/>"#,
-        "customers" => r#"<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 11a3 3 0 1 0 0-6"/><path d="M17 20c0-2.2-.9-4.2-2.3-5.7"/>"#,
-        "quote" => r#"<path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/>"#,
-        "order" => r#"<path d="M4 6h16l-1.5 12H5.5z"/><path d="M8 6a4 4 0 0 1 8 0"/>"#,
-        "delivery" => r#"<path d="M3 16V7h11v9"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>"#,
-        "products" => r#"<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>"#,
-        "credit" => r#"<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/>"#,
-        "ticket" => r#"<path d="M4 9V6h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M12 7v10" stroke-dasharray="2 2"/>"#,
-        "admin" => r#"<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>"#,
-        "events" => r#"<path d="M3 12h4l2-6 3 12 2-6h4"/>"#,
-        "globe" => r#"<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.4 2.6 3.7 5.6 3.7 9s-1.3 6.4-3.7 9c-2.4-2.6-3.7-5.6-3.7-9S9.6 5.6 12 3z"/>"#,
-        "broker" => r#"<path d="M9 7V3M15 7V3"/><rect x="6" y="7" width="12" height="7" rx="2"/><path d="M9 14v3a3 3 0 0 0 3 3 3 3 0 0 0 3-3v-3"/>"#,
-        "cog" => r#"<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>"#,
-        "logout" => r#"<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/>"#,
-        "panel" => r#"<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>"#,
-        "eye" => r#"<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>"#,
-        "pencil" => r#"<path d="M4 20h4L18 10l-4-4L4 16z"/><path d="M13.5 5.5l4 4"/>"#,
-        "trash" => r#"<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>"#,
-        "file" => r#"<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13h6M9 17h4"/>"#,
-        "chevron" => r#"<path d="M6 9.5l6 6 6-6"/>"#,
-        "print" => r#"<path d="M7 8V3h10v5"/><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M7 16h10v5H7z"/>"#,
-        _ => r#"<circle cx="12" cy="12" r="8"/>"#,
-    };
-    format!(
-        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" \
-         stroke-linecap=\"round\" stroke-linejoin=\"round\">{path}</svg>"
-    )
+    crate::icons::svg(name)
 }
 
 fn nav_item(active: bool, href: &str, label: &str, ico: &str) -> String {
@@ -655,7 +625,8 @@ mod tests {
         let s = nav_section("buy", "Procure-to-Pay", &["<a class=\"nav-item\">x</a>"]);
         assert!(s.starts_with("<details class=\"nav-section\" data-nav-sec=\"buy\" open>"));
         assert!(s.contains("<summary class=\"nav-title\" title=\"Procure-to-Pay\">"));
-        assert!(s.contains("<path d=\"M6 9.5l6 6 6-6\"/>"));
+        // the chevron is a Papicons glyph, filled with the text colour
+        assert!(s.contains("<svg viewBox=\"0 0 24 24\" fill=\"currentColor\""));
         assert!(s.contains("<div class=\"nav-links\"><a class=\"nav-item\">x</a></div>"));
         assert!(s.ends_with("</details>"));
     }

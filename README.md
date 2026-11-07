@@ -334,6 +334,31 @@ hovering (or a screen reader) still says `Open · فتح` while the column keeps
 in every language. `views::table()` leaves the cells plain for tables that only
 display data.
 
+### Icons
+
+Every glyph comes from [Papicons](https://github.com/PapillonApp/Papicons), the open
+set drawn by Tom Things for Papillon (MIT — see `docs/THIRD-PARTY.md`). They are
+filled shapes on a 24 px grid, coloured `currentColor`, so an icon takes the tone of
+the text, link or button that carries it and the stylesheet alone decides its size.
+
+`src/icons.rs` holds the inner markup of each glyph and the mapping from the app's own
+names (`po`, `receipt`, `wallet`, …) to the Papicons file that carries the same
+meaning — `views::icon()` is the only caller, so a page names an idea, not an icon set:
+
+| the app asks for | Papicons draws |
+| --- | --- |
+| `dashboard` / `suppliers` / `customers` | home / pillar / user |
+| `po` / `receipt` / `bill` | paper / tasks / newspaper |
+| `wallet` / `credit` | card / piggy-bank |
+| `quote` / `order` / `delivery` | text-bubble / list / car |
+| `products` / `ticket` | archive / qr-code |
+| `admin`, `cog` / `events` / `broker` / `globe` | gears / clock / link / globe |
+| `eye` / `pencil` / `trash` / `file` / `print` | external-link / pen / trash / paper / newspaper |
+| `panel` / `chevron` / `logout` | menu / chevron-down / logout |
+
+`tools/fetch_papicons.py` regenerates the module from the set (it caches the SVGs in
+`.paplicons_tmp/`), so updating the icons is one command.
+
 ### Two header rows
 
 Every table in a page opens with two header rows. The first spans all columns and

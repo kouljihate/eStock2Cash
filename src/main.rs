@@ -14,6 +14,7 @@ mod events;
 mod fonts;
 mod form;
 mod i18n;
+mod icons;
 mod models;
 mod pages;
 mod pdf;
