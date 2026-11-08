@@ -552,14 +552,10 @@ pub fn icon_link(href: &str, ico: &str, label: &str) -> String {
     )
 }
 
-/// The same as a form post, so a delete is an icon too. The form asks for the
-/// confirmation (`data-confirm`) that `app.js` turns into the dialog below.
-pub fn icon_post(action: &str, ico: &str, label: &str) -> String {
-    icon_post_of(action, ico, label, "")
-}
-
-/// `icon_post`, with `note` — plain text, escaped here — naming the record the button
-/// deletes, so the dialog says which one is about to go.
+/// A delete is an icon too, as a form post. The form asks for the confirmation
+/// (`data-confirm`) that `app.js` turns into the dialog below, and `note` — plain
+/// text, escaped here — names the record the button deletes, so the dialog says
+/// which one is about to go.
 pub fn icon_post_of(action: &str, ico: &str, label: &str, note: &str) -> String {
     let text = esc(&crate::util::text_of(label));
     let note_attr = if note.is_empty() {
@@ -677,11 +673,12 @@ mod tests {
         assert!(a.contains("aria-label=\"Edit · تعديل\""));
         assert!(a.contains("<svg"));
         assert!(!a.contains("\"lat\"") && !a.contains("\"ar\""));
-        let p = icon_post("/suppliers/1/delete", "trash", &tr(Lang::En, "a_delete"));
+        let p = icon_post_of("/suppliers/1/delete", "trash", &tr(Lang::En, "a_delete"), "");
         assert!(p.contains("class=\"btn-icon danger\""));
         assert!(p.contains("<svg") && !p.contains("\"lat\""));
-        // a delete asks through the dialog, and names the record it would remove
+        // a delete asks through the dialog; with no record named it says nothing extra
         assert!(p.contains("data-confirm=\"Delete · حذف\""));
+        assert!(!p.contains("data-confirm-note"));
         let named =
             icon_post_of("/customers/9/delete", "trash", &tr(Lang::En, "a_delete"), "Acme <b>");
         assert!(named.contains("data-confirm-note=\"Acme &lt;b&gt;\""));
