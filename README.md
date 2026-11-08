@@ -175,6 +175,11 @@ Document numbering is per company and sequence-based:
   quote, confirming an order and issuing/creating a customer invoice.
 - **Quote validation** creates a confirmed sales order *and* an open customer
   invoice in one step, and links both back to the quote.
+- **Deleting a purchase order** deletes its goods receipts with it; a posted receipt
+  gives its stock back first (one `Reversed` movement per product) instead of erasing
+  history. Nothing is deleted while money hangs off it: a purchase order billed on a
+  supplier invoice, or an invoice that already has payments, is refused with a red
+  notice naming what to delete first.
 
 ### Events (RabbitMQ → MongoDB)
 

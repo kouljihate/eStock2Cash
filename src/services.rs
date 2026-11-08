@@ -105,6 +105,62 @@ pub async fn post_goods_receipt(
     Ok(())
 }
 
+/// The lines a receipt really moved: a posted one keeps its product and a positive
+/// quantity. A free-text row or a zero row never touched stock, so undoing it would
+/// invent a change that never happened.
+pub fn posted_lines(lines: &[ReceiptLine]) -> Vec<(String, String, f64, f64)> {
+    lines
+        .iter()
+        .filter(|l| l.qty_received > 0.0 && !l.product_id.is_empty())
+        .map(|l| {
+            (
+                l.product_id.clone(),
+                l.description.clone(),
+                l.qty_received,
+                l.unit_cost,
+            )
+        })
+        .collect()
+}
+
+/// Undo a receipt before its record goes: the stock it brought in is taken back out and
+/// the movement is written as an `out` row, so the ledger still explains why the
+/// quantity fell. Only a posted receipt moved anything.
+pub async fn void_goods_receipt(
+    db: &DbHandle,
+    gr: &GoodsReceipt,
+    actor: &str,
+) -> Result<(), AppError> {
+    if gr.status != ReceiptStatus::Posted {
+        return Ok(());
+    }
+    let now = now_iso();
+    for (product_id, description, qty, unit_cost) in posted_lines(&gr.lines) {
+        db.products()
+            .update_one(
+                doc! { "_id": &product_id, "company_id": &gr.company_id },
+                doc! { "$inc": { "qty_on_hand": -qty }, "$set": { "updated_at": &now } },
+            )
+            .await?;
+        let mv = StockMove {
+            id: crate::util::new_id(),
+            company_id: gr.company_id.clone(),
+            product_id,
+            product_name: description,
+            kind: MoveKind::Out,
+            qty,
+            unit_cost,
+            source: "goods_receipt_void".into(),
+            source_number: gr.number.clone(),
+            note: "goods receipt deleted with its purchase order".into(),
+            created_at: now.clone(),
+            created_by: actor.to_string(),
+        };
+        db.stock_moves().insert_one(&mv).await?;
+    }
+    Ok(())
+}
+
 /// Recompute the received quantity of a PO from all its posted receipts.
 pub async fn recompute_po_status(db: &DbHandle, company_id: &str, po_id: &str) -> Result<(), AppError> {
     if po_id.is_empty() {
@@ -514,4 +570,43 @@ pub async fn dashboard_stats(db: &DbHandle, company_id: &str) -> Result<Dashboar
         open_quotes,
         aging,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn line(product: &str, qty: f64) -> ReceiptLine {
+        ReceiptLine {
+            product_id: product.into(),
+            description: format!("line {product}"),
+            qty_ordered: qty,
+            qty_received: qty,
+            unit_cost: 2.0,
+        }
+    }
+
+    #[test]
+    fn a_void_only_takes_back_what_the_receipt_moved() {
+        let lines = vec![
+            line("p1", 3.0),
+            // a free-text row (freight, a service) never touched stock
+            ReceiptLine {
+                product_id: String::new(),
+                description: "Freight".into(),
+                qty_ordered: 1.0,
+                qty_received: 1.0,
+                unit_cost: 0.0,
+            },
+            // ordered but nothing arrived
+            ReceiptLine {
+                qty_received: 0.0,
+                ..line("p2", 0.0)
+            },
+        ];
+        let moves = posted_lines(&lines);
+        assert_eq!(moves.len(), 1);
+        assert_eq!(moves[0].0, "p1");
+        assert_eq!(moves[0].2, 3.0);
+    }
 }

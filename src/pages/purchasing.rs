@@ -49,7 +49,7 @@ pub async fn po_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
                 esc(&views::money_text(po.totals.total, &cur_code))
             ),
             format!(
-                "<div class=\"row-actions\">{}{}</div>",
+                "<div class=\"row-actions\">{}{}{}</div>",
                 views::icon_link(&format!("/purchase-orders/{}", po.id), "eye", &tr(l, "a_view")),
                 if matches!(po.status, PoStatus::Sent | PoStatus::PartiallyReceived) {
                     views::icon_link(
@@ -59,7 +59,13 @@ pub async fn po_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
                     )
                 } else {
                     String::new()
-                }
+                },
+                views::icon_post_of(
+                    &format!("/purchase-orders/{}/delete", po.id),
+                    "trash",
+                    &tr(l, "a_delete"),
+                    &format!("{} · {}", po.number, po.supplier_name),
+                )
             ),
         ]);
     }
@@ -344,6 +350,49 @@ pub async fn po_send(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppEr
         )
         .await;
     Ok(ctx.back(&format!("/purchase-orders/{id}"), "msg_sent", "ok").into_response())
+}
+
+/// Deleting a purchase order takes its goods receipts with it: a receipt exists only to
+/// say what arrived against that order, so leaving them behind would leave stock that no
+/// document explains. Whatever a posted receipt added is taken back out first, and the
+/// movement is written as an `out` row rather than erased.
+///
+/// An order that already carries a supplier invoice is kept: that invoice is a fact about
+/// money owed, and deleting it is its own decision.
+pub async fn po_delete(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppError> {
+    let po = services::get_by_id::<PurchaseOrder>(&ctx.state.db.purchase_orders(), &ctx.company.id, &id).await?;
+
+    let billed = ctx
+        .state
+        .db
+        .supplier_invoices()
+        .find_one(doc! { "company_id": &ctx.company.id, "source_id": &po.id })
+        .await?;
+    if billed.is_some() {
+        return Ok(ctx.back("/purchase-orders", "msg_delete_blocked_invoices", "err").into_response());
+    }
+
+    let mut receipts = ctx
+        .state
+        .db
+        .goods_receipts()
+        .find(doc! { "company_id": &ctx.company.id, "po_id": &po.id })
+        .await?;
+    while let Some(gr) = receipts.try_next().await? {
+        services::void_goods_receipt(&ctx.state.db, &gr, &ctx.claims.un).await?;
+        ctx.state
+            .db
+            .goods_receipts()
+            .delete_one(doc! { "_id": &gr.id, "company_id": &ctx.company.id })
+            .await?;
+    }
+
+    ctx.state
+        .db
+        .purchase_orders()
+        .delete_one(doc! { "_id": &po.id, "company_id": &ctx.company.id })
+        .await?;
+    Ok(ctx.back("/purchase-orders", "msg_deleted", "ok").into_response())
 }
 
 pub async fn po_cancel(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppError> {
@@ -782,13 +831,19 @@ pub async fn si_list(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Resu
                 esc(&views::money_text(inv.outstanding(), &cur_code))
             ),
             format!(
-                "<div class=\"row-actions\">{}{}</div>",
+                "<div class=\"row-actions\">{}{}{}</div>",
                 views::icon_link(&format!("/supplier-invoices/{}/pdf", inv.id), "file", &tr(l, "a_pdf")),
                 if inv.display_status().is_payable() {
                     views::icon_link(&format!("/payments/new?invoice={}&kind=supplier", inv.id), "wallet", &tr(l, "a_pay"))
                 } else {
                     String::new()
-                }
+                },
+                views::icon_post_of(
+                    &format!("/supplier-invoices/{}/delete", inv.id),
+                    "trash",
+                    &tr(l, "a_delete"),
+                    &format!("{} · {}", inv.number, inv.party_name),
+                )
             ),
         ]);
     }
@@ -1022,6 +1077,30 @@ pub async fn si_issue(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppE
         )
         .await;
     Ok(ctx.back(&format!("/supplier-invoices/{id}"), "msg_issued", "ok").into_response())
+}
+
+/// A supplier invoice can go when nothing has been paid against it: the payments point at
+/// it by id, and deleting it first would leave money recorded against a bill that no
+/// longer exists.
+pub async fn si_delete(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppError> {
+    let inv = services::get_by_id::<Invoice>(&ctx.state.db.supplier_invoices(), &ctx.company.id, &id).await?;
+
+    let paid = ctx
+        .state
+        .db
+        .payments()
+        .find_one(doc! { "company_id": &ctx.company.id, "invoice_id": &inv.id })
+        .await?;
+    if paid.is_some() {
+        return Ok(ctx.back("/supplier-invoices", "msg_delete_blocked_payments", "err").into_response());
+    }
+
+    ctx.state
+        .db
+        .supplier_invoices()
+        .delete_one(doc! { "_id": &inv.id, "company_id": &ctx.company.id })
+        .await?;
+    Ok(ctx.back("/supplier-invoices", "msg_deleted", "ok").into_response())
 }
 
 pub async fn si_cancel(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppError> {

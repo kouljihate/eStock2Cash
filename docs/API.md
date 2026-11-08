@@ -33,7 +33,7 @@ Returns the user and company documents.
 
 ### `GET /health`
 
-Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.8.1"}`.
+Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.8.2"}`.
 
 ## Dashboard
 
@@ -136,3 +136,15 @@ web-form endpoints (`/purchase-orders`, `/goods-receipts`, `/quotes/{id}/accept`
 `/payments`, `/admin`, …). They are plain form posts protected by the session
 cookie and same-origin checks; a mobile client cannot call them with the JSON API
 token yet.
+
+Deleting a document is web-only for the same reason. `POST /purchase-orders/{id}/delete`
+and `POST /supplier-invoices/{id}/delete` answer with a redirect carrying a flash code
+(`?m=…&k=ok|err`) instead of JSON.
+
+- Deleting a purchase order deletes its goods receipts as well. A receipt that was
+  already posted gives its stock back first, which writes one `stock_moves` row per
+  product (`kind: "out"`, `source: "goods_receipt_void"`) rather than erasing the
+  ledger; a draft receipt simply goes away.
+- Both deletes are refused while money hangs off the record: a purchase order billed
+  on a supplier invoice answers `?m=msg_delete_blocked_invoices&k=err`, and an invoice
+  with payments answers `?m=msg_delete_blocked_payments&k=err`. The record survives.

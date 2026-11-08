@@ -146,6 +146,7 @@ pub fn router(state: AppState) -> Router {
         .route("/purchase-orders/{id}", get(pages::purchasing::po_detail))
         .route("/purchase-orders/{id}/action", post(pages::purchasing::po_send))
         .route("/purchase-orders/{id}/cancel", post(pages::purchasing::po_cancel))
+        .route("/purchase-orders/{id}/delete", post(pages::purchasing::po_delete))
         .route(
             "/goods-receipts",
             get(pages::purchasing::gr_list).post(pages::purchasing::gr_create),
@@ -161,6 +162,7 @@ pub fn router(state: AppState) -> Router {
         .route("/supplier-invoices/{id}", get(pages::purchasing::si_detail))
         .route("/supplier-invoices/{id}/issue", post(pages::purchasing::si_issue))
         .route("/supplier-invoices/{id}/cancel", post(pages::purchasing::si_cancel))
+        .route("/supplier-invoices/{id}/delete", post(pages::purchasing::si_delete))
         .route("/supplier-invoices/{id}/pdf", get(pages::purchasing::si_pdf))
         // Quote-to-cash
         .route("/quotes", get(pages::sales::quote_list).post(pages::sales::quote_create))

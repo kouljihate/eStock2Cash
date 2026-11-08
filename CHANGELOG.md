@@ -3,6 +3,30 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.8.2 — 2026-11-08
+
+A purchase order can be deleted, and its goods receipt goes with it.
+
+### Added
+
+- **Delete** in the actions column of **Purchase Orders** and **Supplier Invoices** —
+  the same red circle as the other deletes, and the same red confirmation card naming
+  the record.
+- Deleting a purchase order deletes every goods receipt raised for it. A receipt that
+  was already posted gives its stock back first, one movement per product, so the
+  ledger keeps its history instead of losing rows: the product's movements page shows
+  a **Reversed · معكوس** row carrying the negative quantity and the receipt number.
+
+### Changed
+
+- A delete is refused, in a red notice, while money hangs off the record: a purchase
+  order that is billed on a supplier invoice asks for that invoice to be deleted
+  first, and a supplier invoice that already has payments asks for the payments to go
+  first. Nothing is half-deleted.
+- The badge on a movement row is now read from the movement's own source instead of
+  the document it points at, so tickets and reversals no longer wear the "Delivery
+  Note" label.
+
 ## 0.8.1 — 2026-11-07
 
 The delete dialog is framed in red.

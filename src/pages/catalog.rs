@@ -252,10 +252,19 @@ pub async fn product_movements(ctx: Ctx, Path(id): Path<String>) -> Result<Respo
             format!(
                 "<span class=\"badge {}\">{}</span>",
                 if mv.kind == MoveKind::In { "green" } else { "amber" },
-                match mv.kind {
-                    MoveKind::In => tr(l, "lbl_received"),
-                    MoveKind::Out => tr(l, "nav_delivery_notes"),
-                    MoveKind::Adjust => tr(l, "a_adjust"),
+                // The badge names the document that moved the stock: a delivery and a
+                // ticket both leave, and a deleted receipt is undone rather than sold.
+                match mv.source.as_str() {
+                    "goods_receipt" => tr(l, "lbl_received"),
+                    "delivery_note" => tr(l, "nav_delivery_notes"),
+                    "ticket" => tr(l, "nav_tickets"),
+                    "adjustment" => tr(l, "a_adjust"),
+                    "goods_receipt_void" => tr(l, "lbl_reversed"),
+                    _ => match mv.kind {
+                        MoveKind::In => tr(l, "lbl_received"),
+                        MoveKind::Out => tr(l, "nav_delivery_notes"),
+                        MoveKind::Adjust => tr(l, "a_adjust"),
+                    },
                 }
             ),
             format!(
