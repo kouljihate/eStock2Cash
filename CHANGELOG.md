@@ -3,6 +3,26 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.10.1 — 2026-11-08
+
+### Changed
+
+- **New Sale reads like a calculator.** The cash registry form is now the cart on the
+  left and, on the right, a screen with the total over the subtotal and tax, the amount
+  received and the change, a keypad (0–9, `.`, backspace, *Clear*) to tap the money in,
+  the quick tenders and a full-width *Charge* button. The two halves stack on a narrow
+  screen, where the cart no longer needs a wide window.
+- The cart lost its description column — the product line already names the item — so
+  four columns and the running total stay readable beside the keypad.
+- The amount received is a decimal text field with a money pattern instead of a number
+  field: typing `56.5` on the keypad no longer wipes the field when the dot follows a
+  digit.
+
+### Fixed
+
+- Line-table headers were laid out as inline blocks by the `.num` class, which pushed
+  the quantity, price and total headings out of their columns.
+
 ## 0.10.0 — 2026-11-08
 
 Credit at the till, paid on payment day.

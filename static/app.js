@@ -120,6 +120,24 @@
       });
     }
 
+    // The keypad writes the amount received, one tap at a time.
+    document.querySelectorAll(".keypad [data-key]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var k = btn.getAttribute("data-key");
+        var v = paid.value || "";
+        if (k === "clear") {
+          v = "";
+        } else if (k === "back") {
+          v = v.slice(0, -1);
+        } else {
+          if (k === "." && v.indexOf(".") !== -1) return;
+          v = (v === "" && k === "." ? "0" : v) + k;
+        }
+        paid.value = v;
+        update();
+      });
+    });
+
     document.addEventListener("input", update);
     document.addEventListener("change", update);
     update();

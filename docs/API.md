@@ -33,7 +33,7 @@ Returns the user and company documents.
 
 ### `GET /health`
 
-Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.10.0"}`.
+Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.10.1"}`.
 
 ## Dashboard
 

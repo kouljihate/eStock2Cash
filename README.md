@@ -525,7 +525,10 @@ English/French labels.
 
 The till sits in the sidebar straight under **Dashboard**, at `/cash-registry`, and it is
 where a day of selling starts: the cashier picks the customer, adds what leaves the
-shelf, takes the cash and hands over a printed receipt.
+shelf, takes the cash and hands over a printed receipt. The **New sale** panel is laid
+out like a calculator, because that is what the counter is: the cart on the left, and on
+the right a screen with the total, the amount received and the change, with the keypad
+right under the thumb. On a narrow screen the screen and its keys drop under the cart.
 
 - **The customer.** A dropdown of the company's customers, plus *Walk-in customer* for
 the sale that has no name to it. The name and id are written on the ticket, so the same
@@ -534,10 +537,12 @@ sale can be found from the customer's side later.
   quantity on hand next to its name; choosing one fills the price and the description.
   Charging writes one `Ticket` and `services::post_ticket` takes the quantity out of
   `qty_on_hand` with a `ticket` stock move, exactly as a direct ticket does.
-- **The cash.** The running total is recomputed on each keystroke, the quick amounts
-  (20 / 50 / 100 / 200 and *Exact*) fill the amount received, and the change is shown
-  live — in red while the cash on the counter is still short of the total. A short
-  payment is refused by the server with a red notice, not written down as a debt.
+- **The cash.** The total sits big on the screen, with the subtotal and tax under it,
+  recomputed on every line and every key. The amount received is tapped on the keypad
+  (0–9, `.`, backspace, *Clear*) or typed, the quick amounts (20 / 50 / 100 / 200 and
+  *Exact*) fill it in one tap, and the change follows live — in red while the cash on
+  the counter is still short of the total. A short payment is refused by the server
+  with a red notice, not written down as a debt.
 - **The credit.** *Payment* switches the sale from cash to credit: the goods still
   leave the shelf today, but the money is owed until the invoice falls due — the last
   day of the month by default, changeable on the form. A credit sale writes a customer

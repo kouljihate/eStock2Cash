@@ -1234,6 +1234,8 @@ td.acts .btn-icon.danger:focus-visible {
 .lines-table th {
   padding: 7px 8px;
   position: static;
+  /* the `.num` class makes a cell inline-block for spans; a header must stay a cell */
+  display: table-cell;
   white-space: normal;
   line-height: 1.25;
   letter-spacing: .04em;
@@ -1282,26 +1284,128 @@ td.acts .btn-icon.danger:focus-visible {
 .lines-sum b { color: var(--ink); font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .lines-sum .grand b { color: var(--brand-600); font-size: 14px; }
 
-/* Cash Registry: the money block under the lines — quick notes, then the change */
-.cash-pay { padding-top: 14px; align-items: start; }
-.tender-btns { display: flex; flex-wrap: wrap; gap: 6px; }
-.tender-btns .btn { min-width: 48px; justify-content: center; font-variant-numeric: tabular-nums; }
-.cash-change {
+/* Cash Registry: the till reads like a calculator — the cart on the left, the money
+   screen and its keys on the right. */
+.cash-desk .till-head { padding-bottom: 12px; }
+.till-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(310px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+.till-cart { min-width: 0; display: flex; flex-direction: column; }
+.till-cart .lines-wrap { flex: 1 1 auto; }
+/* the cart is narrow, so its columns are fixed instead of sized by their labels */
+.till-cart .lines-table { width: 100%; table-layout: fixed; }
+.till-cart .lines-table th:nth-child(1) { width: 44%; }
+.till-cart .lines-table th:nth-child(2),
+.till-cart .lines-table th:nth-child(3) { width: 18%; }
+.till-cart .lines-table th:nth-child(4) { width: 15%; }
+.till-cart .lines-table th:nth-child(5) { width: 5%; }
+.till-pay {
+  position: sticky;
+  top: 12px;
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 41px;
-  padding: 8px 14px;
-  font-family: var(--font-num);
-  font-variant-numeric: tabular-nums;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--brand-600);
-  background: #f7f9ff;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.till-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 13px;
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
 }
-.cash-change.short { color: #a52a1a; background: #fdeeee; border-color: #f3c9c4; }
+.till-cap {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.till-amount { display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; }
+.till-amount b {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 34px;
+  line-height: 1.08;
+  color: var(--brand-600);
+}
+.till-cur { font-size: 11.5px; color: var(--muted); }
+.till-sub { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--muted); }
+.till-sub > span { display: flex; justify-content: space-between; gap: 10px; }
+.till-sub b { font-family: var(--font-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+.till-received .till-input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: right;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.till-received .till-input:focus { outline: none; }
+.till-received .till-input::placeholder { color: var(--line); }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.keypad .key {
+  appearance: none;
+  padding: 11px 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.keypad .key:hover { border-color: var(--brand-600); background: #f7f9ff; }
+.keypad .key:active { transform: translateY(1px); }
+.keypad .key-clear { grid-column: 1 / -1; font-family: inherit; font-size: 11.5px; color: #a52a1a; }
+.tender-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.tender-btns .btn {
+  flex: 1 1 0;
+  min-width: 44px;
+  padding: 6px 4px;
+  justify-content: center;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.tender-btns .tender-exact { flex: 1 1 100%; }
+.till-change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 13px;
+  font-size: 11.5px;
+  color: var(--muted);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.till-change b {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--brand-600);
+}
+#cash-change.short { color: #a52a1a; }
+.till-charge { width: 100%; justify-content: center; padding: 13px; font-size: 14px; }
+.till-all { justify-content: center; }
+@media (max-width: 1020px) {
+  .till-grid { grid-template-columns: 1fr; }
+  .till-pay { position: static; }
+}
 .cash-credit-note {
   font-size: 11.5px;
   line-height: 1.55;

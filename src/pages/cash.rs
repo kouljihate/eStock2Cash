@@ -69,21 +69,22 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
         ));
     }
 
-    let row = |opts: &str, name: &str, qt: &str, price: &str| -> String {
+    let row = |opts: &str, qt: &str, price: &str| -> String {
         format!(
-            "<tr class=\"line-row\"><td><select name=\"item_product\" class=\"line-product\">{opts}</select></td>\
-             <td><input name=\"item_desc\" value=\"{name}\"/></td>\
-             <td><input name=\"item_qty\" class=\"num\" type=\"number\" step=\"0.01\" value=\"{qt}\"/></td>\
-             <td><input name=\"item_price\" class=\"num\" type=\"number\" step=\"0.01\" value=\"{price}\"/></td>\
-             <td class=\"line-total\">0.00</td>\
-             <td><button type=\"button\" class=\"btn-icon remove-line\">×</button></td></tr>"
+            "<tr class=\"line-row\"><td><select name=\"item_product\" class=\"line-product\">{opts}</select></td>             <td><input name=\"item_qty\" class=\"num\" type=\"number\" step=\"0.01\" min=\"0\" value=\"{qt}\"/></td>             <td><input name=\"item_price\" class=\"num\" type=\"number\" step=\"0.01\" min=\"0\" value=\"{price}\"/></td>             <td class=\"line-total num\">0.00</td>             <td><button type=\"button\" class=\"btn-icon remove-line\">×</button></td></tr>"
         )
     };
-    let first_row = row("", "", "1", "0").replace(
-        "<select name=\"item_product\" class=\"line-product\">",
-        &format!("<select name=\"item_product\" class=\"line-product\">{opts}"),
-    );
-    let template_row = row(&opts, "", "1", "0");
+    let first_row = row(&opts, "1", "0");
+    let template_row = row(&opts, "1", "0");
+
+    // The keys of the till: a calculator pad, so the amount received is tapped in
+    // rather than typed on a keyboard the counter does not have.
+    let mut keys = String::new();
+    for d in ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", "."] {
+        keys.push_str(&format!(
+            "<button type=\"button\" class=\"key\" data-key=\"{d}\">{d}</button>"
+        ));
+    }
 
     let mut cust_opts = format!(
         "<option value=\"\">{}</option>",
@@ -169,44 +170,7 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
     let sale = views::card(
         &tr(l, "m_cash_new_sale"),
         format!(
-            "<form method=\"post\" action=\"/cash-registry\" class=\"form cash-desk\">\
-               <div class=\"form-grid\">\
-                 <label class=\"field\"><span>{customer_label}</span><select name=\"customer\">{cust_opts}</select></label>\
-                 <label class=\"field\"><span>{payment_label}</span><select name=\"payment\" id=\"cash-mode\">\
-                   <option value=\"cash\" selected>{pay_cash}</option>\
-                   <option value=\"credit\">{pay_credit}</option>\
-                 </select></label>\
-                 {date}{cashier}\
-               </div>\
-               <div class=\"lines-wrap\" data-mode=\"sale\"><table class=\"lines-table\"><thead><tr>\
-                 <th>{c_product}</th><th>{c_desc}</th><th class=\"num\">{c_qty}</th><th class=\"num\">{c_price}</th><th class=\"num\">{c_tot}</th><th></th>\
-               </tr></thead><tbody id=\"lines-body\">{first_row}</tbody></table>\
-               <template id=\"line-tpl\">{template_row}</template>\
-               <div class=\"lines-foot\"><button type=\"button\" class=\"btn btn-sm\" id=\"add-line\">+ {c_add}</button>\
-                 <div class=\"lines-sum\"><span>{c_sub}: <b id=\"sum-sub\">0.00</b></span><span>{c_tax}: <b id=\"sum-tax\">0.00</b></span><span class=\"grand\">{c_tot}: <b id=\"sum-total\">0.00</b></span></div>\
-               </div></div>\
-               <div class=\"form-grid cash-pay cash-only\">
-                 <label class=\"field\"><span>{pay_label}</span><input id=\"cash-received\" name=\"paid\" type=\"number\" step=\"0.01\" min=\"0\" value=\"\" required/></label>\
-                 {tax}\
-                 <div class=\"field\"><span>{tender_label}</span><div class=\"tender-btns\">\
-                   <button type=\"button\" class=\"btn btn-sm\" data-tender=\"20\">20</button>\
-                   <button type=\"button\" class=\"btn btn-sm\" data-tender=\"50\">50</button>\
-                   <button type=\"button\" class=\"btn btn-sm\" data-tender=\"100\">100</button>\
-                   <button type=\"button\" class=\"btn btn-sm\" data-tender=\"200\">200</button>\
-                   <button type=\"button\" class=\"btn btn-sm\" data-tender-exact=\"1\">{exact}</button>\
-                 </div></div>\
-                 <div class=\"field\"><span>{change_label}</span><div class=\"cash-change\" id=\"cash-change\">0.00</div></div>\
-               </div>\
-               <div class=\"form-grid credit-only\" hidden>\
-                 <label class=\"field\"><span>{due_label}</span><input type=\"date\" name=\"due_date\" value=\"{due_value}\"/></label>\
-                 <div class=\"field field-wide\"><div class=\"cash-credit-note\">{credit_hint}</div></div>\
-               </div>\
-               <input type=\"hidden\" name=\"default_tax\" value=\"0\"/>\
-               <div class=\"form-actions\">\
-                 <button class=\"btn btn-primary\" type=\"submit\"><span class=\"cash-only\">{charge_cash}</span><span class=\"credit-only\" hidden>{charge_credit}</span></button>\
-                 <a class=\"btn btn-ghost\" href=\"/tickets\">{all_tickets}</a>\
-               </div>\
-             </form>",
+            "<form method=\"post\" action=\"/cash-registry\" class=\"form cash-desk till\">               <div class=\"form-grid till-head\">                 <label class=\"field\"><span>{customer_label}</span><select name=\"customer\">{cust_opts}</select></label>                 <label class=\"field\"><span>{payment_label}</span><select name=\"payment\" id=\"cash-mode\">                   <option value=\"cash\" selected>{pay_cash}</option>                   <option value=\"credit\">{pay_credit}</option>                 </select></label>                 {date}{cashier}{tax}               </div>               <div class=\"till-grid\">                 <div class=\"till-cart\">                   <div class=\"lines-wrap\" data-mode=\"sale\"><table class=\"lines-table\"><thead><tr>                     <th>{c_product}</th><th class=\"num\">{c_qty}</th><th class=\"num\">{c_price}</th><th class=\"num\">{c_tot}</th><th></th>                   </tr></thead><tbody id=\"lines-body\">{first_row}</tbody></table>                   <template id=\"line-tpl\">{template_row}</template>                   <div class=\"lines-foot\"><button type=\"button\" class=\"btn btn-sm\" id=\"add-line\">+ {c_add}</button></div></div>                 </div>                 <aside class=\"till-pay\">                   <div class=\"till-screen\">                     <span class=\"till-cap\">{c_tot}</span>                     <div class=\"till-amount\"><b id=\"sum-total\">0.00</b><span class=\"till-cur\">{currency}</span></div>                     <div class=\"till-sub\"><span>{c_sub} <b id=\"sum-sub\">0.00</b></span><span>{c_tax} <b id=\"sum-tax\">0.00</b></span></div>                   </div>                   <div class=\"cash-only\">                     <label class=\"till-screen till-received\"><span class=\"till-cap\">{pay_label}</span>                       <input id=\"cash-received\" name=\"paid\" type=\"text\" inputmode=\"decimal\" autocomplete=\"off\" pattern=\"[0-9]+([.,][0-9]{{0,2}})?\" value=\"\" required class=\"till-input\"/></label>                     <div class=\"keypad\">{keys}<button type=\"button\" class=\"key key-back\" data-key=\"back\">⌫</button>                       <button type=\"button\" class=\"key key-clear\" data-key=\"clear\">{clear_key}</button></div>                     <div class=\"tender-btns\">                       <button type=\"button\" class=\"btn btn-sm\" data-tender=\"20\">20</button>                       <button type=\"button\" class=\"btn btn-sm\" data-tender=\"50\">50</button>                       <button type=\"button\" class=\"btn btn-sm\" data-tender=\"100\">100</button>                       <button type=\"button\" class=\"btn btn-sm\" data-tender=\"200\">200</button>                       <button type=\"button\" class=\"btn btn-sm tender-exact\" data-tender-exact=\"1\">{exact}</button>                     </div>                     <div class=\"till-change\"><span>{change_label}</span><b id=\"cash-change\">0.00</b></div>                   </div>                   <div class=\"credit-only\" hidden>                     <label class=\"field\"><span>{due_label}</span><input type=\"date\" name=\"due_date\" value=\"{due_value}\"/></label>                     <div class=\"cash-credit-note\">{credit_hint}</div>                   </div>                   <input type=\"hidden\" name=\"default_tax\" value=\"0\"/>                   <button class=\"btn btn-primary till-charge\" type=\"submit\"><span class=\"cash-only\">{charge_cash}</span><span class=\"credit-only\" hidden>{charge_credit}</span></button>                   <a class=\"btn btn-ghost till-all\" href=\"/tickets\">{all_tickets}</a>                 </aside>               </div>             </form>",
             customer_label = tr(l, "lbl_customer"),
             cust_opts = cust_opts,
             payment_label = tr(l, "lbl_payment"),
@@ -217,21 +181,22 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
             credit_hint = tr(l, "m_credit_till_hint"),
             date = views::input(&tr(l, "lbl_date"), "date", &today(), "date", true),
             cashier = views::input(&tr(l, "lbl_cashier"), "cashier", &ctx.claims.un, "text", false),
+            tax = views::input_step(&tr(l, "lbl_tax"), "tax", "0", "0.01", false),
             c_product = tr(l, "lbl_product"),
-            c_desc = tr(l, "lbl_description"),
             c_qty = tr(l, "lbl_quantity"),
             c_price = tr(l, "lbl_unit_price"),
             c_tot = tr(l, "lbl_total"),
             c_add = tr(l, "a_add_line"),
             first_row = first_row,
             template_row = template_row,
-            c_sub = tr(l, "lbl_subtotal"),
-            c_tax = tr(l, "lbl_tax"),
+            keys = keys,
+            c_sub = tr_lat(l, "lbl_subtotal"),
+            c_tax = tr_lat(l, "lbl_tax"),
+            currency = esc(&cur),
             pay_label = tr(l, "lbl_amount_received"),
-            tax = views::input_step(&tr(l, "lbl_tax"), "tax", "0", "0.01", false),
-            tender_label = tr(l, "lbl_quick_tender"),
             exact = tr(l, "a_exact"),
-            change_label = tr(l, "lbl_change"),
+            change_label = tr_lat(l, "lbl_change"),
+            clear_key = tr(l, "a_clear"),
             charge_cash = tr(l, "a_charge"),
             charge_credit = tr(l, "a_charge_credit"),
             all_tickets = tr(l, "nav_tickets"),
