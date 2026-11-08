@@ -3,6 +3,31 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.10.0 — 2026-11-08
+
+Credit at the till, paid on payment day.
+
+### Added
+
+- **Payment mode** on the Cash Registry: *Cash now*, or *Credit until month end*. A
+  credit sale still takes the goods off the shelf today but writes a customer invoice
+  (`CI-…`, open) due on the last day of the month — the due date is on the form and can
+  be moved — instead of a cash ticket. The invoice then lives in Customer Invoices, the
+  customer's balance and the Credit page, and is settled on payment day through
+  *Record payment*.
+- Every credit sale is measured against the customer's **credit limit** (the existing
+  per-customer threshold, `0` = unlimited): when the invoice would push their exposure
+  past it, the till refuses in red and writes nothing. A credit sale also needs a named
+  customer — a walk-in has nobody to owe the money.
+- The stock leaves through a `credit_sale` movement, so the product ledger names the
+  invoice that took it, and the till counts **credit sold today** next to the cash.
+
+### Changed
+
+- The till's charge button follows the mode — *Charge & print* for cash, *Charge on
+  credit* otherwise — and the cash block folds away, so a credit sale cannot be held
+  back by an empty amount-received field.
+
 ## 0.9.0 — 2026-11-08
 
 The till: a Cash Registry module.

@@ -172,7 +172,12 @@ Document numbering is per company and sequence-based:
   unpaid invoice past its due date is displayed as `overdue`.
 - **Credit**: `0` limit means unlimited; otherwise exposure (outstanding on open
   invoices) + new amount must stay within the limit — checked when validating a
-  quote, confirming an order and issuing/creating a customer invoice.
+  quote, confirming an order, creating a customer invoice and selling on credit at
+  the till.
+- **Credit at the till** is paid at the end of the month: the sale writes an open
+  customer invoice due on the last day of the month, takes the stock out with a
+  `credit_sale` movement, and the customer settles it on payment day through
+  *Record payment*.
 - **Quote validation** creates a confirmed sales order *and* an open customer
   invoice in one step, and links both back to the quote.
 - **Deleting a purchase order** deletes its goods receipts with it; a posted receipt
@@ -533,6 +538,15 @@ sale can be found from the customer's side later.
   (20 / 50 / 100 / 200 and *Exact*) fill the amount received, and the change is shown
   live — in red while the cash on the counter is still short of the total. A short
   payment is refused by the server with a red notice, not written down as a debt.
+- **The credit.** *Payment* switches the sale from cash to credit: the goods still
+  leave the shelf today, but the money is owed until the invoice falls due — the last
+  day of the month by default, changeable on the form. A credit sale writes a customer
+  invoice (`CI-…`, status open) instead of a ticket, so it lands straight in
+  **Customer Invoices**, the customer's balance and the **Credit** page, and is settled
+  later with *Record payment* like any other invoice. It is refused in red when the
+  customer has no name to be owed by (a walk-in), or when the amount would push the
+  customer's exposure past their **credit limit** — `0` still means unlimited. The head
+  of the page counts what went out on credit today apart from the cash in the drawer.
 - **The printer.** A charged sale lands on its ticket, which opens its print dialog
   straight away; the page also carries *Print*, *Bluetooth print* (the ESC/POS over the
   BLE service `0x18F0`) and the PDF. The customer's name is part of the ESC/POS and PDF

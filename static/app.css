@@ -1302,6 +1302,16 @@ td.acts .btn-icon.danger:focus-visible {
   border-radius: 12px;
 }
 .cash-change.short { color: #a52a1a; background: #fdeeee; border-color: #f3c9c4; }
+.cash-credit-note {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-2, #475569);
+  background: #f7f9ff;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand-600);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
 
 .totals { display: flex; flex-direction: column; gap: 6px; max-width: 330px; margin-inline-start: auto; }
 .tot-row { display: flex; justify-content: space-between; gap: 18px; font-size: 12.5px; padding: 5px 0; }

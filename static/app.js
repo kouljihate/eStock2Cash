@@ -125,6 +125,29 @@
     update();
   }
 
+  // The till takes cash today or lets the customer pay on payment day: only the
+  // block that matters is on screen.
+  function initCashMode() {
+    var mode = document.getElementById("cash-mode");
+    if (!mode) return;
+
+    var sync = function () {
+      var credit = mode.value === "credit";
+      document.querySelectorAll(".cash-only").forEach(function (el) {
+        el.hidden = credit;
+      });
+      document.querySelectorAll(".credit-only").forEach(function (el) {
+        el.hidden = !credit;
+      });
+      // a field nobody can see must not hold the form back
+      var paid = document.getElementById("cash-received");
+      if (paid) paid.disabled = credit;
+    };
+
+    mode.addEventListener("change", sync);
+    sync();
+  }
+
   /* ---------------- receipt straight from the till ---------------- */
   function initAutoprint() {
     if (!document.querySelector("[data-autoprint]")) return;
@@ -352,6 +375,7 @@
       initSidebarToggle();
       initNavSections();
       initCash();
+      initCashMode();
       initAutoprint();
     });
   });

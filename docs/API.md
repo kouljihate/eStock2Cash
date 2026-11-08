@@ -33,7 +33,7 @@ Returns the user and company documents.
 
 ### `GET /health`
 
-Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.9.0"}`.
+Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.10.0"}`.
 
 ## Dashboard
 
@@ -146,6 +146,13 @@ and the cash received, writes a ticket and redirects to its receipt. A short pay
 refused (`?m=msg_paid_short&k=err`), a sale with no line is refused
 (`?m=msg_line_required&k=err`), and a completed one answers `?m=msg_cash_taken&k=ok` on
 `/tickets/{id}`.
+
+With `payment=credit` the same form sells on account instead: it writes an open
+customer invoice (`CI-…`) due on `due_date` — the end of the month when left empty —
+takes the stock out with a `credit_sale` stock move and lands on
+`/customer-invoices/{id}?m=msg_credit_sale&k=ok`. It needs a customer
+(`?m=msg_credit_needs_customer&k=err`) and is refused when the invoice would pass that
+customer's `credit_limit` (`?m=msg_credit_exceeded&k=err`, `0` = unlimited).
 
 Deleting a document is web-only for the same reason. `POST /purchase-orders/{id}/delete`
 and `POST /supplier-invoices/{id}/delete` answer with a redirect carrying a flash code

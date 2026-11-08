@@ -1,6 +1,6 @@
 //! Small shared helpers: escaping, money/date formatting, ids.
 
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, Utc};
 
 /// Text of an HTML fragment, tags removed — for `title`/`aria-label` attributes
 /// that must not contain the `.bi` markup.
@@ -123,6 +123,24 @@ pub fn days_until(date: &str) -> i64 {
 pub fn add_days(date: &str, days: i64) -> String {
     parse_date(date)
         .map(|d| (d + chrono::Duration::days(days)).format("%Y-%m-%d").to_string())
+        .unwrap_or_else(today)
+}
+
+/// Last day of the month `date` falls in. A sale on credit is paid at the end of the
+/// month here, so this is the due date the till defaults to.
+pub fn end_of_month(date: &str) -> String {
+    parse_date(date)
+        .map(|d| {
+            let first = d.with_day(1).unwrap_or(d);
+            let next = if first.month() == 12 {
+                NaiveDate::from_ymd_opt(first.year() + 1, 1, 1)
+            } else {
+                NaiveDate::from_ymd_opt(first.year(), first.month() + 1, 1)
+            };
+            next.and_then(|n| n.pred_opt())
+                .map(|n| n.format("%Y-%m-%d").to_string())
+                .unwrap_or_else(|| first.format("%Y-%m-%d").to_string())
+        })
         .unwrap_or_else(today)
 }
 

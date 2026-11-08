@@ -10,9 +10,9 @@ use crate::error::AppError;
 use crate::events::new_event;
 use crate::form::{Pairs, parse_ticket_items, product_index};
 use crate::i18n::{tr, tr_lat};
-use crate::models::{Customer, Ticket};
+use crate::models::{Customer, DocLine, Invoice, InvoiceStatus, Ticket, Totals};
 use crate::services;
-use crate::util::{esc, now_iso, qty, round2, today};
+use crate::util::{end_of_month, esc, now_iso, qty, round2, today};
 use crate::views;
 
 /// The `HH:MM` half of an ISO timestamp, for the day's receipts.
@@ -43,6 +43,17 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
         customers.push(c);
     }
     customers.sort_by(|a, b| a.name.cmp(&b.name));
+
+    // What went out on credit today: invoices dated today, whether or not they are paid
+    // already — the credit customer settles them on payment day.
+    let mut credit_sold = 0.0_f64;
+    let mut cur_invoices = db
+        .customer_invoices()
+        .find(doc! { "company_id": &company_id, "invoice_date": &today() })
+        .await?;
+    while let Some(inv) = cur_invoices.try_next().await? {
+        credit_sold += inv.totals.total;
+    }
 
     let mut opts = String::from("<option value=\"\">—</option>");
     for p in &list {
@@ -138,6 +149,11 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
             &tr(l, "lbl_paid"),
         ),
         views::stat(
+            &tr(l, "m_credit_sold_today"),
+            &views::money_text(round2(credit_sold), &cur),
+            &tr(l, "lbl_pay_credit"),
+        ),
+        views::stat(
             &tr(l, "m_receipts_today"),
             &count.to_string(),
             &tr(l, "nav_cash_registry"),
@@ -156,6 +172,10 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
             "<form method=\"post\" action=\"/cash-registry\" class=\"form cash-desk\">\
                <div class=\"form-grid\">\
                  <label class=\"field\"><span>{customer_label}</span><select name=\"customer\">{cust_opts}</select></label>\
+                 <label class=\"field\"><span>{payment_label}</span><select name=\"payment\" id=\"cash-mode\">\
+                   <option value=\"cash\" selected>{pay_cash}</option>\
+                   <option value=\"credit\">{pay_credit}</option>\
+                 </select></label>\
                  {date}{cashier}\
                </div>\
                <div class=\"lines-wrap\" data-mode=\"sale\"><table class=\"lines-table\"><thead><tr>\
@@ -165,7 +185,7 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
                <div class=\"lines-foot\"><button type=\"button\" class=\"btn btn-sm\" id=\"add-line\">+ {c_add}</button>\
                  <div class=\"lines-sum\"><span>{c_sub}: <b id=\"sum-sub\">0.00</b></span><span>{c_tax}: <b id=\"sum-tax\">0.00</b></span><span class=\"grand\">{c_tot}: <b id=\"sum-total\">0.00</b></span></div>\
                </div></div>\
-               <div class=\"form-grid cash-pay\">\
+               <div class=\"form-grid cash-pay cash-only\">
                  <label class=\"field\"><span>{pay_label}</span><input id=\"cash-received\" name=\"paid\" type=\"number\" step=\"0.01\" min=\"0\" value=\"\" required/></label>\
                  {tax}\
                  <div class=\"field\"><span>{tender_label}</span><div class=\"tender-btns\">\
@@ -177,11 +197,24 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
                  </div></div>\
                  <div class=\"field\"><span>{change_label}</span><div class=\"cash-change\" id=\"cash-change\">0.00</div></div>\
                </div>\
+               <div class=\"form-grid credit-only\" hidden>\
+                 <label class=\"field\"><span>{due_label}</span><input type=\"date\" name=\"due_date\" value=\"{due_value}\"/></label>\
+                 <div class=\"field field-wide\"><div class=\"cash-credit-note\">{credit_hint}</div></div>\
+               </div>\
                <input type=\"hidden\" name=\"default_tax\" value=\"0\"/>\
-               {actions}\
+               <div class=\"form-actions\">\
+                 <button class=\"btn btn-primary\" type=\"submit\"><span class=\"cash-only\">{charge_cash}</span><span class=\"credit-only\" hidden>{charge_credit}</span></button>\
+                 <a class=\"btn btn-ghost\" href=\"/tickets\">{all_tickets}</a>\
+               </div>\
              </form>",
             customer_label = tr(l, "lbl_customer"),
             cust_opts = cust_opts,
+            payment_label = tr(l, "lbl_payment"),
+            pay_cash = tr_lat(l, "lbl_pay_cash"),
+            pay_credit = tr_lat(l, "lbl_pay_credit"),
+            due_label = tr(l, "lbl_due_date"),
+            due_value = end_of_month(&today()),
+            credit_hint = tr(l, "m_credit_till_hint"),
             date = views::input(&tr(l, "lbl_date"), "date", &today(), "date", true),
             cashier = views::input(&tr(l, "lbl_cashier"), "cashier", &ctx.claims.un, "text", false),
             c_product = tr(l, "lbl_product"),
@@ -199,7 +232,9 @@ pub async fn desk(ctx: Ctx) -> Result<Response, AppError> {
             tender_label = tr(l, "lbl_quick_tender"),
             exact = tr(l, "a_exact"),
             change_label = tr(l, "lbl_change"),
-            actions = views::form_actions(&tr(l, "a_charge"), "/tickets", &tr(l, "nav_tickets")),
+            charge_cash = tr(l, "a_charge"),
+            charge_credit = tr(l, "a_charge_credit"),
+            all_tickets = tr(l, "nav_tickets"),
         ),
     );
 
@@ -243,25 +278,109 @@ pub async fn sell(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
     let tax = round2(pairs.num("tax", 0.0));
     let total = round2(subtotal + tax);
     let paid = round2(pairs.num("paid", 0.0));
+    let cash = pairs.get("payment") != "credit";
+
+    // Who is buying. A credit sale has no walk-in to fall back on: the invoice needs
+    // a customer to be owed by.
+    let customer = if pairs.get("customer").is_empty() {
+        None
+    } else {
+        db.customers()
+            .find_one(doc! { "_id": &pairs.get("customer"), "company_id": &company_id })
+            .await?
+    };
+    if !cash && customer.is_none() {
+        return Ok(ctx
+            .back("/cash-registry", "msg_credit_needs_customer", "err")
+            .into_response());
+    }
+
+    // A credit sale: the goods leave now, the money is owed until the invoice falls
+    // due — the end of the month unless the cashier picked another day.
+    if !cash {
+        let Some(customer) = customer else {
+            return Ok(ctx
+                .back("/cash-registry", "msg_credit_needs_customer", "err")
+                .into_response());
+        };
+        // the till's tax amount becomes one rate across the lines, so the invoice
+        // totals what the customer was quoted
+        let rate = if subtotal > 0.0 {
+            round2(tax / subtotal * 100.0)
+        } else {
+            0.0
+        };
+        let lines = items
+            .iter()
+            .map(|i| DocLine {
+                product_id: i.product_id.clone(),
+                description: i.name.clone(),
+                qty: i.qty,
+                unit_price: i.price,
+                tax_rate: rate,
+            })
+            .collect::<Vec<_>>();
+        let totals = Totals::compute(&lines);
+        let credit = services::credit_position(db, &company_id, &customer).await?;
+        if !credit.allows(totals.total) {
+            return Ok(ctx
+                .back("/cash-registry", "msg_credit_exceeded", "err")
+                .into_response());
+        }
+
+        let number = crate::db::next_number(&db.db, &company_id, "CI").await?;
+        let inv = Invoice {
+            id: crate::util::new_id(),
+            company_id: company_id.clone(),
+            number,
+            party_id: customer.id.clone(),
+            party_name: customer.name.clone(),
+            source_id: String::new(),
+            source_number: String::new(),
+            invoice_date: crate::util::if_empty(&pairs.get("date"), &today()),
+            due_date: crate::util::if_empty(&pairs.get("due_date"), &end_of_month(&today())),
+            lines,
+            totals,
+            status: InvoiceStatus::Open,
+            paid_amount: 0.0,
+            notes: String::new(),
+            created_at: now_iso(),
+            created_by: ctx.claims.un.clone(),
+        };
+        db.customer_invoices().insert_one(&inv).await?;
+        services::post_credit_sale(db, &inv, &ctx.claims.un).await?;
+        ctx.state
+            .bus
+            .publish(
+                "customer_invoice.issued",
+                &new_event(
+                    "customer_invoice.issued",
+                    &inv.company_id,
+                    &inv.id,
+                    &inv.number,
+                    inv.status.as_str(),
+                    inv.totals.total,
+                    &ctx.claims.un,
+                ),
+            )
+            .await;
+        return Ok(axum::response::Redirect::to(&format!(
+            "/customer-invoices/{}?m=msg_credit_sale&k=ok",
+            inv.id
+        ))
+        .into_response());
+    }
+
     if paid + 0.005 < total {
         return Ok(ctx
             .back("/cash-registry", "msg_paid_short", "err")
             .into_response());
     }
     let change = round2(paid - total);
-
-    let mut customer_id = pairs.get("customer");
-    let mut customer_name = String::new();
-    if !customer_id.is_empty() {
-        let found = db
-            .customers()
-            .find_one(doc! { "_id": &customer_id, "company_id": &company_id })
-            .await?;
-        match found {
-            Some(c) => customer_name = c.name,
-            None => customer_id = String::new(),
-        }
-    }
+    let (customer_id, customer_name) = match &customer {
+        Some(c) => (c.id.clone(), c.name.clone()),
+        None => (String::new(), String::new()),
+    };
 
     let number = crate::db::next_number(&db.db, &company_id, "TK").await?;
     let ticket = Ticket {

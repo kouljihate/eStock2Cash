@@ -258,6 +258,7 @@ pub async fn product_movements(ctx: Ctx, Path(id): Path<String>) -> Result<Respo
                     "goods_receipt" => tr(l, "lbl_received"),
                     "delivery_note" => tr(l, "nav_delivery_notes"),
                     "ticket" => tr(l, "nav_tickets"),
+                    "credit_sale" => tr(l, "lbl_credit_sale"),
                     "adjustment" => tr(l, "a_adjust"),
                     "goods_receipt_void" => tr(l, "lbl_reversed"),
                     _ => match mv.kind {

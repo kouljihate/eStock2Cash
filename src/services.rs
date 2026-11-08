@@ -308,6 +308,38 @@ pub async fn post_ticket(db: &DbHandle, ticket: &Ticket) -> Result<(), AppError>
     Ok(())
 }
 
+/// A sale on credit hands the goods over at the till while the money stays owed
+/// until the invoice falls due: stock leaves now, and the invoice carries the debt.
+pub async fn post_credit_sale(db: &DbHandle, inv: &Invoice, actor: &str) -> Result<(), AppError> {
+    for line in &inv.lines {
+        if line.product_id.is_empty() || line.qty <= 0.0 {
+            continue;
+        }
+        db.products()
+            .update_one(
+                doc! { "_id": &line.product_id, "company_id": &inv.company_id },
+                doc! { "$inc": { "qty_on_hand": -line.qty }, "$set": { "updated_at": &inv.created_at } },
+            )
+            .await?;
+        let mv = StockMove {
+            id: crate::util::new_id(),
+            company_id: inv.company_id.clone(),
+            product_id: line.product_id.clone(),
+            product_name: line.description.clone(),
+            kind: MoveKind::Out,
+            qty: line.qty,
+            unit_cost: line.unit_price,
+            source: "credit_sale".into(),
+            source_number: inv.number.clone(),
+            note: String::new(),
+            created_at: inv.created_at.clone(),
+            created_by: actor.to_string(),
+        };
+        db.stock_moves().insert_one(&mv).await?;
+    }
+    Ok(())
+}
+
 /// Which collection holds this invoice kind.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum InvoiceKind {
