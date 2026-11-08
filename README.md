@@ -583,8 +583,9 @@ The phone client lives in [`android/`](android/README.md): a native Java app, no
 and no third-party SDK, speaking the same `/api/v1` this server exposes.
 
 ```bash
-bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.1.0-debug.apk
-adb install -r android/dist/s2c-maroc-0.1.0-debug.apk
+bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.1.1-debug.apk
+bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.1.1-release.apk
+adb install -r android/dist/s2c-maroc-0.1.1-debug.apk
 ```
 
 It signs in with a server address you type (remembered afterwards), shows the dashboard

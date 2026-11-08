@@ -12,7 +12,10 @@ export JAVA_HOME="${S2C_JAVA_HOME:-C:/Program Files/Android/Android Studio/jbr}"
 if command -v gradle >/dev/null 2>&1; then
   GRADLE=gradle
 else
-  GRADLE=$(ls -d "$HOME"/.gradle/wrapper/dists/gradle-*/**/gradle-*/bin/gradle 2>/dev/null | sort -V | tail -1)
+  # Android Gradle Plugin 8.7 runs on Gradle 8.x only, so a 9.x wrapper cached here by
+  # another project must not be picked: prefer the newest 8.x, then anything else.
+  GRADLE=$(ls -d "$HOME"/.gradle/wrapper/dists/gradle-8.*/**/gradle-8.*/bin/gradle 2>/dev/null | sort -V | tail -1)
+  [ -n "${GRADLE:-}" ] || GRADLE=$(ls -d "$HOME"/.gradle/wrapper/dists/gradle-*/**/gradle-*/bin/gradle 2>/dev/null | sort -V | tail -1)
 fi
 if [ -z "${GRADLE:-}" ]; then
   echo "No gradle found: install it, or open android/ in Android Studio once." >&2
@@ -25,8 +28,14 @@ echo "gradle:  $GRADLE"
 echo "javac:   $JAVA_HOME/bin/javac"
 echo "version: $VERSION"
 
-"$GRADLE" -p android --console=plain "${1:-assembleDebug}"
+TASK="${1:-assembleDebug}"
+case "$TASK" in
+  assembleRelease) VARIANT=release ;;
+  *) VARIANT=debug ;;
+esac
+
+"$GRADLE" -p android --console=plain "$TASK"
 
 mkdir -p android/dist
-cp android/app/build/outputs/apk/debug/app-debug.apk "android/dist/s2c-maroc-${VERSION}-debug.apk"
-ls -la "android/dist/s2c-maroc-${VERSION}-debug.apk"
+cp "android/app/build/outputs/apk/$VARIANT/app-$VARIANT.apk" "android/dist/s2c-maroc-${VERSION}-${VARIANT}.apk"
+ls -la "android/dist/s2c-maroc-${VERSION}-${VARIANT}.apk"
