@@ -1,6 +1,7 @@
 //! Page handlers + their Leptos-rendered bodies, grouped by domain.
 
 pub mod admin;
+pub mod cash;
 pub mod catalog;
 pub mod dashboard;
 pub mod invoicing;

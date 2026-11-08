@@ -52,6 +52,13 @@ fn nav_html(ctx: &Ctx) -> String {
 
     let mut out = String::new();
     out.push_str(&nav_item(on("/"), "/", &tr(l, "nav_dashboard"), "dashboard"));
+    // the till sits straight under the dashboard: it is where the day starts
+    out.push_str(&nav_item(
+        on("/cash-registry"),
+        "/cash-registry",
+        &tr(l, "nav_cash_registry"),
+        "wallet",
+    ));
 
     out.push_str(&nav_section(
         "buy",

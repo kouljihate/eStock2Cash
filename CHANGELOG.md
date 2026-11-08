@@ -3,6 +3,33 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.9.0 — 2026-11-08
+
+The till: a Cash Registry module.
+
+### Added
+
+- **Cash Registry** (`/cash-registry`), a stand-alone sidebar entry straight under
+  Dashboard: pick the customer, add the products leaving the shelf, take the cash,
+  print the receipt. Quick amounts (20 / 50 / 100 / 200 and *Exact*) fill the amount
+  received and the change is shown live, in red while the cash on the counter is
+  still short of the total.
+- The sale is a ticket, so it takes its quantities out of `qty_on_hand`, writes one
+  `ticket` stock move per product and publishes `ticket.created`. A short payment is
+  refused with a red notice instead of being written down as a debt.
+- Tickets carry the customer — `customer_id` and `customer_name`, empty for a walk-in
+  and for the tickets written before this version — and the name is printed on the
+  ESC/POS slip and the PDF receipt.
+- The head of the till is the day's drawer: cash taken, receipts written, items sold
+  and the average basket, then every receipt of the day with its time, customer, total
+  and change, each with a print circle.
+
+### Changed
+
+- A charged sale lands on its ticket with the print dialog already open, so the receipt
+  leaves the printer without another click; the ticket page keeps its Print, Bluetooth
+  and PDF buttons.
+
 ## 0.8.2 — 2026-11-08
 
 A purchase order can be deleted, and its goods receipt goes with it.

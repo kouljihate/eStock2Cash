@@ -187,7 +187,8 @@ Every state change publishes to the `stockinvoice` topic exchange:
 `po.created`, `po.sent`, `gr.posted`, `supplier_invoice.created`,
 `supplier_invoice.issued`, `payment.recorded`, `quote.created`, `quote.sent`,
 `quote.accepted`, `order.confirmed`, `delivery.posted`,
-`customer_invoice.issued`, `ticket.created`.
+`customer_invoice.issued`, `ticket.created` — from the Cash Registry as from a
+direct ticket, with the customer on the payload's document.
 
 A background consumer binds `stockinvoice.events` (`#`) and mirrors each message
 into `event_log`, which is the Admin → Event Log page. Publishing never blocks or
@@ -317,7 +318,9 @@ is stored in `localStorage` (`s2c-nav`) and re-applied by a small inline script 
 `<head>`, so a collapsed menu never flashes open while a page loads. On a phone the
 sidebar is a stacked block and the toggle is hidden.
 
-The four groups — Procure-to-Pay, Quote-to-Cash, In Stock and Administration — are
+The menu opens with **Dashboard** and, straight under it, the **Cash Registry** — the
+till, the one entry that belongs to no group because it is where the day starts. Then
+the four groups — Procure-to-Pay, Quote-to-Cash, In Stock and Administration — are
 collapsible: each is a `<details>` whose header row folds its links away, so the
 folding works without JavaScript. `views::nav_section()` emits them (the header is
 the `<summary>`, the links sit in `.nav-links`) and `app.js` only remembers the
@@ -512,6 +515,33 @@ side is independent — to use VIP Rawy in PDFs as well, either overwrite
 a TrueType file with Arabic presentation forms. Amiri ships under the SIL Open
 Font License (`static/fonts/OFL.txt`); without it Arabic PDFs fall back to the
 English/French labels.
+
+## Cash Registry
+
+The till sits in the sidebar straight under **Dashboard**, at `/cash-registry`, and it is
+where a day of selling starts: the cashier picks the customer, adds what leaves the
+shelf, takes the cash and hands over a printed receipt.
+
+- **The customer.** A dropdown of the company's customers, plus *Walk-in customer* for
+the sale that has no name to it. The name and id are written on the ticket, so the same
+sale can be found from the customer's side later.
+- **The shelf.** Every product line picks from stock and shows the price and the
+  quantity on hand next to its name; choosing one fills the price and the description.
+  Charging writes one `Ticket` and `services::post_ticket` takes the quantity out of
+  `qty_on_hand` with a `ticket` stock move, exactly as a direct ticket does.
+- **The cash.** The running total is recomputed on each keystroke, the quick amounts
+  (20 / 50 / 100 / 200 and *Exact*) fill the amount received, and the change is shown
+  live — in red while the cash on the counter is still short of the total. A short
+  payment is refused by the server with a red notice, not written down as a debt.
+- **The printer.** A charged sale lands on its ticket, which opens its print dialog
+  straight away; the page also carries *Print*, *Bluetooth print* (the ESC/POS over the
+  BLE service `0x18F0`) and the PDF. The customer's name is part of the ESC/POS and PDF
+  layouts when there is one.
+
+The top of the page is the day's drawer — cash taken, receipts written, items sold and
+the average basket — and under the form sits every receipt of the day with its time,
+customer, total and change, each with a print circle. Direct tickets still exist for the
+sale that never needs a name; both feed the same counters and the same stock.
 
 ## Direct ticket printing
 

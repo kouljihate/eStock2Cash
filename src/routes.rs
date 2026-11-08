@@ -198,6 +198,11 @@ pub fn router(state: AppState) -> Router {
         .route("/payments", get(pages::invoicing::payment_list).post(pages::invoicing::payment_create))
         .route("/payments/new", get(pages::invoicing::payment_new))
         .route("/credit", get(pages::invoicing::credit))
+        // Cash registry
+        .route(
+            "/cash-registry",
+            get(pages::cash::desk).post(pages::cash::sell),
+        )
         // Tickets
         .route("/tickets", get(pages::tickets::list).post(pages::tickets::create))
         .route("/tickets/new", get(pages::tickets::new))

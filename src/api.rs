@@ -569,6 +569,8 @@ async fn create_ticket(
         paid,
         change: round2((paid - total).max(0.0)),
         cashier: if body.cashier.is_empty() { auth.claims.un.clone() } else { body.cashier },
+        customer_id: String::new(),
+        customer_name: String::new(),
         created_at: now_iso(),
         created_by: auth.claims.un.clone(),
     };

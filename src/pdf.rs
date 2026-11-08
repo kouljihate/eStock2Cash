@@ -576,6 +576,7 @@ pub struct PdfLabels {
     pub reference: String,
     pub ticket: String,
     pub cashier: String,
+    pub customer: String,
     pub change: String,
     pub thank_you: String,
 }
@@ -627,6 +628,7 @@ impl PdfLabels {
                 Lang::En => "SALES TICKET".into(),
             },
             cashier: t("lbl_cashier"),
+            customer: t("lbl_customer"),
             change: t("lbl_change"),
             thank_you: match l {
                 Lang::Fr => "Merci de votre visite".into(),
@@ -914,6 +916,17 @@ pub fn ticket_pdf(ticket: &Ticket, company: &Company, labels: &PdfLabels) -> Vec
         page.text(12.0, y, 7.5, false, "#4b5563", &format!("{}: {}", labels.number, ticket.number));
         page.text_right(width - 12.0, y, 7.5, false, "#4b5563", &ticket.date);
         y += 14.0;
+        if !ticket.customer_name.is_empty() {
+            page.text(
+                12.0,
+                y,
+                7.5,
+                false,
+                "#4b5563",
+                &format!("{}: {}", labels.customer, ticket.customer_name),
+            );
+            y += 11.0;
+        }
         page.line(12.0, y, width - 12.0, y, "#cbd5e1", 0.7);
         y += 14.0;
     }

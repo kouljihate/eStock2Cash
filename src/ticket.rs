@@ -115,6 +115,9 @@ pub fn escpos_ticket(ticket: &Ticket, company: &Company, labels: &crate::pdf::Pd
     o.pair(&format!("{}:", labels.number), &ticket.number);
     o.pair(&format!("{}:", labels.date), &ticket.date);
     o.pair(&format!("{}:", labels.cashier), &ticket.cashier);
+    if !ticket.customer_name.is_empty() {
+        o.pair(&format!("{}:", labels.customer), &ticket.customer_name);
+    }
     o.divider();
 
     for item in &ticket.items {
@@ -166,6 +169,8 @@ mod tests {
             paid: 5.0,
             change: 2.0,
             cashier: "admin".into(),
+            customer_id: String::new(),
+            customer_name: String::new(),
             created_at: "2026-01-01T00:00:00Z".into(),
             created_by: "admin".into(),
         }

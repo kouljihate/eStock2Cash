@@ -69,8 +69,13 @@
         if (price && priceInput && (parseFloat(priceInput.value) || 0) === 0) {
           priceInput.value = price;
         }
-        if (descInput && !descInput.value && opt.textContent) {
-          descInput.value = opt.textContent.replace(/\s*\(.*\)\s*$/, "").trim();
+        // the option may carry the bare name when its label also shows price and
+        // stock, as the till does
+        var name =
+          opt.getAttribute("data-name") ||
+          (opt.textContent || "").replace(/\s*\(.*\)\s*$/, "").trim();
+        if (descInput && !descInput.value && name) {
+          descInput.value = name;
         }
       }
       recalc(wrap);
@@ -83,6 +88,49 @@
     });
 
     recalc(wrap);
+  }
+
+  /* ---------------- cash registry ---------------- */
+  // The till reads the running total the line editor keeps in #sum-total, so the
+  // change is right whatever the cashier types.
+  function initCash() {
+    var paid = document.getElementById("cash-received");
+    var shown = document.getElementById("cash-change");
+    var totalEl = document.getElementById("sum-total");
+    if (!paid || !shown || !totalEl) return;
+
+    var update = function () {
+      var total = parseFloat(totalEl.textContent) || 0;
+      var given = parseFloat(paid.value) || 0;
+      shown.textContent = money(given - total);
+      shown.classList.toggle("short", given + 0.005 < total);
+    };
+
+    document.querySelectorAll("[data-tender]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        paid.value = btn.getAttribute("data-tender");
+        update();
+      });
+    });
+    var exact = document.querySelector("[data-tender-exact]");
+    if (exact) {
+      exact.addEventListener("click", function () {
+        paid.value = money(parseFloat(totalEl.textContent) || 0);
+        update();
+      });
+    }
+
+    document.addEventListener("input", update);
+    document.addEventListener("change", update);
+    update();
+  }
+
+  /* ---------------- receipt straight from the till ---------------- */
+  function initAutoprint() {
+    if (!document.querySelector("[data-autoprint]")) return;
+    window.addEventListener("load", function () {
+      setTimeout(function () { window.print(); }, 250);
+    });
   }
 
   /* ---------------- flash messages ---------------- */
@@ -303,6 +351,8 @@
       initSettingsMenu();
       initSidebarToggle();
       initNavSections();
+      initCash();
+      initAutoprint();
     });
   });
 })();

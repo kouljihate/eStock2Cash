@@ -33,7 +33,7 @@ Returns the user and company documents.
 
 ### `GET /health`
 
-Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.8.2"}`.
+Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.9.0"}`.
 
 ## Dashboard
 
@@ -113,6 +113,10 @@ Last 100 direct-purchase tickets.
 product is given, its name/price fill the missing fields. The ticket is created
 with the next `TK-…` number and stock is decreased for product lines.
 
+A ticket also carries `customer_id` and `customer_name`. The till (`/cash-registry`)
+fills them from the customer it was given; this endpoint leaves them empty, which is
+the same shape as a walk-in sale.
+
 Response: `{"ok": true, "item": { … ticket … }}`.
 
 ## Credit
@@ -136,6 +140,12 @@ web-form endpoints (`/purchase-orders`, `/goods-receipts`, `/quotes/{id}/accept`
 `/payments`, `/admin`, …). They are plain form posts protected by the session
 cookie and same-origin checks; a mobile client cannot call them with the JSON API
 token yet.
+
+The till is a web form too: `POST /cash-registry` takes the customer, the product lines
+and the cash received, writes a ticket and redirects to its receipt. A short payment is
+refused (`?m=msg_paid_short&k=err`), a sale with no line is refused
+(`?m=msg_line_required&k=err`), and a completed one answers `?m=msg_cash_taken&k=ok` on
+`/tickets/{id}`.
 
 Deleting a document is web-only for the same reason. `POST /purchase-orders/{id}/delete`
 and `POST /supplier-invoices/{id}/delete` answer with a redirect carrying a flash code

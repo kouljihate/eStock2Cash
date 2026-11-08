@@ -1282,6 +1282,27 @@ td.acts .btn-icon.danger:focus-visible {
 .lines-sum b { color: var(--ink); font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .lines-sum .grand b { color: var(--brand-600); font-size: 14px; }
 
+/* Cash Registry: the money block under the lines — quick notes, then the change */
+.cash-pay { padding-top: 14px; align-items: start; }
+.tender-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.tender-btns .btn { min-width: 48px; justify-content: center; font-variant-numeric: tabular-nums; }
+.cash-change {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 41px;
+  padding: 8px 14px;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-600);
+  background: #f7f9ff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.cash-change.short { color: #a52a1a; background: #fdeeee; border-color: #f3c9c4; }
+
 .totals { display: flex; flex-direction: column; gap: 6px; max-width: 330px; margin-inline-start: auto; }
 .tot-row { display: flex; justify-content: space-between; gap: 18px; font-size: 12.5px; padding: 5px 0; }
 .tot-row span { color: var(--muted); }

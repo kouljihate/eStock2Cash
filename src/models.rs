@@ -470,6 +470,12 @@ pub struct Ticket {
     pub paid: f64,
     pub change: f64,
     pub cashier: String,
+    /// The customer the cash was taken from, when the till was told who it is.
+    /// Empty for a walk-in sale, and for the tickets written before the registry.
+    #[serde(default)]
+    pub customer_id: String,
+    #[serde(default)]
+    pub customer_name: String,
     pub created_at: String,
     pub created_by: String,
 }

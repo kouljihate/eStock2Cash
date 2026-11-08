@@ -156,6 +156,8 @@ pub async fn create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
         paid,
         change,
         cashier: crate::util::if_empty(&pairs.get("cashier"), &ctx.claims.un),
+        customer_id: String::new(),
+        customer_name: String::new(),
         created_at: now_iso(),
         created_by: ctx.claims.un.clone(),
     };
@@ -181,7 +183,11 @@ pub async fn create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
         .into_response())
 }
 
-pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppError> {
+pub async fn detail(
+    ctx: Ctx,
+    Path(id): Path<String>,
+    Query(q): Query<HashMap<String, String>>,
+) -> Result<Response, AppError> {
     let l = ctx.lang;
     let ticket = services::get_by_id::<Ticket>(&ctx.state.db.tickets(), &ctx.company.id, &id).await?;
     let cur_code = ctx.company.currency.clone();
@@ -199,10 +205,20 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
         })
         .collect::<Vec<_>>();
 
+    // the till records who handed the cash over; a walk-in sale has no one to name
+    let customer = if ticket.customer_name.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "<span>{}: {}</span>",
+            tr(l, "lbl_customer"),
+            esc(&ticket.customer_name)
+        )
+    };
     let receipt = format!(
         "<div class=\"receipt\" id=\"receipt\">\
            <div class=\"receipt-head\"><strong>{}</strong><div>{}</div><div>{}</div></div>\
-           <div class=\"receipt-meta\"><span>{}: {}</span><span>{}</span></div>\
+           <div class=\"receipt-meta\"><span>{}: {}</span><span>{}</span>{}</div>\
            <table class=\"receipt-table\"><tbody>{}</tbody></table>\
            <div class=\"receipt-tot\">\
              <div><span>{}</span><b>{}</b></div>\
@@ -219,6 +235,7 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
         tr(l, "lbl_number"),
         esc(&ticket.number),
         esc(&ticket.date),
+        customer,
         items
             .into_iter()
             .map(|cells| format!(
@@ -257,8 +274,14 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
         views::link_btn(&format!("/tickets/{}/escpos", ticket.id), "ESC/POS"),
     ];
 
+    // coming straight from the till, the receipt is already on its way to the printer
+    let autoprint = if q.get("print").map(|v| v == "1").unwrap_or(false) {
+        "<div data-autoprint hidden></div>"
+    } else {
+        ""
+    };
     let body = format!(
-        "{}{}{}",
+        "{}{}{}{}",
         super::page_head(&ctx, "nav_tickets", &ticket.number, actions),
         receipt,
         views::card(
@@ -268,7 +291,8 @@ pub async fn detail(ctx: Ctx, Path(id): Path<String>) -> Result<Response, AppErr
                 tr(l, "m_ticket_hint"),
                 esc(&ticket.id)
             )
-        )
+        ),
+        autoprint
     );
     let title = views::Title::raw(&ticket.number);
     Ok(views::respond(views::page(&ctx, &title, body)))
