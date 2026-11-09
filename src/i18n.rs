@@ -117,6 +117,7 @@ lang_table! {
     "lbl_inactive" => ("Inactive", "Inactif", "غير نشط"),
     "lbl_sku" => ("SKU", "Référence", "رمز المنتج"),
     "lbl_unit" => ("Unit", "Unité", "الوحدة"),
+    "lbl_package" => ("Package", "Conditionnement", "التغليف"),
     "lbl_category" => ("Category", "Catégorie", "الفئة"),
     "lbl_cost" => ("Cost price", "Prix d'achat", "سعر التكلفة"),
     "lbl_price" => ("Sale price", "Prix de vente", "سعر البيع"),

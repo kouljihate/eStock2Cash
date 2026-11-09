@@ -105,16 +105,26 @@ pub async fn products(ctx: Ctx, Query(q): Query<HashMap<String, String>>) -> Res
 
 fn product_fields(l: crate::i18n::Lang, p: &Product, with_stock: bool) -> String {
     let mut html = format!(
-        "<div class=\"form-grid\">{}{}{}{}{}{}{}{}</div>",
+        "<div class=\"form-grid\">{}{}{}{}{}{}{}</div>",
         views::input(&tr(l, "lbl_sku"), "sku", &p.sku, "text", true),
         views::input(&tr(l, "lbl_name"), "name", &p.name, "text", true),
-        views::input(&tr(l, "lbl_unit"), "unit", &p.unit, "text", false),
         views::input(&tr(l, "lbl_category"), "category", &p.category, "text", false),
         views::input_step(&tr(l, "lbl_cost"), "cost", &format!("{:.2}", p.cost), "0.01", false),
         views::input_step(&tr(l, "lbl_price"), "price", &format!("{:.2}", p.price), "0.01", false),
         views::input_step(&tr(l, "lbl_reorder"), "reorder_level", &qty(p.reorder_level), "0.01", false),
         views::checkbox(&tr(l, "lbl_active"), "active", p.active),
     );
+    // The stock row: what one unit is, how it is packed, and how many are on hand —
+    // three answers about the same shelf, so they stay on one line.
+    html.push_str("<div class=\"form-grid stock-row\">");
+    html.push_str(&views::input(&tr(l, "lbl_unit"), "unit", &p.unit, "text", false));
+    html.push_str(&views::input(
+        &tr(l, "lbl_package"),
+        "package",
+        &p.package,
+        "text",
+        false,
+    ));
     if with_stock {
         html.push_str(&views::input_step(
             &tr(l, "lbl_stock"),
@@ -124,6 +134,7 @@ fn product_fields(l: crate::i18n::Lang, p: &Product, with_stock: bool) -> String
             false,
         ));
     }
+    html.push_str("</div>");
     html
 }
 
@@ -152,6 +163,7 @@ pub async fn product_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError
         sku: pairs.get("sku"),
         name: pairs.get("name"),
         unit: crate::util::if_empty(&pairs.get("unit"), "pcs"),
+        package: pairs.get("package"),
         category: pairs.get("category"),
         cost: pairs.num("cost", 0.0),
         price: pairs.num("price", 0.0),
@@ -211,6 +223,7 @@ pub async fn product_update(ctx: Ctx, Path(id): Path<String>, pairs: Pairs) -> R
     p.sku = pairs.get("sku");
     p.name = pairs.get("name");
     p.unit = crate::util::if_empty(&pairs.get("unit"), "pcs");
+    p.package = pairs.get("package");
     p.category = pairs.get("category");
     p.cost = pairs.num("cost", p.cost);
     p.price = pairs.num("price", p.price);

@@ -345,6 +345,8 @@ struct ProductRequest {
     #[serde(default)]
     unit: String,
     #[serde(default)]
+    package: String,
+    #[serde(default)]
     category: String,
     #[serde(default)]
     cost: f64,
@@ -370,6 +372,7 @@ async fn create_product(
         sku: body.sku,
         name: body.name,
         unit: if body.unit.is_empty() { "pcs".into() } else { body.unit },
+        package: body.package,
         category: body.category,
         cost: body.cost,
         price: body.price,

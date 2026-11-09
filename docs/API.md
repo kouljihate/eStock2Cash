@@ -33,7 +33,7 @@ Returns the user and company documents.
 
 ### `GET /health`
 
-Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.10.1"}`.
+Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.11.0"}`.
 
 ## Dashboard
 
@@ -57,7 +57,7 @@ Public liveness probe: `{"ok": true, "service": "stockinvoice", "version": "0.10
 | GET | `/customers?q=` | includes `credit_limit`, `exposure` |
 | POST | `/customers` | `{code, name, credit_limit?, payment_terms?, email?, phone?, address?, city?}` |
 | GET | `/products?q=` | includes stock and prices |
-| POST | `/products` | `{sku, name, unit?, category?, cost?, price?, qty_on_hand?, reorder_level?}` |
+| POST | `/products` | `{sku, name, unit?, package?, category?, cost?, price?, qty_on_hand?, reorder_level?}` |
 
 List responses: `{"ok": true, "count": 2, "items": [ … ]}`.
 Create responses: `{"ok": true, "item": { … }}`. Duplicate `code`/`sku` returns `500`

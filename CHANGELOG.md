@@ -3,6 +3,16 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.11.0 — 2026-11-08
+
+### Added
+
+- **Package** on a product: how the unit is packed and bought — "Carton of 12",
+  "Sachet 500 g". The field sits in **New product** next to *Unit* and *In stock*, the
+  three of them on one line because they all answer a question about the shelf, and it
+  is kept on the edit form too. Products created before it read back empty, and the API
+  accepts `package` on `POST /products` and returns it with every product.
+
 ## 0.10.1 — 2026-11-08
 
 ### Changed

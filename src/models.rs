@@ -201,6 +201,9 @@ pub struct Product {
     pub sku: String,
     pub name: String,
     pub unit: String,
+    /// How the unit is packed and bought: "Carton of 12", "Sachet 500 g".
+    #[serde(default)]
+    pub package: String,
     pub category: String,
     pub cost: f64,
     pub price: f64,
