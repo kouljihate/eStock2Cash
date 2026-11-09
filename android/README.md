@@ -4,8 +4,8 @@ The phone app for the same ledger the web app serves. It talks only to this proj
 own JSON API (`/api/v1`, documented in [`../docs/API.md`](../docs/API.md)) with a Bearer
 token — no third-party SDK, no WebView, no bundled copy of the server.
 
-Current version: **0.1.1** — first slice: sign in, dashboard, and every list. The
-client version moves on its own; it was rebuilt against the 0.10.1 server and the API
+Current version: **0.1.2** — first slice: sign in, dashboard, and every list. The
+client version moves on its own; it was rebuilt against the 0.11.0 server and the API
 it speaks has not changed.
 
 | Sign in | Dashboard | A list |
@@ -29,8 +29,8 @@ invoice or printing a ticket stays in the web app for now — see *Not built yet
 From the repository root:
 
 ```bash
-bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.1.1-debug.apk
-bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.1.1-release.apk
+bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.1.2-debug.apk
+bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.1.2-release.apk
 ```
 
 The debug APK carries the `android:debuggable` flag and is what `adb install` expects;
@@ -54,7 +54,7 @@ git-ignored, as is `android/dist/`.
 ## Install
 
 ```bash
-adb install -r android/dist/s2c-maroc-0.1.1-debug.apk
+adb install -r android/dist/s2c-maroc-0.1.2-debug.apk
 ```
 
 Or copy the APK to the phone and open it (allow "install unknown apps" for the file
@@ -79,7 +79,7 @@ leaves a trusted network.
 ```
 android/
   settings.gradle.kts, build.gradle.kts, gradle.properties
-  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.1.1
+  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.1.2
   app/src/main/AndroidManifest.xml      INTERNET, cleartext, one activity
   app/src/main/res/                     theme, strings, adaptive launcher icon
   app/src/main/java/ma/s2c/maroc/
