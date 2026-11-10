@@ -121,6 +121,13 @@ pub struct Company {
     pub legal_name: String,
     pub tax_id: String,
     pub currency: String,
+    /// What the shop sells — `grocery`, `butcher`, `pharmacy`, … Chosen when the
+    /// company is created and kept for the documents and the reports.
+    #[serde(default)]
+    pub business_type: String,
+    /// Set when the first-run wizard is finished; empty means setup is still open.
+    #[serde(default)]
+    pub setup_done_at: String,
     pub address: String,
     pub phone: String,
     pub email: String,

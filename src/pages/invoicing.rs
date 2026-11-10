@@ -28,7 +28,7 @@ pub async fn new_invoice_record(
     notes: String,
 ) -> Result<Invoice, AppError> {
     let totals = Totals::compute(&lines);
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "CI").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "CI").await?;
     let inv = Invoice {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -202,7 +202,7 @@ pub async fn ci_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
             .unwrap_or_default()
     };
 
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "CI").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "CI").await?;
     let inv = Invoice {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -581,7 +581,7 @@ pub async fn payment_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError
         return Ok(ctx.back("/payments/new", "msg_amount_too_high", "err").into_response());
     }
 
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "PAY").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "PAY").await?;
     let payment = Payment {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),

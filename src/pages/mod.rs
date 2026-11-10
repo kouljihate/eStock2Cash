@@ -9,6 +9,7 @@ pub mod login;
 pub mod parties;
 pub mod purchasing;
 pub mod sales;
+pub mod settings;
 pub mod tickets;
 
 use crate::auth::Ctx;

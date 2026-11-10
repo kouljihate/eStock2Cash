@@ -555,9 +555,9 @@ pub struct DashboardStats {
 }
 
 pub async fn dashboard_stats(db: &DbHandle, company_id: &str) -> Result<DashboardStats, AppError> {
-    let suppliers = count(&db.db.collection(COLL_SUPPLIERS), company_id).await?;
-    let customers = count(&db.db.collection(COLL_CUSTOMERS), company_id).await?;
-    let products = count(&db.db.collection(COLL_PRODUCTS), company_id).await?;
+    let suppliers = count(&db.db().collection(COLL_SUPPLIERS), company_id).await?;
+    let customers = count(&db.db().collection(COLL_CUSTOMERS), company_id).await?;
+    let products = count(&db.db().collection(COLL_PRODUCTS), company_id).await?;
 
     let mut cur = db.products().find(doc! { "company_id": company_id }).await?;
     let mut low_stock = Vec::new();

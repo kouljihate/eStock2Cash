@@ -1,36 +1,62 @@
 # S2C MAROC — Android client
 
-The phone app for the same ledger the web app serves. It talks only to this project's
-own JSON API (`/api/v1`, documented in [`../docs/API.md`](../docs/API.md)) with a Bearer
-token — no third-party SDK, no WebView, no bundled copy of the server.
+The phone app for the shop's ledger. It **stands alone**: a fresh install opens on its
+own SQLite database, with no server and no network, and suppliers, customers and products
+are entered on the phone. The office server is the second option, not a requirement —
+switching to it reads the same `/api/v1` this project serves (documented in
+[`../docs/API.md`](../docs/API.md)).
 
-Current version: **0.1.2** — first slice: sign in, dashboard, and every list. The
-client version moves on its own; it was rebuilt against the 0.11.0 server and the API
-it speaks has not changed.
+Current version: **0.2.0** (`versionCode` 4). The client version moves on its own, apart
+from the web app's.
 
-| Sign in | Dashboard | A list |
+| Sign in (server mode) | Dashboard | A list |
 | --- | --- | --- |
 | ![Sign in](screens/login.png) | ![Dashboard](screens/dashboard.png) | ![Products](screens/products.png) |
+
+The screenshots are from 0.1.2 and show server mode; the local screens replace the
+figures with the phone's own counts and add **+ Add** to every list.
 
 ## What works today
 
 | Screen | What it shows |
 | --- | --- |
-| **Sign in** | Server address, username, password; the token and company are kept on the phone |
-| **Dashboard** | Supplier/customer/product counts, low stock, stock value, receivables, payables, open POs, receivable aging |
-| **Lists** | Suppliers, purchase orders, supplier invoices, payments, customers, quotes, customer orders, customer invoices, products |
-| **Session** | Back returns to the dashboard; sign out clears the token |
+| **Dashboard** | Supplier/customer/product counts, low stock, stock value and units — from the phone in local mode, from the server in server mode |
+| **Lists** | Suppliers, customers, products (local: add and delete), plus every document list when reading a server |
+| **Settings** | Database: **Local — this phone** or **Server — IP address**, the company name and the currency |
+| **Sign in** | Server address, username, password; only in server mode |
 
-Reading only: the app never writes to the ledger yet. Creating a supplier, issuing an
-invoice or printing a ticket stays in the web app for now — see *Not built yet*.
+In local mode a list is a working screen: **+ Add** opens a form (name, code/SKU, phone,
+city, price, cost, stock, reorder level) and a long press on a row offers *Delete*, behind
+a confirmation. Records live in the phone's own `s2c.db`.
+
+## Where the settings live
+
+The database choice, server address, company name and currency are kept in a plain text
+file, not compiled in, so they can be changed after install — from **Settings** in the app,
+or from a computer:
+
+```
+Android/data/ma.s2c.maroc/files/s2c.properties
+
+db.mode=local                     # local | server
+server.url=http://10.0.2.2:8080
+company.name=S2C MAROC
+company.currency=MAD
+```
+
+The file is written on the first run and survives updates; uninstalling the app removes
+it, which also removes the database. **Delete the app's data to start a clean ledger.**
+
+`db.mode=local` uses `s2c.db` on the phone. `db.mode=server` reads the office computer
+after signing in; the token is kept in `SharedPreferences`, never in the file.
 
 ## Build
 
 From the repository root:
 
 ```bash
-bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.1.2-debug.apk
-bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.1.2-release.apk
+bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.2.0-debug.apk
+bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.2.0-release.apk
 ```
 
 The debug APK carries the `android:debuggable` flag and is what `adb install` expects;
@@ -54,7 +80,7 @@ git-ignored, as is `android/dist/`.
 ## Install
 
 ```bash
-adb install -r android/dist/s2c-maroc-0.1.2-debug.apk
+adb install -r android/dist/s2c-maroc-0.2.0-debug.apk
 ```
 
 Or copy the APK to the phone and open it (allow "install unknown apps" for the file
@@ -63,7 +89,7 @@ not for a store.
 
 ## Point it at your server
 
-The first field on the sign-in screen is the server address, and it is remembered.
+Server mode is chosen in **Settings**; the address is remembered.
 
 - **Emulator**: `http://10.0.2.2:8080` (the default) is the host machine's loopback.
 - **Phone on the same Wi-Fi**: the PC's LAN address, e.g. `http://192.168.1.20:8080`.
@@ -79,11 +105,13 @@ leaves a trusted network.
 ```
 android/
   settings.gradle.kts, build.gradle.kts, gradle.properties
-  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.1.2
+  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.2.0
   app/src/main/AndroidManifest.xml      INTERNET, cleartext, one activity
   app/src/main/res/                     theme, strings, adaptive launcher icon
   app/src/main/java/ma/s2c/maroc/
-    MainActivity.java                   screens: sign in, dashboard, list, chrome
+    MainActivity.java                   screens: dashboard, list, record form, settings, sign in, chrome
+    LocalDb.java                        the phone's SQLite database (suppliers, customers, products)
+    Config.java                         s2c.properties: db.mode, server.url, company, currency
     Api.java                            HttpURLConnection + org.json, token in SharedPreferences
     Ui.java                             palette and view factories (Arabic above Latin)
 ```
@@ -96,14 +124,13 @@ across a pile of layout files.
 
 In the order they would matter on a shop floor:
 
-1. **Writing**: create/edit suppliers, customers and products — the API already accepts
-   `POST /suppliers`, `/customers`, `/products`, `/tickets`.
-2. **Documents**: a purchase order, quote or invoice screen, and the actions on them
-   (issue, validate, receive). Those endpoints are `GET` only today, so the API needs the
-   writes first.
+1. **Documents on the phone**: a purchase order, invoice or ticket screen. The local
+   database holds master data only, so those flows stay in the web app — and the API for
+   them is `GET` only today.
+2. **Sales at the counter**: a local cart that writes a ticket and moves stock.
 3. **Bluetooth receipts**: the browser already prints ESC/POS over Web Bluetooth; the
    native equivalent is `BluetoothLeScanner` + the same byte stream from
    `src/ticket.rs`.
-4. **Offline**: nothing is cached; every screen needs the server.
-5. **Release signing** with a key that belongs to the owner, and a version code scheme
-   tied to the web release.
+4. **Sync**: local and server are two datasets, with no merge between them.
+5. **Backup/restore** of `s2c.db`, and release signing with a key that belongs to the
+   owner.

@@ -140,6 +140,8 @@ pub async fn seed(db: &Database, cfg: &Config) -> Result<(), AppError> {
                 legal_name: cfg.company_name.clone(),
                 tax_id: String::new(),
                 currency: "MAD".into(),
+                business_type: String::new(),
+                setup_done_at: String::new(),
                 address: String::new(),
                 phone: String::new(),
                 email: String::new(),
@@ -186,7 +188,16 @@ pub async fn seed(db: &Database, cfg: &Config) -> Result<(), AppError> {
 }
 
 pub async fn handle(client: Client, db_name: &str) -> DbHandle {
-    DbHandle {
-        db: client.database(db_name),
-    }
+    DbHandle::new(client.database(db_name))
+}
+
+/// Open and prepare a database that the settings page chose: connect, ping, make
+/// sure the indexes exist and seed an empty database, exactly as at boot.
+pub async fn prepare(settings: &crate::config::DbSettings, cfg: &Config) -> Result<mongodb::Database, AppError> {
+    let name = settings.db_name_or_default();
+    let client = connect(&settings.uri(), &name).await?;
+    let database = client.database(&name);
+    ensure_indexes(&database).await?;
+    seed(&database, cfg).await?;
+    Ok(database)
 }

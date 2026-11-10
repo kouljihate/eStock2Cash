@@ -216,6 +216,8 @@ pub fn router(state: AppState) -> Router {
         .route("/admin/password", post(pages::admin::password_change))
         .route("/admin/users", post(pages::admin::user_create))
         .route("/admin/users/{id}/delete", post(pages::admin::user_delete))
+        .route("/settings", get(pages::settings::index))
+        .route("/settings/database", post(pages::settings::database_save))
         .route("/admin/events", get(pages::admin::events))
         .route("/admin/broker", get(pages::admin::broker))
         .route_layer(middleware::from_fn(auth::same_origin));

@@ -557,7 +557,7 @@ async fn create_ticket(
     let tax = round2(body.tax.max(0.0));
     let total = round2(subtotal + tax);
     let paid = round2(if body.paid <= 0.0 { total } else { body.paid });
-    let number = crate::db::next_number(&auth.state.db.db, &auth.claims.cid, "TK")
+    let number = crate::db::next_number(&auth.state.db.db(), &auth.claims.cid, "TK")
         .await
         .map_err(ApiError)?;
     let ticket = Ticket {

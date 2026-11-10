@@ -1,6 +1,6 @@
 //! Shared application state and MongoDB handles.
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use mongodb::Database;
 use mongodb::bson::doc;
@@ -10,14 +10,39 @@ use crate::error::AppError;
 use crate::events::Bus;
 use crate::models::*;
 
+/// The database every request talks to. The handle is shared and swappable: the
+/// settings page can point a running app at a database server on the network (or
+/// back at the local one) without a restart, and the next query uses it.
 #[derive(Clone)]
 pub struct DbHandle {
-    pub db: Database,
+    inner: Arc<RwLock<Database>>,
 }
 
 impl DbHandle {
+    pub fn new(db: Database) -> Self {
+        Self {
+            inner: Arc::new(RwLock::new(db)),
+        }
+    }
+
+    /// A clone of the current database handle. Cheap: the driver pools the sockets.
+    pub fn db(&self) -> Database {
+        self.inner
+            .read()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clone()
+    }
+
+    /// Point the whole running app at another database.
+    pub fn swap(&self, db: Database) {
+        *self
+            .inner
+            .write()
+            .unwrap_or_else(|poisoned| poisoned.into_inner()) = db;
+    }
+
     pub fn coll<T: Send + Sync>(&self, name: &str) -> mongodb::Collection<T> {
-        self.db.collection::<T>(name)
+        self.db().collection::<T>(name)
     }
 
     pub fn companies(&self) -> mongodb::Collection<Company> {
@@ -89,10 +114,19 @@ pub struct AppState {
     pub db: DbHandle,
     pub cfg: Arc<Config>,
     pub bus: Bus,
+    /// The database choice in force right now. `cfg.db` is the value at boot; this is
+    /// what the settings page reads, so a saved change is visible without a restart.
+    pub db_settings: Arc<RwLock<crate::config::DbSettings>>,
 }
 
 impl AppState {
     pub fn new(db: DbHandle, cfg: Arc<Config>, bus: Bus) -> Self {
-        Self { db, cfg, bus }
+        let settings = cfg.db.clone();
+        Self {
+            db,
+            cfg,
+            bus,
+            db_settings: Arc::new(RwLock::new(settings)),
+        }
     }
 }

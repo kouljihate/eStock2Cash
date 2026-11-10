@@ -98,6 +98,7 @@ fn nav_html(ctx: &Ctx) -> String {
             &nav_item(on("/admin"), "/admin", &tr(l, "nav_admin"), "admin"),
             &nav_item(on("/admin/events"), "/admin/events", &tr(l, "nav_events"), "events"),
             &nav_item(on("/admin/broker"), "/admin/broker", &tr(l, "nav_broker"), "broker"),
+            &nav_item(on("/settings"), "/settings", &tr(l, "nav_settings"), "admin"),
         ],
     ));
     out

@@ -293,7 +293,7 @@ pub async fn sell(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
                 .into_response());
         }
 
-        let number = crate::db::next_number(&db.db, &company_id, "CI").await?;
+        let number = crate::db::next_number(&db.db(), &company_id, "CI").await?;
         let inv = Invoice {
             id: crate::util::new_id(),
             company_id: company_id.clone(),
@@ -347,7 +347,7 @@ pub async fn sell(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
         None => (String::new(), String::new()),
     };
 
-    let number = crate::db::next_number(&db.db, &company_id, "TK").await?;
+    let number = crate::db::next_number(&db.db(), &company_id, "TK").await?;
     let ticket = Ticket {
         id: crate::util::new_id(),
         company_id: company_id.clone(),

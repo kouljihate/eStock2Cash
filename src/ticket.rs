@@ -184,6 +184,8 @@ mod tests {
             legal_name: String::new(),
             tax_id: String::new(),
             currency: "USD".into(),
+            business_type: String::new(),
+            setup_done_at: String::new(),
             address: String::new(),
             phone: String::new(),
             email: String::new(),

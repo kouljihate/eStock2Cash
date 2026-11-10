@@ -100,6 +100,69 @@ lang_table! {
     "nav_admin" => ("Administration", "Administration", "الإدارة"),
     "nav_events" => ("Event Log", "Journal d'événements", "سجل الأحداث"),
     "nav_broker" => ("Message Broker", "Broker de messages", "وسيط الرسائل"),
+    "nav_settings" => ("Settings", "Paramètres", "الإعدادات"),
+
+    "m_database" => ("Database", "Base de données", "قاعدة البيانات"),
+    "m_db_current_card" => ("Current connection", "Connexion actuelle", "الاتصال الحالي"),
+    "m_db_current" => ("Connected to", "Connecté à", "متصل بـ"),
+    "lbl_db_mode" => ("Where the data lives", "Où sont les données", "مكان البيانات"),
+    "m_db_local" => (
+        "Local — this computer",
+        "Locale — cet ordinateur",
+        "محلية — هذا الحاسوب"
+    ),
+    "m_db_server" => (
+        "Server — IP address",
+        "Serveur — adresse IP",
+        "خادم — عنوان IP"
+    ),
+    "lbl_db_host" => (
+        "Server address (IP)",
+        "Adresse du serveur (IP)",
+        "عنوان الخادم (IP)"
+    ),
+    "lbl_db_port" => ("Port", "Port", "المنفذ"),
+    "lbl_db_name" => (
+        "Database name",
+        "Nom de la base",
+        "اسم قاعدة البيانات"
+    ),
+    "lbl_db_user" => (
+        "User (optional)",
+        "Utilisateur (facultatif)",
+        "المستخدم (اختياري)"
+    ),
+    "lbl_db_password" => (
+        "Password (blank keeps it)",
+        "Mot de passe (vide = inchangé)",
+        "كلمة المرور (فراغ يبقيها)"
+    ),
+    "m_db_hint" => (
+        "Local uses the MongoDB on this computer. Server uses a MongoDB on the network: enter its IP address and port, plus the user and password if it needs them. The connection is tested before switching, and the app stays on the current database if the new one cannot be reached.",
+        "Locale utilise le MongoDB de cet ordinateur. Serveur utilise un MongoDB du réseau : saisissez son adresse IP et son port, ainsi que l'utilisateur et le mot de passe s'il en faut. La connexion est testée avant de changer, et l'application reste sur la base actuelle si la nouvelle est injoignable.",
+        "محلية تستخدم MongoDB على هذا الحاسوب. خادم يستخدم MongoDB على الشبكة: أدخل عنوان IP والمنفذ، والمستخدم وكلمة المرور إن وُجدا. يتم اختبار الاتصال قبل التغيير، ويبقى التطبيق على القاعدة الحالية إذا تعذّر الوصول إلى الجديدة."
+    ),
+    "m_db_file" => ("Settings file", "Fichier de réglages", "ملف الإعدادات"),
+    "msg_db_saved" => (
+        "Database settings saved.",
+        "Réglages de la base enregistrés.",
+        "تم حفظ إعدادات قاعدة البيانات."
+    ),
+    "msg_db_switched" => (
+        "Database switched — sign in again with an account from that database.",
+        "Base changée — reconnectez-vous avec un compte de cette base.",
+        "تم تغيير قاعدة البيانات — سجّل الدخول من جديد بحساب من تلك القاعدة."
+    ),
+    "msg_db_unreachable" => (
+        "Could not reach that database. Nothing was changed and the app still uses the current one.",
+        "Base injoignable. Rien n'a été modifié, l'application garde la base actuelle.",
+        "تعذّر الوصول إلى قاعدة البيانات. لم يتم تغيير شيء والتطبيق ما زال على القاعدة الحالية."
+    ),
+    "msg_db_save_failed" => (
+        "The database is reachable but the settings file could not be written.",
+        "La base est joignable mais le fichier de réglages n'a pas pu être écrit.",
+        "قاعدة البيانات متاحة لكن تعذّر كتابة ملف الإعدادات."
+    ),
 
     "lbl_name" => ("Name", "Nom", "الاسم"),
     "lbl_code" => ("Code", "Code", "الرمز"),

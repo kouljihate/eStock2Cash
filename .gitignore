@@ -24,3 +24,6 @@ static/fonts/*
 /android/.idea
 *.apk
 !android/dist/*.apk
+
+# Runtime database settings written by the Settings page
+app-settings.json

@@ -50,6 +50,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         version = env!("CARGO_PKG_VERSION"),
         port = cfg.port,
         mongo_db = %cfg.mongo_db,
+        database = %cfg.db.summary(),
+        database_mode = %if cfg.db.is_server() { "server" } else { "local" },
         company = %cfg.company_name,
         rabbitmq = cfg.rabbit_enabled(),
         "starting S2C MAROC"
@@ -57,8 +59,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = db::connect(&cfg.mongo_uri, &cfg.mongo_db).await?;
     let handle = db::handle(client, &cfg.mongo_db).await;
-    db::ensure_indexes(&handle.db).await?;
-    db::seed(&handle.db, &cfg).await?;
+    db::ensure_indexes(&handle.db()).await?;
+    db::seed(&handle.db(), &cfg).await?;
 
     let bus = events::Bus::new(cfg.clone());
     events::spawn_consumer(handle.clone(), cfg.clone());

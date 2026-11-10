@@ -162,7 +162,7 @@ pub async fn po_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
         return Ok(ctx.back("/purchase-orders/new", "msg_line_required", "err").into_response());
     }
     let totals = Totals::compute(&lines);
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "PO").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "PO").await?;
     let po = PurchaseOrder {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -664,7 +664,7 @@ pub async fn gr_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
         return Ok(ctx.back("/goods-receipts/new", "msg_line_required", "err").into_response());
     }
 
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "GR").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "GR").await?;
     let mut gr = GoodsReceipt {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -943,7 +943,7 @@ pub async fn si_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
         return Ok(ctx.back("/supplier-invoices/new", "msg_line_required", "err").into_response());
     }
     let totals = Totals::compute(&lines);
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "SI").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "SI").await?;
     let source_id = pairs.get("source_id");
     let source_number = if source_id.is_empty() {
         String::new()

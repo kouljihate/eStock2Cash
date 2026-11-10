@@ -34,13 +34,13 @@ final class Api {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private static final String PREFS = "s2c";
-    /** The emulator reaches the host machine on 10.0.2.2; a real phone needs the LAN IP. */
-    static final String DEFAULT_SERVER = "http://10.0.2.2:8080";
 
     private final Context ctx;
+    private final Config cfg;
 
-    Api(Context ctx) {
+    Api(Context ctx, Config cfg) {
         this.ctx = ctx.getApplicationContext();
+        this.cfg = cfg;
     }
 
     private SharedPreferences prefs() {
@@ -48,7 +48,7 @@ final class Api {
     }
 
     String server() {
-        return prefs().getString("server", DEFAULT_SERVER);
+        return cfg.server();
     }
 
     String userName() {
@@ -56,11 +56,13 @@ final class Api {
     }
 
     String company() {
-        return prefs().getString("company", "");
+        String stored = prefs().getString("company", "");
+        return stored.isEmpty() || cfg.isLocal() ? cfg.company() : stored;
     }
 
     String currency() {
-        return prefs().getString("currency", "MAD");
+        String stored = prefs().getString("currency", "");
+        return stored.isEmpty() || cfg.isLocal() ? cfg.currency() : stored;
     }
 
     boolean signedIn() {
@@ -73,7 +75,8 @@ final class Api {
 
     /** Signs in and remembers the token, the company it belongs to and its currency. */
     void login(String server, String username, String password, Callback cb) {
-        put("server", trim(server));
+        cfg.setServer(server);
+        cfg.save();
         JSONObject body = new JSONObject();
         try {
             body.put("username", username);
@@ -184,6 +187,6 @@ final class Api {
         while (s.endsWith("/")) {
             s = s.substring(0, s.length() - 1);
         }
-        return s.isEmpty() ? DEFAULT_SERVER : s;
+        return s.isEmpty() ? Config.DEFAULT_SERVER : s;
     }
 }

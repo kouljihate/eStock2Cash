@@ -118,6 +118,27 @@ needed — every dependency is pure Rust.
 The seeded company starts in **MAD**; the currency code is free text on the
 company form, so it can be switched to EUR, USD or anything else per company.
 
+### Where the data lives
+
+The database is chosen in the app, not compiled in. **Settings → Database**
+(`/settings`, under *Administration* in the sidebar) offers two options:
+
+| Option | Meaning |
+|--------|---------|
+| **Local — this computer** | MongoDB on the same machine (`127.0.0.1:27017`) |
+| **Server — IP address** | A MongoDB on the network: its IP and port, plus a user and password if it needs them |
+
+The choice is written to `app-settings.json` next to the binary and applied at
+once: the running app swaps its connection, so the next page reads and writes the
+new database with no restart. The connection is tested before anything changes —
+an unreachable address leaves the app on the database that works. Another database
+has its own users, so switching signs everyone out; an empty one is seeded with
+`ADMIN_USERNAME` / `ADMIN_PASSWORD` the first time it is opened.
+
+`MONGO_URI` and `MONGO_DB` only seed `app-settings.json` on the **first run**; after
+that the file wins (delete it to pick the environment up again). It is git-ignored,
+because it can hold a database server's password.
+
 The broker monitor derives the management API host/port/credentials from
 `RABBITMQ_URL` (`amqp://user:pass@host:5672/vhost` → `http://host:15672`).
 
@@ -580,20 +601,39 @@ totals, cash drawer, cut).
 ## Android app
 
 The phone client lives in [`android/`](android/README.md): a native Java app, no WebView
-and no third-party SDK, speaking the same `/api/v1` this server exposes.
+and no third-party SDK.
 
-```bash
-bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.1.1-debug.apk
-bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.1.1-release.apk
-adb install -r android/dist/s2c-maroc-0.1.1-debug.apk
+**It stands alone.** A fresh install opens on its own SQLite database and needs no
+server: suppliers, customers and products are entered on the phone, kept on the phone,
+and the dashboard counts them. Settings — the link on the sign-in screen, or *Settings*
+in the header — offers the same two database options as the web app:
+
+| Option | Meaning |
+|--------|---------|
+| **Local — this phone** | The app's own database; everything works with no network |
+| **Server — IP address** | Reads the office computer's `/api/v1` over the LAN, after signing in |
+
+The choice lives in a plain text file, so it can be changed later without a rebuild:
+
+```
+Android/data/ma.s2c.maroc/files/s2c.properties
+
+  db.mode=local            # local | server
+  server.url=http://10.0.2.2:8080
+  company.name=S2C MAROC
+  company.currency=MAD
 ```
 
-It signs in with a server address you type (remembered afterwards), shows the dashboard
-figures and reads every list — suppliers, purchase orders, supplier invoices, payments,
-customers, quotes, customer orders, customer invoices, products. The emulator reaches
-this machine on `http://10.0.2.2:8080`; a phone needs the PC's LAN address, e.g.
-`http://192.168.1.20:8080`. It is read-only for now: the write endpoints and Bluetooth
-printing are the next slice, listed in the client's README.
+```bash
+bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.2.0-debug.apk
+bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.2.0-release.apk
+adb install -r android/dist/s2c-maroc-0.2.0-debug.apk
+```
+
+In local mode a list has a **+ Add** button and a long-press deletes a row. The emulator
+reaches this machine on `http://10.0.2.2:8080`; a phone needs the PC's LAN address, e.g.
+`http://192.168.1.20:8080`. Documents — purchase orders, invoices, tickets — and
+Bluetooth printing are still web-only and listed in the client's README.
 
 ## API (Android client)
 
@@ -628,9 +668,11 @@ rejection; tenant isolation; EN/FR/AR switching.
 
 ## Known limitations
 
-- **The Android app reads, it does not write.** Sign-in, dashboard and every list are
-  in; creating records, document actions and Bluetooth printing are still web-only, and
-  the document write endpoints would need to exist first.
+- **The Android app writes master data, not documents.** Suppliers, customers and
+  products can be added and deleted in local mode; purchase orders, invoices, tickets,
+  document actions and Bluetooth printing are still web-only.
+- **The phone's local database does not sync.** Local and Server are two separate
+  datasets: switching the mode switches which one the phone shows, with no merge.
 - **The APK is debug-signed.** Fine for a phone on your desk, not for a store.
 - Arabic PDFs keep the left-to-right grid (column order, totals block); the
   text itself is shaped and runs right to left, but the layout is not mirrored.

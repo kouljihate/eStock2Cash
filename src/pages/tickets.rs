@@ -142,7 +142,7 @@ pub async fn create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> {
     let total = round2(subtotal + tax);
     let paid = round2(pairs.num("paid", 0.0));
     let change = round2((paid - total).max(0.0));
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "TK").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "TK").await?;
 
     let ticket = Ticket {
         id: crate::util::new_id(),

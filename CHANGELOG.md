@@ -3,6 +3,27 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## 0.12.0 — 2026-11-10
+
+### Added
+
+- **The database is a setting, not a build.** *Settings → Database* (`/settings`) offers
+  **Local — this computer** or **Server — IP address** with port, database name and
+  optional user and password. The connection is tested before anything changes, the
+  choice is saved to `app-settings.json`, and the running app swaps its handle, so the
+  next request reads and writes the new database without a restart. Another database
+  means other users, so switching signs the session out; an empty one is seeded the
+  first time it is opened. `MONGO_URI` / `MONGO_DB` now only seed that file on the first
+  run — after that the file wins. An unreachable address changes nothing, so a wrong IP
+  cannot lock a shop out of its own data.
+- **Android 0.2.0 stands alone.** The phone keeps its own SQLite database (`s2c.db`):
+  suppliers, customers and products are entered on the phone and read back from it, with
+  **+ Add** on every list and long-press to delete. *Settings* has the same two choices
+  as the web app — Local (this phone) or Server (IP address) — written to
+  `Android/data/ma.s2c.maroc/files/s2c.properties`, so they can be changed later without
+  a rebuild. The dashboard in local mode counts the phone's own rows and the footer shows
+  the version and which database is in use.
+
 ## 0.11.0 — 2026-11-08
 
 ### Added

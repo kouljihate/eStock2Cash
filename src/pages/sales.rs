@@ -131,7 +131,7 @@ pub async fn quote_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> 
         return Ok(ctx.back("/quotes/new", "msg_line_required", "err").into_response());
     }
     let totals = Totals::compute(&lines);
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "QUO").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "QUO").await?;
     let quote = Quote {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -272,7 +272,7 @@ pub async fn quote_accept(ctx: Ctx, Path(id): Path<String>) -> Result<Response, 
         return Ok(ctx.back(&format!("/quotes/{id}"), "msg_credit_exceeded", "err").into_response());
     }
 
-    let order_number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "SO").await?;
+    let order_number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "SO").await?;
     let order = SalesOrder {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -497,7 +497,7 @@ pub async fn order_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppError> 
     if !credit.allows(totals.total) {
         return Ok(ctx.back("/customer-orders/new", "msg_credit_exceeded", "err").into_response());
     }
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "SO").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "SO").await?;
     let order = SalesOrder {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
@@ -804,7 +804,7 @@ pub async fn delivery_create(ctx: Ctx, pairs: Pairs) -> Result<Response, AppErro
         return Ok(ctx.back("/delivery-notes/new", "msg_line_required", "err").into_response());
     }
 
-    let number = crate::db::next_number(&ctx.state.db.db, &ctx.company.id, "DN").await?;
+    let number = crate::db::next_number(&ctx.state.db.db(), &ctx.company.id, "DN").await?;
     let dn = DeliveryNote {
         id: crate::util::new_id(),
         company_id: ctx.company.id.clone(),
