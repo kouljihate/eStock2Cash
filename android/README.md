@@ -6,12 +6,14 @@ a till, plus products, suppliers, customers and the credit book. The office serv
 second option, not a requirement — switching to it reads the same `/api/v1` this project
 serves (documented in [`../docs/API.md`](../docs/API.md)).
 
-Current version: **0.3.0** (`versionCode` 5). The client version moves on its own, apart
+Current version: **0.4.0** (`versionCode` 6). The client version moves on its own, apart
 from the web app's.
 
-The app opens on a **sign-in page** that carries the settings link and the version; local
-mode asks for nothing and its button simply opens the till. Under the till there is a tab
-strip: **Cashier · Products · Suppliers · Customers · Credit**.
+The app opens on a **sign-in page with three tabs — Login · Forgot · Settings**. On a fresh
+install the Login tab asks for a username, a password and a recovery phrase: that is the
+account that will open this phone's till, and the phrase is the way back in if the password
+is lost. Under the till there is a tab strip: **Cashier · Products · Suppliers · Customers ·
+Credit**.
 
 | Sign in (server mode) | Dashboard | A list |
 | --- | --- | --- |
@@ -24,7 +26,7 @@ cashier below, and every tab reads the phone's own rows in local mode.
 
 | Screen | What it shows |
 | --- | --- |
-| **Sign in** | Company, version and a settings link; server mode adds address, username and password |
+| **Sign in** | Username and password against the phone's own users (or the office server); first run creates the account; the Forgotten tab resets a password with the recovery phrase |
 | **Cashier** | The till: search the phone's products, tap one to add it, then *Review cart* → quantity, payment (cash or credit) and **Charge** |
 | **Products / Suppliers / Customers** | The phone's own lists, **+ Add** on each, long press to delete behind a confirmation |
 | **Credit** | One row per customer with an unpaid credit sale: what they owe, their phone and limit. A long press settles the whole debt |
@@ -84,8 +86,8 @@ system font.
 From the repository root:
 
 ```bash
-bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.3.0-debug.apk
-bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.3.0-release.apk
+bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.4.0-debug.apk
+bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.4.0-release.apk
 ```
 
 The debug APK carries the `android:debuggable` flag and is what `adb install` expects;
@@ -109,7 +111,7 @@ git-ignored, as is `android/dist/`.
 ## Install
 
 ```bash
-adb install -r android/dist/s2c-maroc-0.3.0-debug.apk
+adb install -r android/dist/s2c-maroc-0.4.0-debug.apk
 ```
 
 Or copy the APK to the phone and open it (allow "install unknown apps" for the file
@@ -134,13 +136,14 @@ leaves a trusted network.
 ```
 android/
   settings.gradle.kts, build.gradle.kts, gradle.properties
-  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.3.0
+  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.4.0
   app/src/main/AndroidManifest.xml      INTERNET, cleartext, one activity
   app/src/main/res/                     theme, strings, adaptive launcher icon
   app/src/main/java/ma/s2c/maroc/
-    MainActivity.java                   screens: sign in, cashier, cart, tabs, lists, record form, settings
+    MainActivity.java                   screens: sign-in page with three tabs, cashier, cart, tabs, lists, record form, settings
     LocalDb.java                        the phone's SQLite database (suppliers, customers, products, sales, credit)
     Ui.java                             colours, cards, bilingual labels, the two typefaces
+    res/drawable/logo.xml               the app mark (launcher icon and sign-in hero)
     Config.java                         s2c.properties: db.mode, server.url, company, currency
     Api.java                            HttpURLConnection + org.json, token in SharedPreferences
     Ui.java                             palette and view factories (Arabic above Latin)

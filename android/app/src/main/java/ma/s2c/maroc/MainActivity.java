@@ -15,6 +15,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -96,15 +97,15 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Where the app opens: the sign-in page. Local mode has no account to ask for, so its card
-     * just says where the data lives and opens the till; server mode asks for the username and
-     * password. Either way the page carries the settings link and the version.
+     * Where the app opens: the sign-in page, with three tabs — Login, Forgotten password and
+     * Settings — because those are the three things a shop needs before the till: the account
+     * that opens it, a way back in when the password is gone, and which database it reads.
      */
     private View startScreen() {
-        return loginScreen();
+        return authScreen();
     }
 
-    /** Past the login page: the cashier, with the four tabs under it. */
+    /** Past the login page: the till, with the four tabs under it. */
     private void openShop() {
         cart.clear();
         tab = TAB_CASHIER;
@@ -118,7 +119,7 @@ public class MainActivity extends Activity {
             stack.pop();
             render();
         } else {
-            // The last screen is the dashboard; back leaves the app rather than the account.
+            // The last screen is the door itself; back leaves the app rather than the account.
             super.onBackPressed();
         }
     }
@@ -137,114 +138,181 @@ public class MainActivity extends Activity {
         host.addView(top.build());
     }
 
-    /* ------------------------------------------------------------------ sign in */
+    private static final int AUTH_LOGIN = 0;
+    private static final int AUTH_FORGOT = 1;
+    private static final int AUTH_SETTINGS = 2;
 
-    private View loginScreen() {
+    private int authTab = AUTH_LOGIN;
+
+    /** An auth tab re-renders the same page; it is not a new screen with its own back step. */
+    private void showAuth(int tab) {
+        authTab = tab;
+        stack.clear();
+        stack.push(this::authScreen);
+        render();
+    }
+
+    private void signOut() {
+        api.signOut();
+        authTab = AUTH_LOGIN;
+        stack.clear();
+        push(this::authScreen);
+    }
+
+    private View authScreen() {
         LinearLayout page = Ui.column(this);
 
-        LinearLayout head = Ui.column(this);
-        head.setBackgroundColor(Ui.DARK);
-        int p = Ui.dp(this, 24);
-        head.setPadding(p, Ui.dp(this, 40), p, Ui.dp(this, 28));
-        head.addView(Ui.text(this, "S2C MAROC", 24, Ui.WHITE, true));
-        head.addView(Ui.text(this, "Procure-to-Pay  ·  دورة الشراء", 12, 0xFF94A3B8, false));
-        head.addView(Ui.text(this, "Quote-to-Cash  ·  دورة البيع", 12, 0xFF94A3B8, false));
-        page.addView(head);
+        // The hero: gradient, the mark, the name. The card below rides up over its edge.
+        LinearLayout hero = Ui.column(this);
+        hero.setBackground(Ui.hero(this, Ui.DARK, Ui.DARK_LIGHT, 26));
+        int hp = Ui.dp(this, 22);
+        hero.setPadding(hp, Ui.dp(this, 34), hp, Ui.dp(this, 26));
+
+        LinearLayout mark = Ui.row(this);
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.logo);
+        logo.setContentDescription("S2C MAROC");
+        mark.addView(logo, Ui.lp(Ui.dp(this, 52), Ui.dp(this, 52)));
+        LinearLayout names = Ui.column(this);
+        names.setPadding(Ui.dp(this, 14), 0, 0, 0);
+        names.addView(Ui.text(this, "S2C MAROC", 21, Ui.WHITE, true));
+        names.addView(Ui.spacer(this, 3));
+        names.addView(Ui.text(this, "Cash · Stock · Credit  ·  نقد · مخزون · دين", 11, 0xFF9FB0CC, false));
+        mark.addView(names);
+        hero.addView(mark);
+        page.addView(hero, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout body = Ui.column(this);
-        int b = Ui.dp(this, 18);
+        int b = Ui.dp(this, 16);
         body.setPadding(b, b, b, b);
 
-        if (cfg.isLocal()) {
-            body.addView(localLoginCard());
-        } else {
-            body.addView(serverLoginCard());
-        }
+        LinearLayout card = Ui.card(this);
+        card.addView(authTabs());
+        card.addView(Ui.spacer(this, 16));
+        card.addView(authBody(), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        body.addView(card);
 
-        TextView toSettings = Ui.text(this, "Settings  ·  الإعدادات  ·  v" + version(), 12.5f, Ui.BRAND, true);
-        toSettings.setPadding(0, Ui.dp(this, 16), 0, 0);
-        toSettings.setOnClickListener(v -> push(this::settingsScreen));
-        body.addView(toSettings);
-
+        // Fill the viewport, so the card and every label in it measure against the width of
+        // the phone instead of against an unbounded line.
+        scroll.setFillViewport(true);
+        body.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
         scroll.addView(body);
-        page.addView(scroll, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
-        ((LinearLayout.LayoutParams) scroll.getLayoutParams()).weight = 1;
-
+        page.addView(scroll, verticalWeight());
         page.addView(footer());
         return page;
     }
 
-    /** Local mode asks for nothing: it says where the data lives and opens the till. */
-    private View localLoginCard() {
-        LinearLayout card = Ui.card(this);
-        card.addView(Ui.bi(this, "Welcome", "مرحباً", 18, Ui.INK, true));
-        card.addView(Ui.spacer(this, 4));
-        card.addView(Ui.text(this, cfg.company() + "  ·  " + cfg.currency(), 13, Ui.MUTED, false));
-        card.addView(Ui.spacer(this, 14));
+    /** Login · Forgotten · Settings — the three tabs of the sign-in page. */
+    private View authTabs() {
+        String[][] tabs = {{"Login", "الدخول"}, {"Forgot", "نسيت"}, {"Settings", "الإعدادات"}};
+        LinearLayout row = Ui.row(this);
+        row.setBackground(Ui.rounded(0xFFF1F3FA, 14, this));
+        int p = Ui.dp(this, 4);
+        row.setPadding(p, p, p, p);
 
-        JSONObject stats = local.stats();
-        card.addView(Ui.bi(this, "Stored on this phone", "محفوظ على هذا الهاتف", 13, Ui.INK, true));
-        card.addView(Ui.spacer(this, 4));
-        card.addView(Ui.text(this, plural(stats.optInt("products"), "product") + "  ·  "
-                + plural(stats.optInt("customers"), "customer") + "  ·  "
-                + plural(stats.optInt("suppliers"), "supplier"), 12, Ui.MUTED, false));
-        card.addView(Ui.spacer(this, 16));
-
-        Button enter = bigButton("Enter  ·  دخول");
-        enter.setOnClickListener(v -> openShop());
-        card.addView(enter, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        return card;
+        for (int i = 0; i < tabs.length; i++) {
+            boolean on = i == authTab;
+            LinearLayout cell = Ui.column(this);
+            cell.setGravity(Gravity.CENTER);
+            cell.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+            TextView arabic = Ui.text(this, tabs[i][1], 10.5f, on ? Ui.WHITE : Ui.MUTED, true);
+            arabic.setGravity(Gravity.CENTER);
+            TextView latin = Ui.text(this, tabs[i][0], 10, on ? 0xFFE4E2FF : Ui.MUTED, false);
+            latin.setGravity(Gravity.CENTER);
+            cell.addView(arabic);
+            cell.addView(latin);
+            if (on) {
+                cell.setBackground(Ui.brand(this, 11));
+            }
+            final int index = i;
+            cell.setOnClickListener(v -> showAuth(index));
+            row.addView(cell, weight(1f));
+        }
+        return row;
     }
 
-    /** Server mode keeps the account it always had: the office database decides who may read. */
-    private View serverLoginCard() {
-        LinearLayout card = Ui.card(this);
-        card.addView(Ui.bi(this, "Sign in", "تسجيل الدخول", 18, Ui.INK, true));
-        card.addView(Ui.spacer(this, 14));
+    private View authBody() {
+        if (authTab == AUTH_FORGOT) {
+            return forgotBody();
+        }
+        if (authTab == AUTH_SETTINGS) {
+            return settingsForm();
+        }
+        return loginBody();
+    }
 
-        final EditText server = field("Server · الخادم", api.server(), InputType.TYPE_TEXT_VARIATION_URI);
-        card.addView(fieldLabel("Server address", "عنوان الخادم"));
-        card.addView(server);
-        card.addView(Ui.spacer(this, 10));
+    /* ------------------------------------------------------------------ login tab */
 
-        final EditText user = field("Username · اسم المستخدم", api.userName(), InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+    private View loginBody() {
+        if (cfg.isLocal() && !local.hasUsers()) {
+            return createAccountBody();
+        }
+        LinearLayout box = Ui.column(this);
+        box.addView(Ui.bi(this, "Sign in", "تسجيل الدخول", 18, Ui.INK, true));
+        box.addView(Ui.spacer(this, 4));
+        box.addView(Ui.text(this, cfg.isLocal()
+                ? "The account for this shop, kept on the phone."
+                : "The office account — the server decides who may read.", 12, Ui.MUTED, false));
+        box.addView(Ui.spacer(this, 16));
+
+        final EditText server;
+        if (cfg.isLocal()) {
+            server = null;
+        } else {
+            box.addView(fieldLabel("Server address", "عنوان الخادم"));
+            server = field("http://192.168.1.20:8080", api.server(), InputType.TYPE_TEXT_VARIATION_URI);
+            box.addView(server);
+            box.addView(Ui.spacer(this, 10));
+        }
+
+        box.addView(fieldLabel("Username", "اسم المستخدم"));
+        // Only a server account remembers its name; the phone's own account starts blank.
+        final EditText user = field("admin", cfg.isLocal() ? "" : api.userName(),
+                InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
         user.setSingleLine(true);
-        card.addView(fieldLabel("Username", "اسم المستخدم"));
-        card.addView(user);
-        card.addView(Ui.spacer(this, 10));
+        box.addView(user);
+        box.addView(Ui.spacer(this, 10));
 
-        final EditText pass = field("Password · كلمة المرور", "", InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        box.addView(fieldLabel("Password", "كلمة المرور"));
+        final EditText pass = field("••••••••", "", InputType.TYPE_TEXT_VARIATION_PASSWORD);
         pass.setSingleLine(true);
         pass.setImeOptions(EditorInfo.IME_ACTION_GO);
-        card.addView(fieldLabel("Password", "كلمة المرور"));
-        card.addView(pass);
+        box.addView(pass);
 
-        card.addView(Ui.spacer(this, 16));
-
+        box.addView(Ui.spacer(this, 14));
         final TextView error = Ui.text(this, "", 12.5f, Ui.RED, false);
         error.setVisibility(View.GONE);
-        card.addView(error);
+        box.addView(error);
+        box.addView(Ui.spacer(this, 6));
 
-        final Button go = bigButton("Sign in  ·  تسجيل الدخول");
-        card.addView(go, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        final Button go = bigButton("Sign in", "تسجيل الدخول");
+        box.addView(go, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         final ProgressBar busy = new ProgressBar(this);
         busy.setVisibility(View.GONE);
-        card.addView(busy);
+        box.addView(busy);
 
         go.setOnClickListener(v -> {
-            String s = server.getText().toString().trim();
+            error.setVisibility(View.GONE);
             String u = user.getText().toString().trim();
             String pw = pass.getText().toString();
             if (u.isEmpty() || pw.isEmpty()) {
                 showError(error, "Enter the username and the password.");
                 return;
             }
+            if (cfg.isLocal()) {
+                if (local.login(u, pw)) {
+                    openShop();
+                } else {
+                    showError(error, "Wrong username or password  ·  اسم المستخدم أو كلمة المرور غير صحيحة");
+                }
+                return;
+            }
             go.setEnabled(false);
             busy.setVisibility(View.VISIBLE);
-            error.setVisibility(View.GONE);
-            api.login(s, u, pw, new Api.Callback() {
+            api.login(server.getText().toString().trim(), u, pw, new Api.Callback() {
                 @Override
                 public void ok(JSONObject body) {
                     go.setEnabled(true);
@@ -261,24 +329,168 @@ public class MainActivity extends Activity {
             });
         });
 
-        TextView hint = Ui.text(this, "Server mode reads the office computer's database, e.g. "
-                + "http://192.168.1.20:8080. To work on the phone alone, switch Database to Local in Settings.",
-                12, Ui.MUTED, false);
-        hint.setPadding(0, Ui.dp(this, 12), 0, 0);
-        card.addView(hint);
-        return card;
+        TextView forgot = Ui.text(this, "Forgotten password?  ·  نسيت كلمة المرور؟", 12, Ui.BRAND, true);
+        forgot.setPadding(0, Ui.dp(this, 14), 0, 0);
+        forgot.setOnClickListener(v -> showAuth(AUTH_FORGOT));
+        box.addView(forgot);
+        return box;
+    }
+
+    /** First run on a phone: the shop writes the account that will open the till. */
+    private View createAccountBody() {
+        LinearLayout box = Ui.column(this);
+        box.addView(Ui.bi(this, "First run", "أول تشغيل", 18, Ui.INK, true));
+        box.addView(Ui.spacer(this, 4));
+        box.addView(Ui.text(this, "Create the account that opens this phone's till. The recovery "
+                + "phrase is what brings you back if the password is lost, so write it down.", 12, Ui.MUTED, false));
+        box.addView(Ui.spacer(this, 16));
+
+        box.addView(fieldLabel("Username", "اسم المستخدم"));
+        final EditText user = field("admin", "", InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        user.setSingleLine(true);
+        box.addView(user);
+        box.addView(Ui.spacer(this, 10));
+
+        box.addView(fieldLabel("Password", "كلمة المرور"));
+        final EditText pass = field("at least 4 characters", "", InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        pass.setSingleLine(true);
+        box.addView(pass);
+        box.addView(Ui.spacer(this, 10));
+
+        box.addView(fieldLabel("Repeat the password", "أعد كلمة المرور"));
+        final EditText again = field("••••••••", "", InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        again.setSingleLine(true);
+        box.addView(again);
+        box.addView(Ui.spacer(this, 10));
+
+        box.addView(fieldLabel("Recovery phrase", "عبارة الاستعادة"));
+        final EditText phrase = field("e.g. the name of your street", "", InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        phrase.setSingleLine(true);
+        box.addView(phrase);
+
+        box.addView(Ui.spacer(this, 14));
+        final TextView error = Ui.text(this, "", 12.5f, Ui.RED, false);
+        error.setVisibility(View.GONE);
+        box.addView(error);
+        box.addView(Ui.spacer(this, 6));
+
+        Button create = bigButton("Create account", "إنشاء الحساب");
+        create.setOnClickListener(v -> {
+            error.setVisibility(View.GONE);
+            String p = pass.getText().toString();
+            if (!p.equals(again.getText().toString())) {
+                showError(error, "The two passwords are not the same  ·  كلمتا المرور غير متطابقتين");
+                return;
+            }
+            String problem = local.createUser(user.getText().toString(), p, phrase.getText().toString());
+            if (problem != null) {
+                showError(error, problem);
+                return;
+            }
+            openShop();
+        });
+        box.addView(create, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return box;
+    }
+
+    /* -------------------------------------------------------------- forgotten tab */
+
+    private View forgotBody() {
+        LinearLayout box = Ui.column(this);
+        box.addView(Ui.bi(this, "Forgotten password", "نسيت كلمة المرور", 18, Ui.INK, true));
+        box.addView(Ui.spacer(this, 4));
+
+        if (!cfg.isLocal()) {
+            box.addView(Ui.text(this, "The office account is managed in the web app. Ask the "
+                    + "administrator there to reset it, then sign in with the new password.", 12, Ui.MUTED, false));
+            box.addView(Ui.spacer(this, 16));
+            Button back = choiceButton("Back to sign in", "عودة للدخول", true);
+            back.setOnClickListener(v -> showAuth(AUTH_LOGIN));
+            box.addView(back, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            return box;
+        }
+
+        box.addView(Ui.text(this, "Enter the username and the recovery phrase you wrote at first "
+                + "run, then choose a new password.", 12, Ui.MUTED, false));
+        box.addView(Ui.spacer(this, 16));
+
+        box.addView(fieldLabel("Username", "اسم المستخدم"));
+        final EditText user = field("admin", "", InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        user.setSingleLine(true);
+        box.addView(user);
+        box.addView(Ui.spacer(this, 10));
+
+        box.addView(fieldLabel("Recovery phrase", "عبارة الاستعادة"));
+        final EditText phrase = field("the phrase you wrote down", "", InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        phrase.setSingleLine(true);
+        box.addView(phrase);
+        box.addView(Ui.spacer(this, 10));
+
+        box.addView(fieldLabel("New password", "كلمة المرور الجديدة"));
+        final EditText pass = field("at least 4 characters", "", InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        pass.setSingleLine(true);
+        box.addView(pass);
+        box.addView(Ui.spacer(this, 10));
+
+        box.addView(fieldLabel("Repeat the new password", "أعد كلمة المرور الجديدة"));
+        final EditText again = field("••••••••", "", InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        again.setSingleLine(true);
+        box.addView(again);
+
+        box.addView(Ui.spacer(this, 14));
+        final TextView error = Ui.text(this, "", 12.5f, Ui.RED, false);
+        error.setVisibility(View.GONE);
+        box.addView(error);
+        box.addView(Ui.spacer(this, 6));
+
+        Button reset = bigButton("Set a new password", "تعيين كلمة مرور");
+        reset.setOnClickListener(v -> {
+            error.setVisibility(View.GONE);
+            if (!pass.getText().toString().equals(again.getText().toString())) {
+                showError(error, "The two passwords are not the same  ·  كلمتا المرور غير متطابقتين");
+                return;
+            }
+            String problem = local.resetPassword(user.getText().toString(), phrase.getText().toString(),
+                    pass.getText().toString());
+            if (problem != null) {
+                showError(error, problem);
+                return;
+            }
+            authTab = AUTH_LOGIN;
+            stack.clear();
+            push(this::authScreen);
+            Toast.makeText(this, "Password changed  ·  تم تغيير كلمة المرور", Toast.LENGTH_SHORT).show();
+        });
+        box.addView(reset, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView back = Ui.text(this, "Back to sign in  ·  عودة للدخول", 12, Ui.BRAND, true);
+        back.setPadding(0, Ui.dp(this, 14), 0, 0);
+        back.setOnClickListener(v -> showAuth(AUTH_LOGIN));
+        box.addView(back);
+        return box;
     }
 
     /** The wide brand button every screen uses for its one main action. */
-    private Button bigButton(String text) {
+    private Button bigButton(String latin, String arabic) {
         Button b = new Button(this);
         b.setAllCaps(false);
-        b.setText(Ui.font(this, text, true));
-        b.setTextSize(14);
+        b.setText(Ui.buttonLabel(this, latin, arabic));
+        b.setTextSize(12.5f);
         b.setTextColor(Ui.WHITE);
-        b.setBackground(Ui.rounded(Ui.BRAND, 12, this));
-        b.setPadding(0, Ui.dp(this, 13), 0, Ui.dp(this, 13));
+        b.setLineSpacing(0, 1.1f);
+        b.setBackground(Ui.brand(this, 13));
+        b.setPadding(Ui.dp(this, 10), Ui.dp(this, 9), Ui.dp(this, 10), Ui.dp(this, 9));
         return b;
+    }
+
+    /** Re-draws the screen on top — for a setting that changes what that screen shows. */
+    private void redraw() {
+        Screen top = stack.peek();
+        if (top != null) {
+            stack.pop();
+            stack.push(top);
+            render();
+        }
     }
 
     /** "1 product", "3 products" — the counts on the sign-in card and the till header. */
@@ -579,7 +791,9 @@ public class MainActivity extends Activity {
         card.addView(Ui.spacer(this, 10));
         Button again = new Button(this);
         again.setAllCaps(false);
-        again.setText(Ui.font(this, "Try again  ·  إعادة المحاولة", true));
+        again.setText(Ui.buttonLabel(this, "Try again", "إعادة المحاولة"));
+        again.setTextSize(12);
+        again.setLineSpacing(0, 1.1f);
         again.setTextSize(13);
         again.setTextColor(Ui.WHITE);
         again.setBackground(Ui.rounded(Ui.BRAND, 10, this));
@@ -609,7 +823,7 @@ public class MainActivity extends Activity {
 
         Button add = new Button(this);
         add.setAllCaps(false);
-        add.setText(Ui.font(this, "+  Add  ·  إضافة", true));
+        add.setText(Ui.buttonLabel(this, "+  Add", "إضافة"));
         add.setTextSize(12.5f);
         add.setTextColor(Ui.WHITE);
         add.setBackground(Ui.rounded(Ui.BRAND, 10, this));
@@ -726,11 +940,12 @@ public class MainActivity extends Activity {
 
         Button save = new Button(this);
         save.setAllCaps(false);
-        save.setText(Ui.font(this, "Save  ·  حفظ", true));
-        save.setTextSize(14);
+        save.setText(Ui.buttonLabel(this, "Save", "حفظ"));
+        save.setTextSize(12.5f);
+        save.setLineSpacing(0, 1.1f);
         save.setTextColor(Ui.WHITE);
-        save.setBackground(Ui.rounded(Ui.BRAND, 12, this));
-        save.setPadding(0, Ui.dp(this, 13), 0, Ui.dp(this, 13));
+        save.setBackground(Ui.brand(this, 13));
+        save.setPadding(Ui.dp(this, 10), Ui.dp(this, 9), Ui.dp(this, 10), Ui.dp(this, 9));
         save.setOnClickListener(v -> {
             JSONObject row = new JSONObject();
             try {
@@ -786,6 +1001,7 @@ public class MainActivity extends Activity {
      * The two database choices and the addresses that go with them. Everything here is
      * written to s2c.properties, so it can also be changed with a text editor later.
      */
+    /** Settings as a page, for the gear in the bar. */
     private View settingsScreen() {
         LinearLayout page = Ui.column(this);
         page.addView(topBar("Settings", "الإعدادات", true));
@@ -794,8 +1010,20 @@ public class MainActivity extends Activity {
         LinearLayout body = Ui.column(this);
         int b = Ui.dp(this, 14);
         body.setPadding(b, b, b, b);
+        body.addView(settingsForm());
 
-        final String[] mode = {cfg.mode()};
+        scroll.setFillViewport(true);
+        body.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        scroll.addView(body);
+        page.addView(scroll, verticalWeight());
+        page.addView(footer());
+        return page;
+    }
+
+    /** The settings themselves: database, address, company, currency, then the way out. */
+    private View settingsForm() {
+        LinearLayout box = Ui.column(this);
 
         LinearLayout card = Ui.card(this);
         card.addView(Ui.bi(this, "Database", "قاعدة البيانات", 16, Ui.INK, true));
@@ -805,17 +1033,17 @@ public class MainActivity extends Activity {
         card.addView(Ui.spacer(this, 12));
 
         LinearLayout choices = Ui.row(this);
-        Button localBtn = choiceButton("Local  ·  هذا الهاتف", Config.MODE_LOCAL.equals(mode[0]));
-        Button serverBtn = choiceButton("Server  ·  الخادم", Config.MODE_SERVER.equals(mode[0]));
+        Button localBtn = choiceButton("Local", "هذا الهاتف", cfg.isLocal());
+        Button serverBtn = choiceButton("Server", "الخادم", !cfg.isLocal());
+        // The choice is held in memory until Save writes it, so switching back and forth in
+        // the form does not rewrite the shop's settings file behind their back.
         localBtn.setOnClickListener(v -> {
-            mode[0] = Config.MODE_LOCAL;
-            stack.pop();
-            push(this::settingsScreen);
+            cfg.setMode(Config.MODE_LOCAL);
+            redraw();
         });
         serverBtn.setOnClickListener(v -> {
-            mode[0] = Config.MODE_SERVER;
-            stack.pop();
-            push(this::settingsScreen);
+            cfg.setMode(Config.MODE_SERVER);
+            redraw();
         });
         choices.addView(localBtn, weighted());
         choices.addView(serverBtn, weightedWithGap());
@@ -840,22 +1068,16 @@ public class MainActivity extends Activity {
         final TextView error = Ui.text(this, "", 12.5f, Ui.RED, false);
         error.setVisibility(View.GONE);
         card.addView(error);
+        card.addView(Ui.spacer(this, 6));
 
-        Button save = new Button(this);
-        save.setAllCaps(false);
-        save.setText(Ui.font(this, "Save  ·  حفظ", true));
-        save.setTextSize(14);
-        save.setTextColor(Ui.WHITE);
-        save.setBackground(Ui.rounded(Ui.BRAND, 12, this));
-        save.setPadding(0, Ui.dp(this, 13), 0, Ui.dp(this, 13));
+        Button save = bigButton("Save", "حفظ");
         save.setOnClickListener(v -> {
             String url = server.getText().toString().trim();
-            if (Config.MODE_SERVER.equals(mode[0]) && url.isEmpty()) {
+            if (!cfg.isLocal() && url.isEmpty()) {
                 showError(error, "Enter the server address, e.g. http://192.168.1.20:8080");
                 return;
             }
             String oldServer = cfg.server();
-            cfg.setMode(mode[0]);
             cfg.setServer(url);
             cfg.setCompany(company.getText().toString());
             cfg.setCurrency(currency.getText().toString());
@@ -868,12 +1090,15 @@ public class MainActivity extends Activity {
                 // Another server means another account: the old token is worthless.
                 api.signOut();
             }
+            // The database may have changed under the app, so the way back in is the door.
+            authTab = AUTH_LOGIN;
             stack.clear();
-            push(MainActivity.this::startScreen);
+            push(this::authScreen);
+            Toast.makeText(this, "Settings saved  ·  تم حفظ الإعدادات", Toast.LENGTH_SHORT).show();
         });
         card.addView(save, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        body.addView(card);
-        body.addView(Ui.spacer(this, 12));
+        box.addView(card);
+        box.addView(Ui.spacer(this, 12));
 
         LinearLayout fileCard = Ui.card(this);
         fileCard.addView(Ui.bi(this, "Settings file", "ملف الإعدادات", 13, Ui.INK, true));
@@ -884,21 +1109,34 @@ public class MainActivity extends Activity {
         TextView path = Ui.text(this, cfg.path(), 11, Ui.BRAND, false);
         path.setTextIsSelectable(true);
         fileCard.addView(path);
-        body.addView(fileCard);
+        box.addView(fileCard);
 
-        scroll.addView(body);
-        page.addView(scroll, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
-        ((LinearLayout.LayoutParams) scroll.getLayoutParams()).weight = 1;
+        box.addView(Ui.spacer(this, 12));
+        Button out = new Button(this);
+        out.setAllCaps(false);
+        out.setText(Ui.buttonLabel(this, "Sign out", "خروج"));
+        out.setTextSize(11);
+        out.setLineSpacing(0, 1.1f);
+        out.setTextColor(Ui.RED);
+        out.setBackground(Ui.outlined(Ui.WHITE, 13, Ui.LINE, this));
+        out.setPadding(Ui.dp(this, 10), Ui.dp(this, 9), Ui.dp(this, 10), Ui.dp(this, 9));
+        out.setOnClickListener(v -> signOut());
+        box.addView(out, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        page.addView(footer());
-        return page;
+        TextView about = Ui.text(this, "S2C MAROC  ·  v" + version() + "  ·  "
+                + (cfg.isLocal() ? "local database" : "server"), 11, Ui.MUTED, false);
+        about.setGravity(Gravity.CENTER);
+        about.setPadding(0, Ui.dp(this, 12), 0, 0);
+        box.addView(about);
+        return box;
     }
 
-    private Button choiceButton(String text, boolean selected) {
+    private Button choiceButton(String latin, String arabic, boolean selected) {
         Button b = new Button(this);
         b.setAllCaps(false);
-        b.setText(Ui.font(this, text, true));
-        b.setTextSize(12.5f);
+        b.setText(Ui.buttonLabel(this, latin, arabic));
+        b.setTextSize(11);
+        b.setLineSpacing(0, 1.1f);
         paintChoice(b, selected);
         return b;
     }
@@ -1022,7 +1260,7 @@ public class MainActivity extends Activity {
         card.addView(Ui.text(this, "This phone is set to Server, so there is no till here. "
                 + "Switch Database to Local in Settings to sell from this phone.", 12, Ui.MUTED, false));
         card.addView(Ui.spacer(this, 12));
-        Button settings = bigButton("Settings  ·  الإعدادات");
+        Button settings = bigButton("Settings", "الإعدادات");
         settings.setOnClickListener(v -> push(this::settingsScreen));
         card.addView(settings);
         card.addView(Ui.spacer(this, 6));
@@ -1172,13 +1410,17 @@ public class MainActivity extends Activity {
     private void fillStrip(LinearLayout strip) {
         strip.removeAllViews();
         LinearLayout row = Ui.row(this);
-        row.addView(Ui.bi(this, cart.size() + (cart.size() == 1 ? " line" : " lines") + "  ·  " + Ui.qty(units()) + " units",
-                "في السلة", 12, Ui.MUTED, false), weight(1f));
+        TextView count = Ui.text(this, cart.size() + (cart.size() == 1 ? " line" : " lines")
+                + "  ·  " + Ui.qty(units()) + " units  ·  في السلة", 12, Ui.MUTED, false);
+        count.setPadding(0, 0, Ui.dp(this, 12), 0);
+        row.addView(count, weight(1f));
         row.addView(Ui.text(this, Ui.money(total(), api.currency()), 17, Ui.INK, true));
         strip.addView(row);
         strip.addView(Ui.spacer(this, 10));
 
-        Button review = bigButton(cart.isEmpty() ? "Cart is empty  ·  السلة فارغة" : "Review cart  ·  مراجعة السلة");
+        Button review = cart.isEmpty()
+                ? bigButton("Cart is empty", "السلة فارغة")
+                : bigButton("Review cart", "مراجعة السلة");
         review.setEnabled(!cart.isEmpty());
         review.setOnClickListener(v -> push(this::cartScreen));
         strip.addView(review, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -1233,8 +1475,8 @@ public class MainActivity extends Activity {
         money.addView(Ui.bi(this, "Payment", "الدفع", 13, Ui.INK, true));
         money.addView(Ui.spacer(this, 8));
         LinearLayout choices = Ui.row(this);
-        final Button cash = choiceButton("Cash  ·  نقداً", true);
-        final Button credit = choiceButton("Credit  ·  بالأجل", false);
+        final Button cash = choiceButton("Cash", "نقداً", true);
+        final Button credit = choiceButton("Credit", "بالأجل", false);
         choices.addView(cash, weighted());
         choices.addView(credit, weightedWithGap());
         money.addView(choices);
@@ -1282,7 +1524,7 @@ public class MainActivity extends Activity {
 
         money.addView(Ui.spacer(this, 14));
         money.addView(error);
-        Button charge = bigButton("Charge  ·  تحصيل");
+        Button charge = bigButton("Charge", "تحصيل");
         charge.setOnClickListener(v -> {
             if (cart.isEmpty()) {
                 showError(error, "The cart is empty.");
@@ -1503,28 +1745,21 @@ public class MainActivity extends Activity {
             bar.addView(arrow);
         }
 
-        LinearLayout titles = Ui.bi(this, latin, arabic, 17, Ui.WHITE, true);
+        // The title stacks, because side by side it ran into the link on the right.
+        LinearLayout titles = Ui.column(this);
+        titles.addView(Ui.text(this, latin, 18, Ui.WHITE, true));
+        TextView arabicTitle = Ui.text(this, arabic, 12, 0xFF9FB0CC, false);
+        // Arabic text left to its own devices aligns to the right edge; under a Latin title
+        // it belongs on the same left margin.
+        arabicTitle.setGravity(Gravity.LEFT);
+        arabicTitle.setPadding(0, Ui.dp(this, 2), 0, 0);
+        titles.addView(arabicTitle);
         bar.addView(titles, weight(1f));
 
-        String who = api.company().isEmpty() ? api.userName() : api.company();
-        LinearLayout right = Ui.column(this);
-        right.setGravity(Gravity.END);
-        if (!api.userName().isEmpty()) {
-            right.addView(Ui.text(this, who, 11, 0xFF94A3B8, false));
-        }
-        TextView action = Ui.text(this, cfg.isLocal() ? "Settings  ·  إعدادات" : "Sign out  ·  خروج",
-                12, 0xFFC7D2FE, false);
-        action.setOnClickListener(v -> {
-            if (cfg.isLocal()) {
-                push(this::settingsScreen);
-                return;
-            }
-            api.signOut();
-            stack.clear();
-            push(this::startScreen);
-        });
-        right.addView(action);
-        bar.addView(right);
+        TextView action = Ui.text(this, "Settings  ·  إعدادات", 12, 0xFFC7D2FE, false);
+        action.setGravity(Gravity.END);
+        action.setOnClickListener(v -> push(this::settingsScreen));
+        bar.addView(action);
         return bar;
     }
 

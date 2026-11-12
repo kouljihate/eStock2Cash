@@ -15,24 +15,33 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * The look of the phone app, taken from the web UI: the same navy header, the same
- * indigo, the same white cards on a pale page. Two rules carried over deliberately —
- * the app is always left-to-right, and wherever a label has both languages the Arabic
- * sits above the Latin.
+ * The look of the phone app, taken from the web UI and sharpened for a 6-inch screen: the
+ * deep navy bar, the indigo action, white cards on a cool page.
+ *
+ * Two rules are carried over deliberately. The app is always left-to-right, and a bilingual
+ * label reads English on the left, Arabic on the right — except a button, where the Arabic
+ * sits on top and the English underneath, because a button is read as a whole rather than
+ * skimmed left to right.
  */
 final class Ui {
 
-    static final int BG = 0xFFF4F6FB;
+    static final int BG = 0xFFF3F5FB;
     static final int CARD = 0xFFFFFFFF;
-    static final int INK = 0xFF0F172A;
-    static final int MUTED = 0xFF64748B;
-    static final int LINE = 0xFFE2E8F0;
+    static final int INK = 0xFF0E1729;
+    static final int MUTED = 0xFF6B7A90;
+    static final int LINE = 0xFFE4E9F3;
     static final int BRAND = 0xFF4F46E5;
-    static final int BRAND_SOFT = 0xFFEEF1FE;
+    static final int BRAND_DARK = 0xFF4338CA;
+    static final int BRAND_LIGHT = 0xFF6D66F0;
+    static final int BRAND_SOFT = 0xFFEDEDFE;
     static final int DARK = 0xFF0B1220;
+    static final int DARK_LIGHT = 0xFF1B2A4A;
     static final int DARK_SOFT = 0xFF1E293B;
-    static final int GREEN = 0xFF0F7A3D;
-    static final int RED = 0xFFA52A1A;
+    static final int GREEN = 0xFF0E7A43;
+    static final int GREEN_SOFT = 0xFFE6F7EE;
+    static final int RED = 0xFFB3261E;
+    static final int RED_SOFT = 0xFFFDECEB;
+    static final int AMBER = 0xFFA15C07;
     static final int WHITE = 0xFFFFFFFF;
 
     private Ui() {
@@ -130,36 +139,93 @@ final class Ui {
         }
     }
 
+    /**
+     * A button's label: Arabic on top, English underneath. Buttons are read as a block, so
+     * they are the one place the two languages stack instead of facing each other.
+     */
+    static CharSequence buttonLabel(Context c, String latin, String arabic) {
+        return font(c, arabic + "\n" + latin, true);
+    }
+
     static int dp(Context c, float value) {
         return Math.round(value * c.getResources().getDisplayMetrics().density);
     }
 
+    /* ------------------------------------------------------------------ layout */
+
     static TextView text(Context c, CharSequence s, float sp, int color, boolean bold) {
         TextView t = new TextView(c);
-        t.setText(font(c, s, bold));
+        // Size first, text last: a layout built before the size is known breaks its lines for
+        // one font size and then draws them at another, which runs the words off the edge.
         t.setTextSize(sp);
         t.setTextColor(color);
         t.setIncludeFontPadding(false);
+        dressed(c, t, s, bold);
         return t;
     }
 
-    /** Arabic above Latin, the way the web headings and buttons read. */
+    /**
+     * A string in one script is set by giving the whole view that typeface — spans are kept
+     * for the mixed labels only, because a span-altered string is measured by the platform
+     * slightly differently from how it is drawn, and long paragraphs came out ragged.
+     */
+    private static void dressed(Context c, TextView t, CharSequence s, boolean bold) {
+        if (s == null) {
+            return;
+        }
+        loadFonts(c);
+        boolean anyArabic = false;
+        boolean anyLatin = false;
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (isArabic(ch)) {
+                anyArabic = true;
+            } else if (Character.isLetter(ch)) {
+                anyLatin = true;
+            }
+            if (anyArabic && anyLatin) {
+                break;
+            }
+        }
+        if (anyArabic && anyLatin) {
+            t.setText(font(c, s, bold));
+            return;
+        }
+        t.setTypeface(anyArabic ? arabic(c, bold) : latin(c, bold));
+        t.setText(s);
+    }
+
+    /**
+     * English on the left, Arabic on the right — the app's standing rule for anything that
+     * is not a button. Both lines share the row, so the Arabic really sits at the edge.
+     */
     static LinearLayout bi(Context c, String latin, String arabic, float sp, int color, boolean bold) {
-        LinearLayout box = new LinearLayout(c);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setLayoutDirection(LinearLayout.LAYOUT_DIRECTION_LTR);
-        if (arabic != null && !arabic.isEmpty()) {
-            TextView ar = text(c, arabic, sp * 0.94f, color, bold);
-            // The lines stack, they do not face each other: an Arabic label that hugged the
-            // right edge would leave the Latin line alone on the left, which is not how the
-            // web reads and looks broken on a phone.
-            ar.setGravity(android.view.Gravity.LEFT);
-            box.addView(ar);
+        LinearLayout row = row(c);
+        // Full width, so the Arabic has room for a whole phrase instead of being squeezed into
+        // a column and left wrapping between two words.
+        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        boolean hasLatin = latin != null && !latin.isEmpty();
+        boolean hasArabic = arabic != null && !arabic.isEmpty();
+        if (hasLatin) {
+            TextView left = text(c, latin, sp, color, bold);
+            left.setMaxLines(2);
+            row.addView(left);
         }
-        if (latin != null && !latin.isEmpty()) {
-            box.addView(text(c, latin, sp, color, bold));
+        if (hasLatin && hasArabic) {
+            // A weight on the English side would starve the Arabic of the room it needs, and
+            // the phrase would break between two words. A spacer takes the slack instead.
+            View gap = new View(c);
+            row.addView(gap, new LinearLayout.LayoutParams(0, 1, 1f));
         }
-        return box;
+        if (hasArabic) {
+            TextView right = text(c, arabic, sp, color, bold);
+            right.setGravity(android.view.Gravity.END);
+            right.setMaxLines(2);
+            right.setPadding(dp(c, 8), 0, 0, 0);
+            row.addView(right);
+        }
+        return row;
     }
 
     /** One line for tight spots: "Delete · حذف". */
@@ -182,6 +248,8 @@ final class Ui {
         return box;
     }
 
+    /* ------------------------------------------------------------------ shapes */
+
     static GradientDrawable rounded(int color, float radiusDp, Context c) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(color);
@@ -195,14 +263,50 @@ final class Ui {
         return d;
     }
 
-    /** A white card with the app's corner radius, ready to be filled and added. */
+    /** A diagonal wash, for the hero and for the primary action. */
+    static GradientDrawable gradient(int from, int to, float radiusDp, Context c) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{from, to});
+        d.setCornerRadius(dp(c, radiusDp));
+        return d;
+    }
+
+    /** The indigo face of every primary button. */
+    static GradientDrawable brand(Context c, float radiusDp) {
+        return gradient(BRAND_LIGHT, BRAND_DARK, radiusDp, c);
+    }
+
+    /** The gradient wash of a page hero, rounded along its bottom edge only. */
+    static GradientDrawable hero(Context c, int from, int to, float radiusDp) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{from, to});
+        float r = dp(c, radiusDp);
+        d.setCornerRadii(new float[]{0, 0, 0, 0, r, r, r, r});
+        return d;
+    }
+
+    /**
+     * A white card: rounded, hairline-edged, barely lifted off the page. It fills the width by
+     * default — a wrap-content card lets a long sentence measure itself as one endless line
+     * and run off the side of the phone.
+     */
     static LinearLayout card(Context c) {
         LinearLayout card = column(c);
-        card.setBackground(rounded(CARD, 16, c));
+        card.setBackground(outlined(CARD, 18, LINE, c));
+        card.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
         int p = dp(c, 16);
         card.setPadding(p, p, p, p);
-        card.setElevation(dp(c, 1.5f));
+        card.setElevation(dp(c, 2));
         return card;
+    }
+
+    /** A quiet pill for counts and states. */
+    static TextView pill(Context c, CharSequence s, int bg, int fg) {
+        TextView t = text(c, s, 11, fg, true);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setBackground(rounded(bg, 999, c));
+        t.setPadding(dp(c, 10), dp(c, 4), dp(c, 10), dp(c, 4));
+        return t;
     }
 
     static void pad(View v, int l, int t, int r, int b) {

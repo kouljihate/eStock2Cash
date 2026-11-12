@@ -3,17 +3,21 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- three rising bars, the same idea as the web app's ledger: stock in, stock out, cash -->
+    <!-- The white half of the logo; the indigo half is the adaptive background. -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M34,58h9v18h-9z" />
+        android:pathData="M42,48 H66 A7,7 0 0 1 73,55 V74 A7,7 0 0 1 66,81 H42 A7,7 0 0 1 35,74 V55 A7,7 0 0 1 42,48 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M49.5,48h9v28h-9z" />
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M43.5,49 A10.5,10.5 0 0 1 64.5,49" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M65,38h9v38h-9z" />
-    <path
-        android:fillColor="#C7D2FE"
-        android:pathData="M32,80h44v3h-44z" />
+        android:strokeColor="#4F46E5"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M45,64 L52,71 L64,57" />
 </vector>

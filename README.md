@@ -625,13 +625,14 @@ Android/data/ma.s2c.maroc/files/s2c.properties
 ```
 
 ```bash
-bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.3.0-debug.apk
-bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.3.0-release.apk
-adb install -r android/dist/s2c-maroc-0.3.0-debug.apk
+bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.4.0-debug.apk
+bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.4.0-release.apk
+adb install -r android/dist/s2c-maroc-0.4.0-debug.apk
 ```
 
-The app opens on a sign-in page carrying the version and the settings link, and under it a
-single screen with the till and five tabs — **Cashier**, **Products**, **Suppliers**,
+The app opens on a sign-in page with three tabs - Login, Forgotten password and Settings:
+the first run creates the phone's own account, and a recovery phrase resets a forgotten
+password. Under it sits a single screen with the till and five tabs — **Cashier**, **Products**, **Suppliers**,
 **Customers**, **Credit**. A sale is paid cash or put on credit, stock comes down with it,
 and the credit book settles a customer in one long press. In local mode a list has a
 **+ Add** button and a long-press deletes a row. The emulator

@@ -25,7 +25,7 @@ import java.util.UUID;
 final class LocalDb extends SQLiteOpenHelper {
 
     private static final String NAME = "s2c.db";
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     static final String SUPPLIERS = "suppliers";
     static final String CUSTOMERS = "customers";
@@ -54,6 +54,19 @@ final class LocalDb extends SQLiteOpenHelper {
         db.execSQL("CREATE INDEX idx_customers_name ON customers(name)");
         db.execSQL("CREATE INDEX idx_products_name ON products(name)");
         createSales(db);
+        createUsers(db);
+    }
+
+    /**
+     * Who may open the till on this phone. The password is never stored, only a salted
+     * SHA-256 of it, and the recovery phrase goes through the same treatment so a forgotten
+     * password can be replaced without anyone being able to read it back.
+     */
+    private void createUsers(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS users ("
+                + "id TEXT PRIMARY KEY, username TEXT NOT NULL, password TEXT NOT NULL,"
+                + "recovery TEXT, created_at TEXT)");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_name ON users(username COLLATE NOCASE)");
     }
 
     /**
@@ -79,6 +92,9 @@ final class LocalDb extends SQLiteOpenHelper {
         // Tables are only ever added: an installed phone keeps its data across an upgrade.
         if (from < 2) {
             createSales(db);
+        }
+        if (from < 3) {
+            createUsers(db);
         }
     }
 
@@ -306,6 +322,123 @@ final class LocalDb extends SQLiteOpenHelper {
             return Double.parseDouble(raw);
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    /* ---------------------------------------------------------------- the account */
+
+    /** True once the shop has an account on this phone; the first run creates it. */
+    boolean hasUsers() {
+        return count(getReadableDatabase(), "users", null, null) > 0;
+    }
+
+    /**
+     * Creates the phone's own account. Returns null when it is made, or the sentence to show
+     * on the form — an empty field, a short password, a name already taken.
+     */
+    String createUser(String username, String password, String recovery) {
+        String name = username == null ? "" : username.trim();
+        String pass = password == null ? "" : password;
+        String phrase = recovery == null ? "" : recovery.trim();
+        if (name.length() < 3) {
+            return "The username needs at least 3 characters.";
+        }
+        if (pass.length() < 4) {
+            return "The password needs at least 4 characters.";
+        }
+        if (phrase.length() < 3) {
+            return "Write a recovery phrase you will remember — it is the only way back in.";
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        if (findUser(db, name) != null) {
+            return "That username is already used on this phone.";
+        }
+        ContentValues v = new ContentValues();
+        v.put("id", UUID.randomUUID().toString());
+        v.put("username", name);
+        v.put("password", sealed(pass));
+        v.put("recovery", sealed(phrase.toLowerCase(Locale.US)));
+        v.put("created_at", now());
+        return db.insert("users", null, v) < 0 ? "Could not save the account." : null;
+    }
+
+    /** True when the username and password match the account kept on this phone. */
+    boolean login(String username, String password) {
+        String stored = findUser(getReadableDatabase(), username == null ? "" : username.trim());
+        return matches(stored, password == null ? "" : password);
+    }
+
+    /**
+     * Replaces a forgotten password: the recovery phrase written at first run proves the
+     * shop is theirs. Returns null when the password is changed.
+     */
+    String resetPassword(String username, String recovery, String newPassword) {
+        String name = username == null ? "" : username.trim();
+        String pass = newPassword == null ? "" : newPassword;
+        if (pass.length() < 4) {
+            return "The new password needs at least 4 characters.";
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        String phrase = recovery == null ? "" : recovery.trim().toLowerCase(Locale.US);
+        if (!matches(recoveryFor(db, name), phrase)) {
+            return "That username and recovery phrase do not match.";
+        }
+        ContentValues v = new ContentValues();
+        v.put("password", sealed(pass));
+        return db.update("users", v, "username = ? COLLATE NOCASE", new String[]{name}) == 0
+                ? "Could not save the new password."
+                : null;
+    }
+
+    /* ------------------------------------------------------------- account helpers */
+
+    /** The stored password hash for a name, or null when there is no such account. */
+    private String findUser(SQLiteDatabase db, String username) {
+        try (Cursor c = db.rawQuery("SELECT password FROM users WHERE username = ? COLLATE NOCASE",
+                new String[]{username})) {
+            return c.moveToFirst() ? c.getString(0) : null;
+        }
+    }
+
+    /** The stored recovery hash for a name; used only to compare, never shown. */
+    private String recoveryFor(SQLiteDatabase db, String username) {
+        try (Cursor c = db.rawQuery("SELECT recovery FROM users WHERE username = ? COLLATE NOCASE",
+                new String[]{username})) {
+            return c.moveToFirst() ? c.getString(0) : null;
+        }
+    }
+
+    /** Recomputes the hash with the salt stored beside it and compares. */
+    private boolean matches(String stored, String secret) {
+        if (stored == null) {
+            return false;
+        }
+        int cut = stored.indexOf('$');
+        if (cut <= 0) {
+            return false;
+        }
+        String salt = stored.substring(0, cut);
+        return stored.equals(salt + "$" + sha256(salt + secret));
+    }
+
+    /** `salt$hash`, so two shops with the same password do not share a stored value. */
+    private String sealed(String secret) {
+        String salt = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        return salt + "$" + sha256(salt + secret);
+    }
+
+    private static String sha256(String value) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                out.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
+            }
+            return out.toString();
+        } catch (Exception e) {
+            // SHA-256 is required of every Android runtime; this cannot happen in practice.
+            return value.hashCode() + "";
         }
     }
 

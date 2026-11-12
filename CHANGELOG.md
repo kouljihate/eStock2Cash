@@ -3,6 +3,34 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## Android 0.4.0 — 2026-11-12
+
+The web app is unchanged and stays at 0.12.0.
+
+### Added
+
+- **A login with an account of its own.** The phone keeps its users in `s2c.db` — the
+  password is stored only as a salted SHA-256, never in clear — and the first run asks for
+  username, password and a recovery phrase instead of dropping the shop straight into the
+  till. Signing in is required on every start; *Sign out* sits at the bottom of Settings.
+- **Forgotten password**, the second tab: username + the recovery phrase written at first
+  run + a new password, and the till opens with it. On a server the tab explains that the
+  office account is reset in the web app.
+- **Three tabs on the door**: Login · Forgot · Settings, with the database choice, company
+  and currency reachable before signing in.
+- **An app mark**: an indigo badge with a white shopping bag and a tick, used for the
+  launcher icon (adaptive on API 26+, the flat mark below it) and in the sign-in hero.
+
+### Changed
+
+- **A new look.** Gradient hero, white cards with a hairline and a soft shadow, indigo
+  gradient buttons instead of flat ones, quieter captions and pill-shaped tabs.
+- **Bilingual labels now face each other**: English on the left, Arabic on the right, in
+  headings, labels and rows. Buttons are the one exception — Arabic on top, English
+  underneath — because a button is read as a block rather than skimmed left to right.
+- A page title in the bar stacks its two languages, which is what kept the Arabic title
+  from running into the Settings link on the right.
+
 ## Android 0.3.0 — 2026-11-12
 
 The web app is unchanged and stays at 0.12.0; the phone client versions on its own.
