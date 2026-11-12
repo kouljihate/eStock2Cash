@@ -1,8 +1,14 @@
 package ma.s2c.maroc;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.style.CharacterStyle;
+import android.text.style.UpdateAppearance;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -32,19 +38,108 @@ final class Ui {
     private Ui() {
     }
 
+    /* ------------------------------------------------------------------- fonts */
+
+    /*
+     * The same two faces the web app uses: Comfortaa for Latin, VIP Rawy for Arabic, with a
+     * bold cut of each. A phone cannot pick a font by script the way CSS does with a font
+     * stack, so every string is cut into runs of Arabic and non-Arabic characters and each
+     * run is given its own face. That is what keeps "Delete · حذف" looking like the browser
+     * instead of letting one font win the whole line — and it is why digits inside Arabic
+     * labels stay in Comfortaa, exactly like the web's numerals-only faces.
+     */
+
+    private static Typeface latRegular;
+    private static Typeface latBold;
+    private static Typeface arRegular;
+    private static Typeface arBold;
+
+    private static synchronized void loadFonts(Context c) {
+        if (latRegular != null && arRegular != null) {
+            return;
+        }
+        AssetManager assets = c.getApplicationContext().getAssets();
+        latRegular = face(assets, "fonts/Comfortaa-Regular.ttf", Typeface.DEFAULT);
+        latBold = face(assets, "fonts/Comfortaa-Bold.ttf", Typeface.DEFAULT_BOLD);
+        arRegular = face(assets, "fonts/VIP-Rawy-Regular.ttf", latRegular);
+        arBold = face(assets, "fonts/VIP-Rawy-Bold.ttf", latBold);
+    }
+
+    private static Typeface face(AssetManager assets, String path, Typeface fallback) {
+        try {
+            return Typeface.createFromAsset(assets, path);
+        } catch (Exception e) {
+            // A font missing from the package must not take the screen down with it: the
+            // system face is a duller app, not a blank one.
+            return fallback;
+        }
+    }
+
+    /** The Latin face; used for inputs, where spans would not survive typing. */
+    static Typeface latin(Context c, boolean bold) {
+        loadFonts(c);
+        return bold ? latBold : latRegular;
+    }
+
+    static Typeface arabic(Context c, boolean bold) {
+        loadFonts(c);
+        return bold ? arBold : arRegular;
+    }
+
+    private static boolean isArabic(char ch) {
+        return (ch >= 0x0600 && ch <= 0x06FF)      // Arabic
+                || (ch >= 0x0750 && ch <= 0x077F)  // Arabic Supplement
+                || (ch >= 0x08A0 && ch <= 0x08FF)  // Arabic Extended-A
+                || (ch >= 0xFB50 && ch <= 0xFDFF)  // Presentation forms A
+                || (ch >= 0xFE70 && ch <= 0xFEFF); // Presentation forms B
+    }
+
+    /** The string, with each run of Arabic or Latin letters set in its own face. */
+    static CharSequence font(Context c, CharSequence s, boolean bold) {
+        if (s == null || s.length() == 0) {
+            return s;
+        }
+        loadFonts(c);
+        SpannableString out = new SpannableString(s);
+        int n = s.length();
+        int i = 0;
+        while (i < n) {
+            boolean arabic = isArabic(s.charAt(i));
+            int j = i + 1;
+            while (j < n && isArabic(s.charAt(j)) == arabic) {
+                j++;
+            }
+            Typeface face = arabic ? (bold ? arBold : arRegular) : (bold ? latBold : latRegular);
+            out.setSpan(new Face(face), i, j, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+            i = j;
+        }
+        return out;
+    }
+
+    /** One typeface applied to one stretch of a string. */
+    private static final class Face extends CharacterStyle implements UpdateAppearance {
+        private final Typeface typeface;
+
+        Face(Typeface typeface) {
+            this.typeface = typeface;
+        }
+
+        @Override
+        public void updateDrawState(TextPaint paint) {
+            paint.setTypeface(typeface);
+        }
+    }
+
     static int dp(Context c, float value) {
         return Math.round(value * c.getResources().getDisplayMetrics().density);
     }
 
     static TextView text(Context c, CharSequence s, float sp, int color, boolean bold) {
         TextView t = new TextView(c);
-        t.setText(s);
+        t.setText(font(c, s, bold));
         t.setTextSize(sp);
         t.setTextColor(color);
         t.setIncludeFontPadding(false);
-        if (bold) {
-            t.setTypeface(Typeface.DEFAULT_BOLD);
-        }
         return t;
     }
 

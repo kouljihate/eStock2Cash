@@ -3,6 +3,39 @@
 All notable changes to S2C MAROC. The version follows the crate version in
 `Cargo.toml` and is shown at the bottom of the sidebar.
 
+## Android 0.3.0 — 2026-11-12
+
+The web app is unchanged and stays at 0.12.0; the phone client versions on its own.
+
+### Added
+
+- **A sign-in page, even without a server.** The app opens on a page that carries the
+  company, the counts kept on the phone, the settings link and the version. Local mode asks
+  for nothing — its button opens the till; server mode keeps the address, username and
+  password it always had.
+- **The cashier is the main screen.** Search the phone's products, tap one to put it in the
+  cart, and the strip at the bottom keeps the line count, the units and the total while you
+  walk to another tab. *Review cart* gives the quantities a minus, a plus and a remove,
+  then the payment: **cash**, or **credit** to a chosen customer. *Charge* writes the sale
+  and its lines and takes the quantities out of stock in one transaction, refusing a cart
+  that asks for more than the shelf holds. Sales are numbered `S-0001`, `S-0002`…
+- **Tabs: Products · Suppliers · Customers · Credit.** The first three are the lists that
+  already existed, now one tap apart; **Credit** shows who owes the shop money — what they
+  owe, their phone, their limit and how many sales are open — and a long press settles the
+  whole debt, which marks those sales paid.
+- **The web app's two faces on the phone.** Comfortaa for Latin and numbers, VIP Rawy for
+  Arabic, regular and bold, bundled in `app/src/main/assets/fonts/`. Every label is cut
+  into Arabic and non-Arabic runs so `Delete  ·  حذف` sets each script in its own face, the
+  way the browser does; a missing font falls back to the system face instead of failing.
+
+### Changed
+
+- The local dashboard is gone: its counts sit on the sign-in page and the cashier's header,
+  and the credit numbers now lead the **Credit** tab. Server mode keeps its dashboard,
+  reachable from the cashier's hint card.
+- Dialog buttons are sentence case, like every other label in the app, and are set in the
+  app's fonts rather than the platform's capitals.
+
 ## 0.12.0 — 2026-11-10
 
 ### Added

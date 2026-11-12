@@ -25,5 +25,10 @@ static/fonts/*
 *.apk
 !android/dist/*.apk
 
+# The phone app's fonts: Comfortaa is OFL, but VIP Rawy is a licensed face and
+# stays out of the repository, exactly like static/fonts/VIP-Rawy-*.ttf.
+/android/app/src/main/assets/fonts/*.ttf
+!/android/app/src/main/assets/fonts/Comfortaa-*.ttf
+
 # Runtime database settings written by the Settings page
 app-settings.json

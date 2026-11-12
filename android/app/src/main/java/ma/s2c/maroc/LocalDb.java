@@ -25,11 +25,12 @@ import java.util.UUID;
 final class LocalDb extends SQLiteOpenHelper {
 
     private static final String NAME = "s2c.db";
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     static final String SUPPLIERS = "suppliers";
     static final String CUSTOMERS = "customers";
     static final String PRODUCTS = "products";
+    static final String SALES = "sales";
 
     LocalDb(Context ctx) {
         super(ctx.getApplicationContext(), NAME, null, VERSION);
@@ -52,11 +53,33 @@ final class LocalDb extends SQLiteOpenHelper {
         db.execSQL("CREATE INDEX idx_suppliers_name ON suppliers(name)");
         db.execSQL("CREATE INDEX idx_customers_name ON customers(name)");
         db.execSQL("CREATE INDEX idx_products_name ON products(name)");
+        createSales(db);
+    }
+
+    /**
+     * The till: one row per sale and one per line, plus what was owed when the sale went out
+     * on credit. Kept apart from the master data because a sale is history — deleting a
+     * product must never delete what has already been sold.
+     */
+    private void createSales(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS sales ("
+                + "id TEXT PRIMARY KEY, number TEXT, date TEXT, customer_id TEXT, customer_name TEXT,"
+                + "payment TEXT NOT NULL DEFAULT 'cash', items INTEGER NOT NULL DEFAULT 0,"
+                + "total REAL NOT NULL DEFAULT 0, paid REAL NOT NULL DEFAULT 0,"
+                + "status TEXT NOT NULL DEFAULT 'paid', created_at TEXT)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS sale_items ("
+                + "id TEXT PRIMARY KEY, sale_id TEXT NOT NULL, product_id TEXT, name TEXT,"
+                + "qty REAL NOT NULL DEFAULT 0, price REAL NOT NULL DEFAULT 0, cost REAL NOT NULL DEFAULT 0)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sales_customer ON sales(customer_id)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items(sale_id)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int from, int to) {
-        // Nothing to migrate yet; the tables are additive from here on.
+        // Tables are only ever added: an installed phone keeps its data across an upgrade.
+        if (from < 2) {
+            createSales(db);
+        }
     }
 
     /* --------------------------------------------------------------- reading */
@@ -86,7 +109,11 @@ final class LocalDb extends SQLiteOpenHelper {
     }
 
     private double scalar(SQLiteDatabase db, String sql) {
-        try (Cursor c = db.rawQuery(sql, null)) {
+        return scalar(db, sql, null);
+    }
+
+    private double scalar(SQLiteDatabase db, String sql, String[] args) {
+        try (Cursor c = db.rawQuery(sql, args)) {
             return c.moveToFirst() ? c.getDouble(0) : 0;
         }
     }
@@ -280,6 +307,161 @@ final class LocalDb extends SQLiteOpenHelper {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    /* ----------------------------------------------------------------- the till */
+
+    /** The next sale number, e.g. S-0007, counted from the sales already in the phone. */
+    String nextNumber() {
+        int done = count(getReadableDatabase(), SALES, null, null);
+        return String.format(Locale.US, "S-%04d", done + 1);
+    }
+
+    /**
+     * Records one till sale and takes its quantities out of stock.
+     *
+     * @param sale  number, payment (cash or credit), customer_id, customer_name, total
+     * @param items one object per line: product_id, name, qty, price, cost
+     * @return null when saved, or the sentence the cashier should read instead
+     */
+    String saveSale(JSONObject sale, JSONArray items) {
+        if (items == null || items.length() == 0) {
+            return "The cart is empty.";
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        String saleId = UUID.randomUUID().toString();
+        double total = 0;
+        db.beginTransaction();
+        try {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject line = items.getJSONObject(i);
+                String productId = line.optString("product_id", "");
+                double qty = line.optDouble("qty", 0);
+                if (qty <= 0) {
+                    return "One line has no quantity.";
+                }
+                double have = scalar(db, "SELECT qty_on_hand FROM products WHERE id = ?", new String[]{productId});
+                if (qty > have) {
+                    return "Only " + qtyText(have) + " of " + line.optString("name", "that item") + " left in stock.";
+                }
+                ContentValues v = new ContentValues();
+                v.put("id", UUID.randomUUID().toString());
+                v.put("sale_id", saleId);
+                v.put("product_id", productId);
+                v.put("name", line.optString("name", ""));
+                v.put("qty", qty);
+                v.put("price", line.optDouble("price", 0));
+                v.put("cost", line.optDouble("cost", 0));
+                if (db.insert("sale_items", null, v) < 0) {
+                    return "Could not save the sale.";
+                }
+                db.execSQL("UPDATE products SET qty_on_hand = qty_on_hand - ? WHERE id = ?",
+                        new Object[]{qty, productId});
+                total += qty * line.optDouble("price", 0);
+            }
+
+            boolean credit = "credit".equals(sale.optString("payment", "cash"));
+            ContentValues s = new ContentValues();
+            s.put("id", saleId);
+            s.put("number", sale.optString("number", nextNumber()));
+            s.put("date", now());
+            s.put("customer_id", sale.optString("customer_id", ""));
+            s.put("customer_name", sale.optString("customer_name", ""));
+            s.put("payment", credit ? "credit" : "cash");
+            s.put("items", items.length());
+            s.put("total", total);
+            s.put("paid", credit ? 0 : total);
+            s.put("status", credit ? "credit" : "paid");
+            s.put("created_at", now());
+            if (db.insert(SALES, null, s) < 0) {
+                return "Could not save the sale.";
+            }
+            db.setTransactionSuccessful();
+            return null;
+        } catch (Exception e) {
+            return "Could not save the sale: " + e.getMessage();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** The last sales, newest first, for the cashier's own history. */
+    JSONArray sales(int limit) {
+        JSONArray out = new JSONArray();
+        try (Cursor c = getReadableDatabase().rawQuery(
+                "SELECT * FROM sales ORDER BY created_at DESC LIMIT " + Math.max(1, limit), null)) {
+            while (c.moveToNext()) {
+                JSONObject o = new JSONObject();
+                o.put("id", text(c, "id"));
+                o.put("number", text(c, "number"));
+                o.put("date", text(c, "date"));
+                o.put("customer_id", text(c, "customer_id"));
+                o.put("customer_name", text(c, "customer_name"));
+                o.put("payment", text(c, "payment"));
+                o.put("items", c.getInt(c.getColumnIndexOrThrow("items")));
+                o.put("total", c.getDouble(c.getColumnIndexOrThrow("total")));
+                o.put("paid", c.getDouble(c.getColumnIndexOrThrow("paid")));
+                o.put("status", text(c, "status"));
+                out.put(o);
+            }
+        } catch (Exception ignored) {
+            // An unreadable till shows as an empty history, not a crash.
+        }
+        return out;
+    }
+
+    /**
+     * Who owes the shop what: one row per customer with an unpaid sale, plus the total.
+     * The Credit tab reads this and nothing else — the phone does not guess a limit.
+     */
+    JSONObject credit() {
+        JSONObject out = new JSONObject();
+        JSONArray rows = new JSONArray();
+        double sum = 0;
+        String sql = "SELECT s.customer_id AS cid, s.customer_name AS name,"
+                + " SUM(s.total - s.paid) AS owed, COUNT(*) AS open,"
+                + " IFNULL((SELECT c.phone FROM customers c WHERE c.id = s.customer_id), '') AS phone,"
+                + " IFNULL((SELECT c.credit_limit FROM customers c WHERE c.id = s.customer_id), 0) AS lim"
+                + " FROM sales s WHERE s.paid < s.total GROUP BY s.customer_id ORDER BY owed DESC";
+        try (Cursor c = getReadableDatabase().rawQuery(sql, null)) {
+            while (c.moveToNext()) {
+                JSONObject o = new JSONObject();
+                o.put("id", text(c, "cid"));
+                o.put("name", text(c, "name").isEmpty() ? "Walk-in" : text(c, "name"));
+                o.put("phone", text(c, "phone"));
+                o.put("outstanding", c.getDouble(c.getColumnIndexOrThrow("owed")));
+                o.put("open_sales", c.getInt(c.getColumnIndexOrThrow("open")));
+                o.put("credit_limit", c.getDouble(c.getColumnIndexOrThrow("lim")));
+                rows.put(o);
+                sum += c.getDouble(c.getColumnIndexOrThrow("owed"));
+            }
+        } catch (Exception ignored) {
+            // Same rule as everywhere else: an empty list beats an exception.
+        }
+        try {
+            out.put("items", rows);
+            out.put("total", sum);
+            out.put("count", rows.length());
+        } catch (Exception ignored) {
+            // JSONObject string keys cannot fail.
+        }
+        return out;
+    }
+
+    /** Marks every unpaid sale of one customer as settled — the debt is paid in at the till. */
+    boolean settle(String customerId) {
+        if (customerId == null || customerId.isEmpty()) {
+            return false;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        // paid is copied from total, so the balance really is zero afterwards.
+        db.execSQL("UPDATE sales SET status = 'paid', paid = total WHERE customer_id = ? AND paid < total",
+                new Object[]{customerId});
+        return true;
+    }
+
+    private String qtyText(double v) {
+        return v == Math.rint(v) ? String.format(Locale.US, "%,.0f", v) : String.format(Locale.US, "%,.2f", v);
     }
 
     private String table(String kind) {

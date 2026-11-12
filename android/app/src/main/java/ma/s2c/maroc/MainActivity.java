@@ -3,9 +3,10 @@ package ma.s2c.maroc;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -40,11 +42,35 @@ public class MainActivity extends Activity {
         View build();
     }
 
+    /** The tabs along the bottom, in the order the shop reads them. */
+    private static final int TAB_CASHIER = 0;
+    private static final int TAB_PRODUCTS = 1;
+    private static final int TAB_SUPPLIERS = 2;
+    private static final int TAB_CUSTOMERS = 3;
+    private static final int TAB_CREDIT = 4;
+
     private Api api;
     private Config cfg;
     private LocalDb local;
     private FrameLayout host;
     private final ArrayDeque<Screen> stack = new ArrayDeque<>();
+    private int tab = TAB_CASHIER;
+
+    /**
+     * The till's cart, kept here rather than in a screen so that walking to Products to check
+     * a price does not throw away what the cashier has already rung up.
+     */
+    private final java.util.LinkedHashMap<String, CartLine> cart = new java.util.LinkedHashMap<>();
+
+    /** One product in the cart, with everything the receipt needs. */
+    private static final class CartLine {
+        String name;
+        String unit;
+        double price;
+        double cost;
+        double qty;
+        double stock;
+    }
 
     @Override
     protected void onCreate(Bundle state) {
@@ -70,15 +96,20 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Where the app opens. In local mode there is no server and no account to sign in to —
-     * the phone owns its data — so it goes straight to the dashboard. Server mode keeps the
-     * sign-in screen it always had.
+     * Where the app opens: the sign-in page. Local mode has no account to ask for, so its card
+     * just says where the data lives and opens the till; server mode asks for the username and
+     * password. Either way the page carries the settings link and the version.
      */
     private View startScreen() {
-        if (cfg.isLocal() || api.signedIn()) {
-            return homeScreen();
-        }
         return loginScreen();
+    }
+
+    /** Past the login page: the cashier, with the four tabs under it. */
+    private void openShop() {
+        cart.clear();
+        tab = TAB_CASHIER;
+        stack.clear();
+        push(this::shellScreen);
     }
 
     @Override
@@ -125,6 +156,49 @@ public class MainActivity extends Activity {
         int b = Ui.dp(this, 18);
         body.setPadding(b, b, b, b);
 
+        if (cfg.isLocal()) {
+            body.addView(localLoginCard());
+        } else {
+            body.addView(serverLoginCard());
+        }
+
+        TextView toSettings = Ui.text(this, "Settings  ·  الإعدادات  ·  v" + version(), 12.5f, Ui.BRAND, true);
+        toSettings.setPadding(0, Ui.dp(this, 16), 0, 0);
+        toSettings.setOnClickListener(v -> push(this::settingsScreen));
+        body.addView(toSettings);
+
+        scroll.addView(body);
+        page.addView(scroll, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+        ((LinearLayout.LayoutParams) scroll.getLayoutParams()).weight = 1;
+
+        page.addView(footer());
+        return page;
+    }
+
+    /** Local mode asks for nothing: it says where the data lives and opens the till. */
+    private View localLoginCard() {
+        LinearLayout card = Ui.card(this);
+        card.addView(Ui.bi(this, "Welcome", "مرحباً", 18, Ui.INK, true));
+        card.addView(Ui.spacer(this, 4));
+        card.addView(Ui.text(this, cfg.company() + "  ·  " + cfg.currency(), 13, Ui.MUTED, false));
+        card.addView(Ui.spacer(this, 14));
+
+        JSONObject stats = local.stats();
+        card.addView(Ui.bi(this, "Stored on this phone", "محفوظ على هذا الهاتف", 13, Ui.INK, true));
+        card.addView(Ui.spacer(this, 4));
+        card.addView(Ui.text(this, plural(stats.optInt("products"), "product") + "  ·  "
+                + plural(stats.optInt("customers"), "customer") + "  ·  "
+                + plural(stats.optInt("suppliers"), "supplier"), 12, Ui.MUTED, false));
+        card.addView(Ui.spacer(this, 16));
+
+        Button enter = bigButton("Enter  ·  دخول");
+        enter.setOnClickListener(v -> openShop());
+        card.addView(enter, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return card;
+    }
+
+    /** Server mode keeps the account it always had: the office database decides who may read. */
+    private View serverLoginCard() {
         LinearLayout card = Ui.card(this);
         card.addView(Ui.bi(this, "Sign in", "تسجيل الدخول", 18, Ui.INK, true));
         card.addView(Ui.spacer(this, 14));
@@ -152,14 +226,7 @@ public class MainActivity extends Activity {
         error.setVisibility(View.GONE);
         card.addView(error);
 
-        final Button go = new Button(this);
-        go.setAllCaps(false);
-        go.setText("Sign in  ·  تسجيل الدخول");
-        go.setTextSize(14);
-        go.setTextColor(Ui.WHITE);
-        go.setTypeface(Typeface.DEFAULT_BOLD);
-        go.setBackground(Ui.rounded(Ui.BRAND, 12, this));
-        go.setPadding(0, Ui.dp(this, 14), 0, Ui.dp(this, 14));
+        final Button go = bigButton("Sign in  ·  تسجيل الدخول");
         card.addView(go, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         final ProgressBar busy = new ProgressBar(this);
@@ -182,8 +249,7 @@ public class MainActivity extends Activity {
                 public void ok(JSONObject body) {
                     go.setEnabled(true);
                     busy.setVisibility(View.GONE);
-                    stack.clear();
-                    push(MainActivity.this::homeScreen);
+                    openShop();
                 }
 
                 @Override
@@ -195,25 +261,37 @@ public class MainActivity extends Activity {
             });
         });
 
-        body.addView(card);
-
         TextView hint = Ui.text(this, "Server mode reads the office computer's database, e.g. "
                 + "http://192.168.1.20:8080. To work on the phone alone, switch Database to Local in Settings.",
                 12, Ui.MUTED, false);
         hint.setPadding(0, Ui.dp(this, 12), 0, 0);
-        body.addView(hint);
+        card.addView(hint);
+        return card;
+    }
 
-        TextView toSettings = Ui.text(this, "Settings  ·  الإعدادات", 12.5f, Ui.BRAND, true);
-        toSettings.setPadding(0, Ui.dp(this, 14), 0, 0);
-        toSettings.setOnClickListener(v -> push(this::settingsScreen));
-        body.addView(toSettings);
+    /** The wide brand button every screen uses for its one main action. */
+    private Button bigButton(String text) {
+        Button b = new Button(this);
+        b.setAllCaps(false);
+        b.setText(Ui.font(this, text, true));
+        b.setTextSize(14);
+        b.setTextColor(Ui.WHITE);
+        b.setBackground(Ui.rounded(Ui.BRAND, 12, this));
+        b.setPadding(0, Ui.dp(this, 13), 0, Ui.dp(this, 13));
+        return b;
+    }
 
-        scroll.addView(body);
-        page.addView(scroll, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
-        ((LinearLayout.LayoutParams) scroll.getLayoutParams()).weight = 1;
+    /** "1 product", "3 products" — the counts on the sign-in card and the till header. */
+    private String plural(int n, String word) {
+        return n + " " + word + (n == 1 ? "" : "s");
+    }
 
-        page.addView(footer());
-        return page;
+    private String version() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private TextView fieldLabel(String latin, String arabic) {
@@ -224,7 +302,10 @@ public class MainActivity extends Activity {
 
     private EditText field(String hint, String value, int variation) {
         EditText e = new EditText(this);
-        e.setHint(hint);
+        // The input takes one face rather than spans: typing replaces spans as it goes, and
+        // Arabic typed here still falls back to the system face glyph by glyph.
+        e.setTypeface(Ui.latin(this, false));
+        e.setHint(Ui.font(this, hint, false));
         e.setText(value);
         e.setTextSize(14);
         e.setTextColor(Ui.INK);
@@ -239,9 +320,9 @@ public class MainActivity extends Activity {
 
     /* ---------------------------------------------------------------- dashboard */
 
-    /** The dashboard of whichever database this phone is set to use. */
+    /** The server dashboard, reachable from the cashier tab when the phone reads the office. */
     private View homeScreen() {
-        return cfg.isLocal() ? localHomeScreen() : serverHomeScreen();
+        return serverHomeScreen();
     }
 
     private View serverHomeScreen() {
@@ -417,13 +498,19 @@ public class MainActivity extends Activity {
     /* --------------------------------------------------------------------- list */
 
     private View listScreen(String latin, String arabic, String path, String kind) {
-        return cfg.isLocal() ? localListScreen(latin, arabic, path, kind) : serverListScreen(latin, arabic, path, kind);
+        return serverListScreen(latin, arabic, path, kind);
     }
 
     private View serverListScreen(String latin, String arabic, String path, String kind) {
         LinearLayout page = Ui.column(this);
         page.addView(topBar(latin, arabic, true));
+        page.addView(serverListBody(latin, arabic, path, kind));
+        page.addView(footer());
+        return page;
+    }
 
+    /** The list itself, without the bar or the footer: a tab's body, or the middle of a page. */
+    private View serverListBody(String latin, String arabic, String path, String kind) {
         final ProgressBar busy = new ProgressBar(this);
         busy.setPadding(0, Ui.dp(this, 24), 0, 0);
 
@@ -460,10 +547,9 @@ public class MainActivity extends Activity {
             }
         });
 
-        page.addView(holder, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+        holder.setLayoutParams(Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
         ((LinearLayout.LayoutParams) holder.getLayoutParams()).weight = 1;
-        page.addView(footer());
-        return page;
+        return holder;
     }
 
     private View emptyCard() {
@@ -493,7 +579,7 @@ public class MainActivity extends Activity {
         card.addView(Ui.spacer(this, 10));
         Button again = new Button(this);
         again.setAllCaps(false);
-        again.setText("Try again  ·  إعادة المحاولة");
+        again.setText(Ui.font(this, "Try again  ·  إعادة المحاولة", true));
         again.setTextSize(13);
         again.setTextColor(Ui.WHITE);
         again.setBackground(Ui.rounded(Ui.BRAND, 10, this));
@@ -503,73 +589,15 @@ public class MainActivity extends Activity {
     }
 
     private void showError(TextView target, String message) {
-        target.setText(message);
+        target.setText(Ui.font(this, message, false));
         target.setVisibility(View.VISIBLE);
     }
 
     /* ------------------------------------------------------------- local mode */
 
-    /** The dashboard without a server: every number read from this phone's SQLite file. */
-    private View localHomeScreen() {
-        LinearLayout page = Ui.column(this);
-        page.addView(topBar("Dashboard", "لوحة التحكم", false));
-
-        ScrollView scroll = new ScrollView(this);
-        LinearLayout body = Ui.column(this);
-        int b = Ui.dp(this, 14);
-        body.setPadding(b, b, b, b);
-
-        body.addView(localStatGrid(local.stats()));
-        body.addView(Ui.spacer(this, 14));
-        body.addView(sectionCard("Master data", "البيانات الأساسية", new String[][]{
-                {"Suppliers", "الموردون", "/suppliers", "party"},
-                {"Customers", "العملاء", "/customers", "party"},
-                {"Products", "المنتجات", "/products", "product"},
-        }));
-        body.addView(Ui.spacer(this, 12));
-
-        LinearLayout note = Ui.card(this);
-        note.addView(Ui.bi(this, "Stored on this phone", "محفوظ على هذا الهاتف", 13, Ui.INK, true));
-        note.addView(Ui.spacer(this, 6));
-        note.addView(Ui.text(this, "No server needed: suppliers, customers and products live in the "
-                + "phone's own database and stay there with or without a network.", 12, Ui.MUTED, false));
-        note.addView(Ui.spacer(this, 10));
-        Button open = new Button(this);
-        open.setAllCaps(false);
-        open.setText("Settings  ·  الإعدادات");
-        open.setTextSize(13);
-        open.setTextColor(Ui.WHITE);
-        open.setTypeface(Typeface.DEFAULT_BOLD);
-        open.setBackground(Ui.rounded(Ui.BRAND, 10, this));
-        open.setOnClickListener(v -> push(this::settingsScreen));
-        note.addView(open);
-        body.addView(note);
-
-        scroll.addView(body);
-        page.addView(scroll, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
-        ((LinearLayout.LayoutParams) scroll.getLayoutParams()).weight = 1;
-
-        page.addView(footer());
-        return page;
-    }
-
-    private View localStatGrid(JSONObject d) {
-        String cur = api.currency();
-        String[][] cells = {
-                {"Suppliers", "الموردون", String.valueOf(d.optInt("suppliers"))},
-                {"Customers", "العملاء", String.valueOf(d.optInt("customers"))},
-                {"Products", "المنتجات", String.valueOf(d.optInt("products"))},
-                {"Low stock", "مخزون منخفض", String.valueOf(d.optInt("low_stock"))},
-                {"Stock value", "قيمة المخزون", Ui.money(d.optDouble("stock_value", 0), cur)},
-                {"Stock units", "وحدات المخزون", Ui.qty(d.optDouble("stock_units", 0))},
-        };
-        return gridCells(cells);
-    }
-
     /** The list, read from the phone. Long-press a row to delete it. */
-    private View localListScreen(String latin, String arabic, String path, String kind) {
+    private View localListBody(String latin, String arabic, String path, String kind) {
         LinearLayout page = Ui.column(this);
-        page.addView(topBar(latin, arabic, true));
 
         JSONArray items = local.list(path, "");
 
@@ -581,10 +609,9 @@ public class MainActivity extends Activity {
 
         Button add = new Button(this);
         add.setAllCaps(false);
-        add.setText("+  Add  ·  إضافة");
+        add.setText(Ui.font(this, "+  Add  ·  إضافة", true));
         add.setTextSize(12.5f);
         add.setTextColor(Ui.WHITE);
-        add.setTypeface(Typeface.DEFAULT_BOLD);
         add.setBackground(Ui.rounded(Ui.BRAND, 10, this));
         add.setPadding(Ui.dp(this, 14), 0, Ui.dp(this, 14), 0);
         add.setOnClickListener(v -> push(() -> recordScreen(path, kind, new JSONObject())));
@@ -601,7 +628,7 @@ public class MainActivity extends Activity {
             p.setMargins(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), 0);
             empty.setLayoutParams(p);
             page.addView(empty);
-            page.addView(new View(this), weight(1f));
+            page.addView(new View(this), verticalWeight());
         } else {
             ListView list = new ListView(this);
             list.setDivider(null);
@@ -620,22 +647,34 @@ public class MainActivity extends Activity {
             ((LinearLayout.LayoutParams) list.getLayoutParams()).weight = 1;
         }
 
-        page.addView(footer());
         return page;
     }
 
     private void confirmDelete(String path, String kind, String latin, String arabic, JSONObject row) {
         String name = row.optString("name", "");
-        new AlertDialog.Builder(this)
-                .setTitle("Delete  ·  حذف")
-                .setMessage(name + "\n\nRemoves this record from the phone's database. لا يمكن التراجع بعد الحذف.")
-                .setNegativeButton("Cancel  ·  إلغاء", null)
-                .setPositiveButton("Delete  ·  حذف", (dialog, which) -> {
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(Ui.font(this, "Delete  ·  حذف", true))
+                .setMessage(Ui.font(this, name + "\n\nRemoves this record from the phone's database. لا يمكن التراجع بعد الحذف.", false))
+                .setNegativeButton(Ui.font(this, "Cancel  ·  إلغاء", false), null)
+                .setPositiveButton(Ui.font(this, "Delete  ·  حذف", true), (d, which) -> {
                     local.remove(path, row.optString("id", ""));
-                    stack.pop();
-                    push(() -> listScreen(latin, arabic, path, kind));
+                    selectTab(tab);
                 })
-                .show();
+                .create();
+        dialog.show();
+        sentenceCase(dialog);
+    }
+
+    /** Android shouts dialog buttons in capitals; every label in this app is sentence case. */
+    private void sentenceCase(AlertDialog dialog) {
+        int[] buttons = {AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL};
+        for (int which : buttons) {
+            Button button = dialog.getButton(which);
+            if (button != null) {
+                button.setAllCaps(false);
+                button.setText(button.getText());
+            }
+        }
     }
 
     /** The form for one supplier, customer or product, saved into the phone's database. */
@@ -687,10 +726,9 @@ public class MainActivity extends Activity {
 
         Button save = new Button(this);
         save.setAllCaps(false);
-        save.setText("Save  ·  حفظ");
+        save.setText(Ui.font(this, "Save  ·  حفظ", true));
         save.setTextSize(14);
         save.setTextColor(Ui.WHITE);
-        save.setTypeface(Typeface.DEFAULT_BOLD);
         save.setBackground(Ui.rounded(Ui.BRAND, 12, this));
         save.setPadding(0, Ui.dp(this, 13), 0, Ui.dp(this, 13));
         save.setOnClickListener(v -> {
@@ -708,10 +746,9 @@ public class MainActivity extends Activity {
                 showError(error, problem);
                 return;
             }
-            String listLatin = product ? "Products" : customer ? "Customers" : "Suppliers";
-            String listArabic = product ? "المنتجات" : customer ? "العملاء" : "الموردون";
-            stack.pop();
-            push(() -> listScreen(listLatin, listArabic, path, kind));
+            String saved = product ? "Product" : customer ? "Customer" : "Supplier";
+            selectTab(tab);
+            Toast.makeText(this, saved + " saved  ·  تم الحفظ", Toast.LENGTH_SHORT).show();
         });
         card.addView(save, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -806,10 +843,9 @@ public class MainActivity extends Activity {
 
         Button save = new Button(this);
         save.setAllCaps(false);
-        save.setText("Save  ·  حفظ");
+        save.setText(Ui.font(this, "Save  ·  حفظ", true));
         save.setTextSize(14);
         save.setTextColor(Ui.WHITE);
-        save.setTypeface(Typeface.DEFAULT_BOLD);
         save.setBackground(Ui.rounded(Ui.BRAND, 12, this));
         save.setPadding(0, Ui.dp(this, 13), 0, Ui.dp(this, 13));
         save.setOnClickListener(v -> {
@@ -861,14 +897,590 @@ public class MainActivity extends Activity {
     private Button choiceButton(String text, boolean selected) {
         Button b = new Button(this);
         b.setAllCaps(false);
-        b.setText(text);
+        b.setText(Ui.font(this, text, true));
         b.setTextSize(12.5f);
+        paintChoice(b, selected);
+        return b;
+    }
+
+    private void paintChoice(Button b, boolean selected) {
         b.setTextColor(selected ? Ui.WHITE : Ui.INK);
-        b.setTypeface(Typeface.DEFAULT_BOLD);
         b.setBackground(selected
                 ? Ui.rounded(Ui.BRAND, 10, this)
                 : Ui.outlined(Ui.WHITE, 10, Ui.LINE, this));
-        return b;
+    }
+
+    /* ----------------------------------------------------------- shell and tabs */
+
+    /** Every tab in one page: the navy bar, the body, the strip along the bottom, the footer. */
+    private View shellScreen() {
+        LinearLayout page = Ui.column(this);
+        page.addView(topBar(tabLatin(), tabArabic(), false));
+
+        View body;
+        if (tab == TAB_PRODUCTS) {
+            body = cfg.isLocal()
+                    ? localListBody("Products", "المنتجات", "/products", "product")
+                    : serverListBody("Products", "المنتجات", "/products", "product");
+        } else if (tab == TAB_SUPPLIERS) {
+            body = cfg.isLocal()
+                    ? localListBody("Suppliers", "الموردون", "/suppliers", "party")
+                    : serverListBody("Suppliers", "الموردون", "/suppliers", "party");
+        } else if (tab == TAB_CUSTOMERS) {
+            body = cfg.isLocal()
+                    ? localListBody("Customers", "العملاء", "/customers", "party")
+                    : serverListBody("Customers", "العملاء", "/customers", "party");
+        } else if (tab == TAB_CREDIT) {
+            body = creditBody();
+        } else {
+            body = cfg.isLocal() ? cashierBody() : needsLocalBody("Cashier", "الصندوق");
+        }
+        page.addView(body, verticalWeight());
+        page.addView(tabBar());
+        page.addView(footer());
+        return page;
+    }
+
+    private String tabLatin() {
+        switch (tab) {
+            case TAB_PRODUCTS:
+                return "Products";
+            case TAB_SUPPLIERS:
+                return "Suppliers";
+            case TAB_CUSTOMERS:
+                return "Customers";
+            case TAB_CREDIT:
+                return "Credit";
+            default:
+                return "Cashier";
+        }
+    }
+
+    private String tabArabic() {
+        switch (tab) {
+            case TAB_PRODUCTS:
+                return "المنتجات";
+            case TAB_SUPPLIERS:
+                return "الموردون";
+            case TAB_CUSTOMERS:
+                return "العملاء";
+            case TAB_CREDIT:
+                return "الائتمان";
+            default:
+                return "الصندوق";
+        }
+    }
+
+    /** A tab is a fresh root: the back key leaves the shop, it does not walk back through tabs. */
+    private void selectTab(int index) {
+        tab = index;
+        stack.clear();
+        stack.push(this::shellScreen);
+        render();
+    }
+
+    private View tabBar() {
+        String[][] tabs = {
+                {"Cashier", "الصندوق"},
+                {"Products", "المنتجات"},
+                {"Suppliers", "الموردون"},
+                {"Customers", "العملاء"},
+                {"Credit", "الائتمان"},
+        };
+        LinearLayout bar = Ui.row(this);
+        bar.setBackgroundColor(Ui.WHITE);
+        bar.setPadding(Ui.dp(this, 2), Ui.dp(this, 6), Ui.dp(this, 2), Ui.dp(this, 6));
+
+        for (int i = 0; i < tabs.length; i++) {
+            boolean on = i == tab;
+            LinearLayout cell = Ui.column(this);
+            cell.setGravity(Gravity.CENTER);
+            cell.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+            if (on) {
+                cell.setBackground(Ui.rounded(Ui.BRAND_SOFT, 10, this));
+            }
+            TextView arabic = Ui.text(this, tabs[i][1], 10, on ? Ui.BRAND : Ui.MUTED, on);
+            arabic.setGravity(Gravity.CENTER);
+            TextView latin = Ui.text(this, tabs[i][0], 9.5f, on ? Ui.BRAND : Ui.MUTED, on);
+            latin.setGravity(Gravity.CENTER);
+            cell.addView(arabic);
+            cell.addView(latin);
+            final int index = i;
+            cell.setOnClickListener(v -> selectTab(index));
+            bar.addView(cell, weight(1f));
+        }
+        return bar;
+    }
+
+    /** The till and the credit book need the phone's own data; say so instead of faking one. */
+    private View needsLocalBody(String latin, String arabic) {
+        LinearLayout page = Ui.column(this);
+        LinearLayout card = Ui.card(this);
+        card.setLayoutParams(cardParams());
+        card.addView(Ui.bi(this, latin, arabic, 16, Ui.INK, true));
+        card.addView(Ui.spacer(this, 6));
+        card.addView(Ui.text(this, "This phone is set to Server, so there is no till here. "
+                + "Switch Database to Local in Settings to sell from this phone.", 12, Ui.MUTED, false));
+        card.addView(Ui.spacer(this, 12));
+        Button settings = bigButton("Settings  ·  الإعدادات");
+        settings.setOnClickListener(v -> push(this::settingsScreen));
+        card.addView(settings);
+        card.addView(Ui.spacer(this, 6));
+        TextView dashboard = Ui.text(this, "Open the server dashboard  ·  لوحة التحكم", 12, Ui.BRAND, true);
+        dashboard.setPadding(0, Ui.dp(this, 8), 0, 0);
+        dashboard.setOnClickListener(v -> push(this::homeScreen));
+        card.addView(dashboard);
+        page.addView(card);
+        page.addView(new View(this), verticalWeight());
+        return page;
+    }
+
+    /** A child that fills what is left of a column, the way weight does in a row. */
+    private LinearLayout.LayoutParams verticalWeight() {
+        return new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+    }
+
+    private LinearLayout.LayoutParams cardParams() {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        p.setMargins(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), 0);
+        return p;
+    }
+
+    /* ----------------------------------------------------------------- the till */
+
+    /** The cashier: find a product, tap it, ring it up. The cart survives a look at another tab. */
+    private View cashierBody() {
+        LinearLayout page = Ui.column(this);
+
+        JSONObject stats = local.stats();
+        LinearLayout head = Ui.card(this);
+        head.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
+        head.setLayoutParams(cardParams());
+        head.addView(Ui.text(this, plural(stats.optInt("products"), "product") + "  ·  "
+                + stats.optInt("low_stock") + " low stock", 11.5f, Ui.MUTED, false));
+        head.addView(Ui.spacer(this, 8));
+        final EditText search = field("Find a product · ابحث عن منتج", "", InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        head.addView(search);
+        page.addView(head);
+
+        final LinearLayout results = Ui.column(this);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(results);
+        page.addView(scroll, verticalWeight());
+
+        final LinearLayout strip = Ui.card(this);
+        strip.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+        strip.setLayoutParams(cardParams());
+        page.addView(strip);
+
+        fillStrip(strip);
+        fillResults(results, "", strip);
+
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                fillResults(results, s == null ? "" : s.toString(), strip);
+            }
+        });
+        return page;
+    }
+
+    private void fillResults(LinearLayout holder, String q, LinearLayout strip) {
+        holder.removeAllViews();
+        JSONArray items = local.list("/products", q);
+        if (items.length() == 0) {
+            LinearLayout card = Ui.card(this);
+            card.setLayoutParams(cardParams());
+            card.addView(Ui.bi(this, q.isEmpty() ? "No products yet" : "Nothing matches",
+                    q.isEmpty() ? "لا توجد منتجات بعد" : "لا يوجد تطابق", 13, Ui.MUTED, false));
+            card.addView(Ui.spacer(this, 6));
+            card.addView(Ui.text(this, "Add them in the Products tab, then come back here.", 12, Ui.MUTED, false));
+            holder.addView(card);
+            return;
+        }
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject row = items.optJSONObject(i);
+            if (row != null) {
+                holder.addView(productRow(row, strip));
+            }
+        }
+    }
+
+    private View productRow(JSONObject o, LinearLayout strip) {
+        LinearLayout card = Ui.card(this);
+        card.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11));
+        LinearLayout row = Ui.row(this);
+
+        LinearLayout left = Ui.column(this);
+        left.addView(Ui.text(this, o.optString("name", "(unnamed)"), 14, Ui.INK, true));
+        StringBuilder sub = new StringBuilder();
+        sub.append(Ui.qty(o.optDouble("qty_on_hand", 0))).append(' ').append(o.optString("unit", "pc"));
+        if (!o.optString("sku", "").trim().isEmpty()) {
+            sub.append("  ·  ").append(o.optString("sku"));
+        }
+        left.addView(Ui.text(this, sub.toString(), 11.5f, Ui.MUTED, false));
+        row.addView(left, weight(1f));
+
+        TextView price = Ui.text(this, Ui.money(o.optDouble("price", 0), api.currency()), 13.5f, Ui.BRAND, true);
+        price.setGravity(Gravity.END);
+        row.addView(price);
+        card.addView(row);
+
+        card.setOnClickListener(v -> addToCart(o, strip));
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        p.setMargins(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
+        card.setLayoutParams(p);
+        return card;
+    }
+
+    private void addToCart(JSONObject o, LinearLayout strip) {
+        String id = o.optString("id", "");
+        double stock = o.optDouble("qty_on_hand", 0);
+        CartLine line = cart.get(id);
+        if (stock <= 0) {
+            Toast.makeText(this, "Out of stock  ·  نفد المخزون", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (line != null && line.qty + 1 > stock) {
+            Toast.makeText(this, "Only " + Ui.qty(stock) + " in stock  ·  المخزون لا يكفي", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (line == null) {
+            line = new CartLine();
+            line.name = o.optString("name", "");
+            line.unit = o.optString("unit", "pc");
+            line.price = o.optDouble("price", 0);
+            line.cost = o.optDouble("cost", 0);
+            line.stock = stock;
+            cart.put(id, line);
+        }
+        line.qty += 1;
+        fillStrip(strip);
+    }
+
+    /** The bar under the products: what is in the cart, what it costs, and the way to pay. */
+    private void fillStrip(LinearLayout strip) {
+        strip.removeAllViews();
+        LinearLayout row = Ui.row(this);
+        row.addView(Ui.bi(this, cart.size() + (cart.size() == 1 ? " line" : " lines") + "  ·  " + Ui.qty(units()) + " units",
+                "في السلة", 12, Ui.MUTED, false), weight(1f));
+        row.addView(Ui.text(this, Ui.money(total(), api.currency()), 17, Ui.INK, true));
+        strip.addView(row);
+        strip.addView(Ui.spacer(this, 10));
+
+        Button review = bigButton(cart.isEmpty() ? "Cart is empty  ·  السلة فارغة" : "Review cart  ·  مراجعة السلة");
+        review.setEnabled(!cart.isEmpty());
+        review.setOnClickListener(v -> push(this::cartScreen));
+        strip.addView(review, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    }
+
+    private double units() {
+        double sum = 0;
+        for (CartLine line : cart.values()) {
+            sum += line.qty;
+        }
+        return sum;
+    }
+
+    private double total() {
+        double sum = 0;
+        for (CartLine line : cart.values()) {
+            sum += line.qty * line.price;
+        }
+        return sum;
+    }
+
+    /* ----------------------------------------------------------------- the cart */
+
+    /** The cart: change a quantity, drop a line, then take the money or put it on credit. */
+    private View cartScreen() {
+        LinearLayout page = Ui.column(this);
+        page.addView(topBar("Cart", "السلة", true));
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout body = Ui.column(this);
+        int b = Ui.dp(this, 12);
+        body.setPadding(b, b, b, b);
+
+        final LinearLayout lines = Ui.column(this);
+        body.addView(lines);
+
+        final TextView error = Ui.text(this, "", 12.5f, Ui.RED, false);
+        error.setVisibility(View.GONE);
+
+        final String[] payment = {"cash"};
+        final String[] customerId = {""};
+        final String[] customerName = {""};
+
+        LinearLayout money = Ui.card(this);
+        money.setLayoutParams(cardParams());
+        money.addView(Ui.bi(this, "Total", "المجموع", 12, Ui.MUTED, false));
+        money.addView(Ui.spacer(this, 4));
+        final TextView totalText = Ui.text(this, Ui.money(total(), api.currency()), 22, Ui.INK, true);
+        money.addView(totalText);
+        money.addView(Ui.spacer(this, 12));
+
+        money.addView(Ui.bi(this, "Payment", "الدفع", 13, Ui.INK, true));
+        money.addView(Ui.spacer(this, 8));
+        LinearLayout choices = Ui.row(this);
+        final Button cash = choiceButton("Cash  ·  نقداً", true);
+        final Button credit = choiceButton("Credit  ·  بالأجل", false);
+        choices.addView(cash, weighted());
+        choices.addView(credit, weightedWithGap());
+        money.addView(choices);
+
+        final TextView pickCustomer = Ui.text(this, "Choose the customer  ·  اختر العميل", 12.5f, Ui.BRAND, true);
+        pickCustomer.setPadding(0, Ui.dp(this, 12), 0, 0);
+        pickCustomer.setVisibility(View.GONE);
+        pickCustomer.setOnClickListener(v -> {
+            JSONArray people = local.list("/customers", "");
+            if (people.length() == 0) {
+                Toast.makeText(this, "Add a customer first  ·  أضف عميلاً أولاً", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            final String[] names = new String[people.length()];
+            for (int i = 0; i < people.length(); i++) {
+                JSONObject person = people.optJSONObject(i);
+                names[i] = person == null ? "" : person.optString("name", "");
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle(Ui.font(this, "Who takes the credit?  ·  من عليه الأجل؟", true))
+                    .setItems(names, (dialog, which) -> {
+                        JSONObject person = people.optJSONObject(which);
+                        customerId[0] = person == null ? "" : person.optString("id", "");
+                        customerName[0] = names[which];
+                        pickCustomer.setText(Ui.font(this, "Credit to  ·  بالأجل على " + customerName[0], true));
+                    })
+                    .show();
+        });
+        money.addView(pickCustomer);
+
+        cash.setOnClickListener(v -> {
+            payment[0] = "cash";
+            customerId[0] = "";
+            customerName[0] = "";
+            paintChoice(cash, true);
+            paintChoice(credit, false);
+            pickCustomer.setVisibility(View.GONE);
+        });
+        credit.setOnClickListener(v -> {
+            payment[0] = "credit";
+            paintChoice(cash, false);
+            paintChoice(credit, true);
+            pickCustomer.setVisibility(View.VISIBLE);
+        });
+
+        money.addView(Ui.spacer(this, 14));
+        money.addView(error);
+        Button charge = bigButton("Charge  ·  تحصيل");
+        charge.setOnClickListener(v -> {
+            if (cart.isEmpty()) {
+                showError(error, "The cart is empty.");
+                return;
+            }
+            if ("credit".equals(payment[0]) && customerId[0].isEmpty()) {
+                showError(error, "Choose the customer who takes the credit.");
+                return;
+            }
+            JSONArray linesOut = new JSONArray();
+            try {
+                for (java.util.Map.Entry<String, CartLine> e : cart.entrySet()) {
+                    CartLine line = e.getValue();
+                    JSONObject item = new JSONObject();
+                    item.put("product_id", e.getKey());
+                    item.put("name", line.name);
+                    item.put("qty", line.qty);
+                    item.put("price", line.price);
+                    item.put("cost", line.cost);
+                    linesOut.put(item);
+                }
+                String number = local.nextNumber();
+                JSONObject sale = new JSONObject();
+                sale.put("number", number);
+                sale.put("payment", payment[0]);
+                sale.put("customer_id", customerId[0]);
+                sale.put("customer_name", customerName[0]);
+                String problem = local.saveSale(sale, linesOut);
+                if (problem != null) {
+                    showError(error, problem);
+                    return;
+                }
+                cart.clear();
+                selectTab(TAB_CASHIER);
+                Toast.makeText(this, "Sale " + number + " saved  ·  تم حفظ البيع", Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+                showError(error, "Could not save the sale: " + e.getMessage());
+            }
+        });
+        money.addView(charge, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        body.addView(money);
+
+        renderCartLines(lines, totalText);
+
+        scroll.addView(body);
+        page.addView(scroll, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+        ((LinearLayout.LayoutParams) scroll.getLayoutParams()).weight = 1;
+        page.addView(footer());
+        return page;
+    }
+
+    private void renderCartLines(LinearLayout holder, final TextView totalText) {
+        holder.removeAllViews();
+        if (cart.isEmpty()) {
+            LinearLayout card = Ui.card(this);
+            card.setLayoutParams(cardParams());
+            card.addView(Ui.bi(this, "The cart is empty", "السلة فارغة", 13, Ui.MUTED, false));
+            holder.addView(card);
+            return;
+        }
+        for (java.util.Map.Entry<String, CartLine> entry : cart.entrySet()) {
+            final String id = entry.getKey();
+            final CartLine line = entry.getValue();
+
+            LinearLayout card = Ui.card(this);
+            card.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11));
+            card.setLayoutParams(cardParams());
+
+            LinearLayout top = Ui.row(this);
+            LinearLayout left = Ui.column(this);
+            left.addView(Ui.text(this, line.name, 13.5f, Ui.INK, true));
+            left.addView(Ui.text(this, Ui.money(line.price, api.currency()) + "  ×  " + Ui.qty(line.qty),
+                    11.5f, Ui.MUTED, false));
+            top.addView(left, weight(1f));
+            top.addView(Ui.text(this, Ui.money(line.price * line.qty, api.currency()), 13, Ui.BRAND, true));
+            card.addView(top);
+
+            LinearLayout controls = Ui.row(this);
+            controls.setPadding(0, Ui.dp(this, 8), 0, 0);
+            TextView minus = stepChip("−");
+            TextView qty = Ui.text(this, Ui.qty(line.qty) + " " + line.unit, 12.5f, Ui.INK, true);
+            qty.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+            TextView plus = stepChip("+");
+            controls.addView(minus);
+            controls.addView(qty);
+            controls.addView(plus);
+            controls.addView(new View(this), weight(1f));
+            TextView remove = Ui.text(this, "Remove  ·  إزالة", 11.5f, Ui.RED, false);
+            controls.addView(remove);
+            card.addView(controls);
+
+            minus.setOnClickListener(v -> {
+                if (line.qty > 1) {
+                    line.qty -= 1;
+                } else {
+                    cart.remove(id);
+                }
+                renderCartLines(holder, totalText);
+                totalText.setText(Ui.font(this, Ui.money(total(), api.currency()), true));
+            });
+            plus.setOnClickListener(v -> {
+                if (line.qty + 1 > line.stock) {
+                    Toast.makeText(this, "Only " + Ui.qty(line.stock) + " in stock  ·  المخزون لا يكفي",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                line.qty += 1;
+                renderCartLines(holder, totalText);
+                totalText.setText(Ui.font(this, Ui.money(total(), api.currency()), true));
+            });
+            remove.setOnClickListener(v -> {
+                cart.remove(id);
+                renderCartLines(holder, totalText);
+                totalText.setText(Ui.font(this, Ui.money(total(), api.currency()), true));
+            });
+            holder.addView(card);
+        }
+    }
+
+    /** A small round button for the cart's minus and plus. */
+    private TextView stepChip(String symbol) {
+        TextView t = Ui.text(this, symbol, 16, Ui.BRAND, true);
+        t.setGravity(Gravity.CENTER);
+        int size = Ui.dp(this, 32);
+        t.setLayoutParams(new LinearLayout.LayoutParams(size, size));
+        t.setBackground(Ui.rounded(Ui.BRAND_SOFT, 16, this));
+        return t;
+    }
+
+    /* ----------------------------------------------------------------- the credit */
+
+    /** Who owes the shop money, and one long press to say they have paid. */
+    private View creditBody() {
+        if (!cfg.isLocal()) {
+            return needsLocalBody("Credit", "الائتمان");
+        }
+        LinearLayout page = Ui.column(this);
+        JSONObject data = local.credit();
+
+        LinearLayout summary = Ui.card(this);
+        summary.setLayoutParams(cardParams());
+        summary.addView(Ui.bi(this, "Owed to the shop", "المستحق لنا", 12, Ui.MUTED, false));
+        summary.addView(Ui.spacer(this, 6));
+        summary.addView(Ui.text(this, Ui.money(data.optDouble("total", 0), api.currency()), 22, Ui.INK, true));
+        summary.addView(Ui.spacer(this, 4));
+        summary.addView(Ui.text(this, plural(data.optInt("count"), "customer")
+                + " with an open credit sale  ·  اضغط مطولاً لسداد", 11.5f, Ui.MUTED, false));
+        page.addView(summary);
+
+        JSONArray rows = data.optJSONArray("items");
+        if (rows == null || rows.length() == 0) {
+            LinearLayout empty = Ui.card(this);
+            empty.setLayoutParams(cardParams());
+            empty.addView(Ui.bi(this, "Nobody owes anything", "لا توجد ديون", 13, Ui.INK, true));
+            empty.addView(Ui.spacer(this, 6));
+            empty.addView(Ui.text(this, "A sale taken as Credit at the till turns up here until it is settled.",
+                    12, Ui.MUTED, false));
+            page.addView(empty);
+            page.addView(new View(this), verticalWeight());
+            return page;
+        }
+
+        ListView list = new ListView(this);
+        list.setDivider(null);
+        list.setDividerHeight(0);
+        list.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+        list.setClipToPadding(false);
+        list.setAdapter(new Rows(this, rows, "credit"));
+        final JSONArray people = rows;
+        list.setOnItemLongClickListener((parent, view, pos, id) -> {
+            JSONObject person = people.optJSONObject(pos);
+            if (person != null) {
+                confirmSettle(person);
+            }
+            return true;
+        });
+        page.addView(list, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+        ((LinearLayout.LayoutParams) list.getLayoutParams()).weight = 1;
+        return page;
+    }
+
+    private void confirmSettle(JSONObject person) {
+        String name = person.optString("name", "");
+        String owed = Ui.money(person.optDouble("outstanding", 0), api.currency());
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(Ui.font(this, "Settle the credit  ·  سداد الأجل", true))
+                .setMessage(Ui.font(this, name + " owes " + owed
+                        + ".\n\nThe sales are marked paid and leave the credit book. "
+                        + "يتم تسجيل كل مبيعاته كمدفوعة.", false))
+                .setNegativeButton(Ui.font(this, "Cancel  ·  إلغاء", false), null)
+                .setPositiveButton(Ui.font(this, "Settle  ·  سداد", true), (d, which) -> {
+                    local.settle(person.optString("id", ""));
+                    selectTab(TAB_CREDIT);
+                    Toast.makeText(this, name + " settled  ·  تم السداد", Toast.LENGTH_SHORT).show();
+                })
+                .create();
+        dialog.show();
+        sentenceCase(dialog);
     }
 
     /* ---------------------------------------------------------------- chrome */
@@ -917,12 +1529,7 @@ public class MainActivity extends Activity {
     }
 
     private View footer() {
-        String version;
-        try {
-            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-        } catch (Exception e) {
-            version = "";
-        }
+        String version = version();
         String where = cfg.isLocal() ? "local db" : "server";
         TextView t = Ui.text(this, cfg.company() + "  ·  v" + version + "  ·  " + where, 10.5f, Ui.MUTED, false);
         t.setGravity(Gravity.CENTER);
@@ -1006,12 +1613,14 @@ public class MainActivity extends Activity {
             } else if ("product".equals(kind)) {
                 push(parts, first(o, "sku"));
                 push(parts, first(o, "category"));
-                String stock = o.isNull("qty_on_hand") ? "" : Ui.qty(o.optDouble("qty_on_hand")) + " " + o.optString("unit");
-                push(parts, stock.trim());
+                // The stock is the figure on the right, so it is not repeated here.
             } else if ("payment".equals(kind)) {
                 push(parts, first(o, "party_name", "invoice_number"));
                 push(parts, first(o, "date"));
                 push(parts, first(o, "method"));
+            } else if ("credit".equals(kind)) {
+                push(parts, first(o, "phone"));
+                push(parts, o.optInt("open_sales") + (o.optInt("open_sales") == 1 ? " open sale" : " open sales"));
             } else {
                 push(parts, first(o, "party_name", "supplier_name", "customer_name"));
                 push(parts, first(o, "invoice_date", "order_date", "quote_date", "date"));
@@ -1038,6 +1647,9 @@ public class MainActivity extends Activity {
             if (!o.isNull("qty_on_hand")) {
                 return Ui.qty(o.optDouble("qty_on_hand", 0)) + " " + o.optString("unit");
             }
+            if (!o.isNull("outstanding")) {
+                return Ui.money(o.optDouble("outstanding", 0), api.currency());
+            }
             return "";
         }
 
@@ -1052,6 +1664,9 @@ public class MainActivity extends Activity {
             }
             if (!o.isNull("price") && !o.isNull("qty_on_hand")) {
                 parts.add("price " + Ui.money(o.optDouble("price", 0), api.currency()));
+            }
+            if (!o.isNull("credit_limit") && o.optDouble("credit_limit", 0) > 0) {
+                parts.add("limit " + Ui.money(o.optDouble("credit_limit", 0), api.currency()));
             }
             StringBuilder sb = new StringBuilder();
             for (String part : parts) {

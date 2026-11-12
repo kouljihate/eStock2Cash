@@ -1,29 +1,39 @@
 # S2C MAROC — Android client
 
 The phone app for the shop's ledger. It **stands alone**: a fresh install opens on its
-own SQLite database, with no server and no network, and suppliers, customers and products
-are entered on the phone. The office server is the second option, not a requirement —
-switching to it reads the same `/api/v1` this project serves (documented in
-[`../docs/API.md`](../docs/API.md)).
+own SQLite database, with no server and no network, and the shop is run from the phone —
+a till, plus products, suppliers, customers and the credit book. The office server is the
+second option, not a requirement — switching to it reads the same `/api/v1` this project
+serves (documented in [`../docs/API.md`](../docs/API.md)).
 
-Current version: **0.2.0** (`versionCode` 4). The client version moves on its own, apart
+Current version: **0.3.0** (`versionCode` 5). The client version moves on its own, apart
 from the web app's.
+
+The app opens on a **sign-in page** that carries the settings link and the version; local
+mode asks for nothing and its button simply opens the till. Under the till there is a tab
+strip: **Cashier · Products · Suppliers · Customers · Credit**.
 
 | Sign in (server mode) | Dashboard | A list |
 | --- | --- | --- |
 | ![Sign in](screens/login.png) | ![Dashboard](screens/dashboard.png) | ![Products](screens/products.png) |
 
-The screenshots are from 0.1.2 and show server mode; the local screens replace the
-figures with the phone's own counts and add **+ Add** to every list.
+The screenshots are from 0.1.2 and show server mode; 0.3.0 replaced the dashboard with the
+cashier below, and every tab reads the phone's own rows in local mode.
 
 ## What works today
 
 | Screen | What it shows |
 | --- | --- |
-| **Dashboard** | Supplier/customer/product counts, low stock, stock value and units — from the phone in local mode, from the server in server mode |
-| **Lists** | Suppliers, customers, products (local: add and delete), plus every document list when reading a server |
+| **Sign in** | Company, version and a settings link; server mode adds address, username and password |
+| **Cashier** | The till: search the phone's products, tap one to add it, then *Review cart* → quantity, payment (cash or credit) and **Charge** |
+| **Products / Suppliers / Customers** | The phone's own lists, **+ Add** on each, long press to delete behind a confirmation |
+| **Credit** | One row per customer with an unpaid credit sale: what they owe, their phone and limit. A long press settles the whole debt |
 | **Settings** | Database: **Local — this phone** or **Server — IP address**, the company name and the currency |
-| **Sign in** | Server address, username, password; only in server mode |
+
+A sale is written in one transaction: the `sales` and `sale_items` rows, then the
+quantities come out of stock, so a cart that asks for more than the shelf holds is refused
+with the quantity that is left. Cash sales are paid immediately; a credit sale stays in
+the **Credit** tab until it is settled, and settling marks those sales paid.
 
 In local mode a list is a working screen: **+ Add** opens a form (name, code/SKU, phone,
 city, price, cost, stock, reorder level) and a long press on a row offers *Delete*, behind
@@ -50,13 +60,32 @@ it, which also removes the database. **Delete the app's data to start a clean le
 `db.mode=local` uses `s2c.db` on the phone. `db.mode=server` reads the office computer
 after signing in; the token is kept in `SharedPreferences`, never in the file.
 
+## Fonts
+
+The app sets its text in the same two faces as the web UI: **Comfortaa** for Latin and
+numbers, **VIP Rawy** for Arabic, each with a regular and a bold cut. A phone cannot pick
+a font by script the way a CSS font stack does, so every label is cut into runs of Arabic
+and non-Arabic characters and each run is given its own face — that is what keeps
+`Delete  ·  حذف` reading like the browser, with the Arabic in Rawy and the Latin in
+Comfortaa.
+
+The files live in `app/src/main/assets/fonts/` and are read once per process
+(`Ui.font`); an input field takes Comfortaa alone, because spans do not survive typing, and
+Arabic typed there falls back to the system face.
+
+Comfortaa is SIL Open Font License (see `../static/fonts/OFL-Comfortaa.txt`). **VIP Rawy is
+a commercial face and is not committed** — same rule as the web app: copy
+`VIP-Rawy-Regular.ttf` and `VIP-Rawy-Bold.ttf` into `app/src/main/assets/fonts/` before
+building for a shop that needs the Arabic branding. Without them the app still runs, in the
+system font.
+
 ## Build
 
 From the repository root:
 
 ```bash
-bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.2.0-debug.apk
-bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.2.0-release.apk
+bash tools/build_android.sh                    # → android/dist/s2c-maroc-0.3.0-debug.apk
+bash tools/build_android.sh assembleRelease    # → android/dist/s2c-maroc-0.3.0-release.apk
 ```
 
 The debug APK carries the `android:debuggable` flag and is what `adb install` expects;
@@ -80,7 +109,7 @@ git-ignored, as is `android/dist/`.
 ## Install
 
 ```bash
-adb install -r android/dist/s2c-maroc-0.2.0-debug.apk
+adb install -r android/dist/s2c-maroc-0.3.0-debug.apk
 ```
 
 Or copy the APK to the phone and open it (allow "install unknown apps" for the file
@@ -105,12 +134,13 @@ leaves a trusted network.
 ```
 android/
   settings.gradle.kts, build.gradle.kts, gradle.properties
-  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.2.0
+  app/build.gradle.kts                  compileSdk 35, minSdk 24, versionName 0.3.0
   app/src/main/AndroidManifest.xml      INTERNET, cleartext, one activity
   app/src/main/res/                     theme, strings, adaptive launcher icon
   app/src/main/java/ma/s2c/maroc/
-    MainActivity.java                   screens: dashboard, list, record form, settings, sign in, chrome
-    LocalDb.java                        the phone's SQLite database (suppliers, customers, products)
+    MainActivity.java                   screens: sign in, cashier, cart, tabs, lists, record form, settings
+    LocalDb.java                        the phone's SQLite database (suppliers, customers, products, sales, credit)
+    Ui.java                             colours, cards, bilingual labels, the two typefaces
     Config.java                         s2c.properties: db.mode, server.url, company, currency
     Api.java                            HttpURLConnection + org.json, token in SharedPreferences
     Ui.java                             palette and view factories (Arabic above Latin)

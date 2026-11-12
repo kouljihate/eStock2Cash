@@ -625,12 +625,16 @@ Android/data/ma.s2c.maroc/files/s2c.properties
 ```
 
 ```bash
-bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.2.0-debug.apk
-bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.2.0-release.apk
-adb install -r android/dist/s2c-maroc-0.2.0-debug.apk
+bash tools/build_android.sh                       # → android/dist/s2c-maroc-0.3.0-debug.apk
+bash tools/build_android.sh assembleRelease       # → android/dist/s2c-maroc-0.3.0-release.apk
+adb install -r android/dist/s2c-maroc-0.3.0-debug.apk
 ```
 
-In local mode a list has a **+ Add** button and a long-press deletes a row. The emulator
+The app opens on a sign-in page carrying the version and the settings link, and under it a
+single screen with the till and five tabs — **Cashier**, **Products**, **Suppliers**,
+**Customers**, **Credit**. A sale is paid cash or put on credit, stock comes down with it,
+and the credit book settles a customer in one long press. In local mode a list has a
+**+ Add** button and a long-press deletes a row. The emulator
 reaches this machine on `http://10.0.2.2:8080`; a phone needs the PC's LAN address, e.g.
 `http://192.168.1.20:8080`. Documents — purchase orders, invoices, tickets — and
 Bluetooth printing are still web-only and listed in the client's README.
